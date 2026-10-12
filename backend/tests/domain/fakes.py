@@ -13,6 +13,7 @@ from app.domain.entities import (
     Level,
     Material,
     MaterialStatus,
+    Submission,
     Role,
     Student,
     User,
@@ -101,7 +102,9 @@ class InMemoryLessonRepository(LessonRepository):
         pdfs_by_teacher: dict[UUID, dict[UUID, tuple[str, str]]] | None = None,
         contexts_by_teacher: dict[UUID, list[GenerationContext]] | None = None,
         pdfs_by_student: dict[UUID, dict[UUID, tuple[str, str]]] | None = None,
+        lessons_by_student: dict[UUID, set[UUID]] | None = None,
     ) -> None:
+        self._lessons_by_student = lessons_by_student or {}
         self._pdfs_by_student = pdfs_by_student or {}
         self._contexts_by_teacher = contexts_by_teacher or {}
         self._lessons = lessons or []
@@ -124,6 +127,9 @@ class InMemoryLessonRepository(LessonRepository):
         location = self._pdfs_by_teacher.get(teacher_id, {}).get(lesson_id)
         return LessonPdfLocation(*location) if location else None
 
+    def exists_for_student(self, student_id: UUID, lesson_id: UUID) -> bool:
+        return lesson_id in self._lessons_by_student.get(student_id, set())
+
     def get_pdf_for_student(self, student_id: UUID, lesson_id: UUID) -> LessonPdfLocation | None:
         location = self._pdfs_by_student.get(student_id, {}).get(lesson_id)
         return LessonPdfLocation(*location) if location else None
@@ -137,9 +143,15 @@ class InMemoryMaterialRepository(MaterialRepository):
 
     def __init__(self) -> None:
         self.saved: dict[UUID, tuple[dict[str, Any], Material]] = {}
+        self.submissions: dict[UUID, Submission] = {}
 
     def save(self, lesson_id: UUID, llm_request: Mapping[str, Any], material: Material) -> None:
         self.saved[lesson_id] = (dict(llm_request), material)
+
+    def get_for_lesson(self, lesson_id: UUID) -> tuple[Material, Submission | None] | None:
+        if lesson_id not in self.saved:
+            return None
+        return self.saved[lesson_id][1], self.submissions.get(lesson_id)
 
 
 class FakeLLMClient(LLMClient):

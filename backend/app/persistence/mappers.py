@@ -4,11 +4,13 @@ from typing import Any
 
 from app.domain.entities import (
     ActivityType,
+    Answer,
     Exercise,
     LessonSummary,
     Material,
     MaterialStatus,
     Student,
+    Submission,
     SubmissionSummary,
 )
 from app.persistence.models import (
@@ -87,3 +89,16 @@ def to_material_content(material: Material) -> dict[str, Any]:
             for exercise in material.exercises
         ],
     }
+
+
+def to_submission(model: MaterialSubmissionModel) -> Submission:
+    recommendations: dict[str, Any] = model.recommendations
+    return Submission(
+        submitted_at=model.submitted_at,
+        answers=tuple(Answer(answer["exercise_id"], answer["selected_option"]) for answer in model.answers),
+        correct_count=model.correct_count,
+        incorrect_count=model.incorrect_count,
+        score=model.score,
+        feedback=recommendations["feedback"],
+        recommendations=tuple(recommendations["recommendations"]),
+    )

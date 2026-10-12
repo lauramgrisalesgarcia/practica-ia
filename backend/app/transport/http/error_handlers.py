@@ -12,6 +12,7 @@ from app.domain.errors import (
     LessonNotFoundError,
     LessonPdfNotFoundError,
     MaterialAlreadySubmittedError,
+    MaterialNotFoundError,
     StudentNotFoundError,
 )
 
@@ -21,6 +22,7 @@ _RESPONSES: dict[type[DomainError], tuple[int, str]] = {
     StudentNotFoundError: (status.HTTP_404_NOT_FOUND, "Estudiante no encontrado"),
     LessonNotFoundError: (status.HTTP_404_NOT_FOUND, "Clase no encontrada"),
     LessonPdfNotFoundError: (status.HTTP_404_NOT_FOUND, "El PDF de la clase no está disponible"),
+    MaterialNotFoundError: (status.HTTP_404_NOT_FOUND, "La clase no tiene material de refuerzo"),
     LessonNotCompletedError: (status.HTTP_409_CONFLICT, "Solo se puede generar material para clases ya realizadas"),
     MaterialAlreadySubmittedError: (
         status.HTTP_409_CONFLICT,

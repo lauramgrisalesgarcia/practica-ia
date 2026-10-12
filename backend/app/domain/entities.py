@@ -172,3 +172,52 @@ class MaterialGenerationRequest:
             },
             "output_language": "es",
         }
+
+
+@dataclass(frozen=True, slots=True)
+class Answer:
+    """Opción elegida por el estudiante para un ejercicio."""
+
+    exercise_id: int
+    selected_option: str
+
+
+@dataclass(frozen=True, slots=True)
+class ExerciseResult:
+    exercise_id: int
+    selected_option: str
+    correct_option: str
+    is_correct: bool
+
+
+@dataclass(frozen=True, slots=True)
+class Grade:
+    """Corrección de un intento: se calcula siempre en el backend a partir del material y las respuestas."""
+
+    results: tuple[ExerciseResult, ...]
+    correct_count: int
+    incorrect_count: int
+    score: Decimal
+
+
+@dataclass(frozen=True, slots=True)
+class Submission:
+    """Intento guardado del estudiante (uno por material)."""
+
+    submitted_at: datetime
+    answers: tuple[Answer, ...]
+    correct_count: int
+    incorrect_count: int
+    score: Decimal
+    feedback: str
+    recommendations: tuple[str, ...]
+
+
+@dataclass(frozen=True, slots=True)
+class StudentMaterialView:
+    """Material de una clase tal como lo ve el estudiante, con su corrección si ya lo resolvió."""
+
+    lesson_id: UUID
+    material: Material
+    submission: Submission | None
+    grade: Grade | None

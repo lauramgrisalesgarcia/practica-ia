@@ -23,6 +23,7 @@ from app.domain.ports import (
 from app.domain.use_cases.generate_material import GenerateMaterial
 from app.domain.use_cases.authenticate_user import AuthenticateUser
 from app.domain.use_cases.get_my_lesson_pdf import GetMyLessonPdf
+from app.domain.use_cases.get_my_material import GetMyMaterial
 from app.domain.use_cases.get_teacher_lesson import GetTeacherLesson
 from app.domain.use_cases.get_teacher_lesson_pdf import GetTeacherLessonPdf
 from app.domain.use_cases.get_teacher_student import GetTeacherStudent
@@ -120,3 +121,10 @@ def get_get_my_lesson_pdf(
     files: Annotated[FileStorage, Depends(get_file_storage)],
 ) -> GetMyLessonPdf:
     return GetMyLessonPdf(lessons=lessons, files=files)
+
+
+def get_get_my_material(
+    lessons: Annotated[LessonRepository, Depends(get_lesson_repository)],
+    materials: Annotated[MaterialRepository, Depends(get_material_repository)],
+) -> GetMyMaterial:
+    return GetMyMaterial(lessons=lessons, materials=materials)
