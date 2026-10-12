@@ -15,7 +15,7 @@ info:
 
     **Propiedad de recursos**: un recurso que existe pero pertenece a otro usuario responde `404` para no revelar su existencia.
 
-    Fuente: `docs/backend-requirements.md`.
+    Fuente: `docs/001-backend-requirements.md`.
 servers:
   - url: http://localhost:8001
     description: Desarrollo local
