@@ -52,9 +52,15 @@ app/
   - Puertos en `ports.py` (`Protocol`): lo que el dominio necesita de fuera (`UserRepository`, `PasswordHasher`…).
   - Un **use case** por acción en `use_cases/`: una clase con dependencias inyectadas en el constructor y un método `execute`. Lanza errores de dominio; nunca `HTTPException`.
 - **Persistencia (`app/persistence`)**: modelos SQLAlchemy (`*Model`) y un **repository** por agregado en `repositories/` que implementa el puerto del dominio y devuelve **entidades**, nunca modelos.
-- **Transporte (`app/transport/http`)**: valida la entrada con Pydantic, obtiene el use case por `Depends`, llama a `execute` y traduce errores de dominio a códigos HTTP. No importa SQLAlchemy ni modelos.
+- **Transporte (`app/transport/http`)**: valida la entrada con Pydantic, obtiene el use case por `Depends` y llama a `execute`. Los errores de dominio se traducen a códigos HTTP en un único lugar, `error_handlers.py` (los routers no usan `try/except` para ello). No importa SQLAlchemy ni modelos.
 - **Composición (`app/composition.py`)**: único lugar que conoce a la vez persistencia y dominio.
 - **Tests por capa** (`tests/domain`, `tests/persistence`, `tests/transport`, `tests/core`): los use cases se prueban con fakes en memoria y sin BD; los repositories contra la BD de test; los endpoints con `TestClient`.
+
+## Contratos (obligatorio)
+
+- **Interfaces internas**: en el backend, los puertos del dominio son `Protocol` (`app/domain/ports.py`) y cada implementación (repositories, adaptadores y fakes de test) **hereda explícitamente** de su protocolo. En el frontend, los servicios son `interface` de TypeScript.
+- **Verificación de tipos**: `mypy --strict` (backend) y `tsc` (frontend) comprueban que cada implementación cumple su contrato. Se ejecutan en local y en CI; un error de tipos bloquea el cambio. No se usa `type: ignore` salvo justificación en un comentario.
+- **Contrato de la API**: `docs/openapi.yaml` es la fuente de verdad. `tests/contract/test_openapi_contract.py` verifica que cada endpoint implementado está documentado y que la petición y la respuesta de éxito coinciden con la especificación (campos, obligatorios, tipos, enums y restricciones). Si un cambio de la API es intencionado, se actualiza primero `openapi.yaml` (el test falla: red) y después el código.
 
 ## Principios SOLID (obligatorio)
 
@@ -110,6 +116,7 @@ npm run build
 # Backend (desde backend/)
 uv run uvicorn app.main:app --reload --port 8001
 uv run pytest
+uv run mypy
 uv run alembic upgrade head
 uv run alembic revision --autogenerate -m "descripción"
 

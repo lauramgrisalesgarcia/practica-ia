@@ -16,7 +16,7 @@ class _TestSettings(BaseSettings):
 
 
 # Los tests siempre usan la base de datos de test, nunca la de desarrollo.
-os.environ["DATABASE_URL"] = _TestSettings().test_database_url.get_secret_value()  # type: ignore[call-arg]
+os.environ["DATABASE_URL"] = _TestSettings().test_database_url.get_secret_value()
 # Clave aleatoria en cada ejecución: ningún secreto queda escrito en el código.
 os.environ["JWT_SECRET"] = secrets.token_urlsafe(32)
 

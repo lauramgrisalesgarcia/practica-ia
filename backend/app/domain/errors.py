@@ -4,3 +4,7 @@ class DomainError(Exception):
 
 class InvalidCredentialsError(DomainError):
     """El correo no existe o la contraseña no es correcta (no se distingue a propósito)."""
+
+
+class AccessDeniedError(DomainError):
+    """El usuario no tiene el rol necesario para esta acción."""

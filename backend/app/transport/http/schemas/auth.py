@@ -1,3 +1,5 @@
+from typing import Literal
+
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 from app.domain.entities import Role
@@ -20,6 +22,6 @@ class UserOut(BaseModel):
 
 class LoginResponse(BaseModel):
     access_token: str
-    token_type: str = "bearer"
+    token_type: Literal["bearer"]
     expires_in: int
     user: UserOut
