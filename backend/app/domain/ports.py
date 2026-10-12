@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import Protocol
 from uuid import UUID
 
-from app.domain.entities import LessonDetail, LessonSummary, Student, User
+from app.domain.entities import LessonDetail, LessonPdfLocation, LessonSummary, Student, User
 
 
 class UserRepository(Protocol):
@@ -45,6 +45,20 @@ class LessonRepository(Protocol):
 
     def get_detail_for_teacher(self, teacher_id: UUID, lesson_id: UUID) -> LessonDetail | None:
         """Detalle de la clase, solo si es de un estudiante asignado a ese docente."""
+        ...
+
+    def get_pdf_for_teacher(self, teacher_id: UUID, lesson_id: UUID) -> LessonPdfLocation | None:
+        """Ubicación del PDF de la clase, solo si es de un estudiante asignado a ese docente."""
+        ...
+
+
+class FileStorage(Protocol):
+    def read(self, path: str) -> bytes | None:
+        """Contenido del archivo, o None si no existe o la ruta no es válida."""
+        ...
+
+    def write(self, path: str, content: bytes) -> None:
+        """Guarda el archivo. Lanza ValueError si la ruta no es válida."""
         ...
 
 

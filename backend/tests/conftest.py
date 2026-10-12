@@ -1,6 +1,7 @@
 import os
 import secrets
 from collections.abc import Iterator
+from pathlib import Path
 
 import pytest
 from pydantic import SecretStr
@@ -25,7 +26,9 @@ from alembic.config import Config  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
 from sqlalchemy.orm import Session  # noqa: E402
 
+from app.composition import get_file_storage  # noqa: E402
 from app.persistence.database import engine, get_session  # noqa: E402
+from app.persistence.file_storage import LocalFileStorage  # noqa: E402
 from app.main import create_app  # noqa: E402
 
 
@@ -53,8 +56,15 @@ def db_session() -> Iterator[Session]:
 
 
 @pytest.fixture
-def client(db_session: Session) -> Iterator[TestClient]:
+def file_storage(tmp_path: Path) -> LocalFileStorage:
+    """Almacenamiento de archivos en una carpeta temporal de cada test."""
+    return LocalFileStorage(tmp_path / "storage")
+
+
+@pytest.fixture
+def client(db_session: Session, file_storage: LocalFileStorage) -> Iterator[TestClient]:
     app = create_app()
     app.dependency_overrides[get_session] = lambda: db_session
+    app.dependency_overrides[get_file_storage] = lambda: file_storage
     with TestClient(app) as test_client:
         yield test_client

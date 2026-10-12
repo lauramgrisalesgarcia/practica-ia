@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.core.tokens import create_access_token
 from app.domain.entities import Level
+from app.persistence.file_storage import LocalFileStorage
 from tests.factories import create_lesson, create_material, create_student, create_submission, create_user
 
 
@@ -279,5 +280,79 @@ class TestDetalleDeUnaClase:
 
     def test_sin_token_responde_401(self, client: TestClient) -> None:
         response = client.get(f"/teachers/me/lessons/{uuid4()}")
+
+        assert response.status_code == 401
+
+
+class TestPdfDeUnaClase:
+    def test_descarga_el_pdf(self, client: TestClient, db_session: Session, file_storage: LocalFileStorage) -> None:
+        teacher = create_user(db_session)
+        emma = create_student(db_session, teacher=teacher)
+        lesson = create_lesson(
+            db_session, student=emma, teacher=teacher, date=datetime.now(UTC), pdf_filename="restaurante-a2.pdf"
+        )
+        file_storage.write(lesson.pdf_path, b"%PDF-1.4 contenido de la clase")
+
+        response = client.get(f"/teachers/me/lessons/{lesson.public_id}/pdf", headers=auth_header(teacher.public_id))
+
+        assert response.status_code == 200
+        assert response.content == b"%PDF-1.4 contenido de la clase"
+        assert response.headers["content-type"] == "application/pdf"
+        assert response.headers["content-disposition"] == 'inline; filename="restaurante-a2.pdf"'
+        assert response.headers["x-content-type-options"] == "nosniff"
+
+    def test_el_nombre_del_archivo_no_puede_inyectar_cabeceras(
+        self, client: TestClient, db_session: Session, file_storage: LocalFileStorage
+    ) -> None:
+        teacher = create_user(db_session)
+        emma = create_student(db_session, teacher=teacher)
+        lesson = create_lesson(
+            db_session,
+            student=emma,
+            teacher=teacher,
+            date=datetime.now(UTC),
+            pdf_filename='mal"nombre\r\nX-Inyectada: si.pdf',
+            pdf_path="lessons/prueba/seguro.pdf",
+        )
+        file_storage.write(lesson.pdf_path, b"%PDF-1.4")
+
+        response = client.get(f"/teachers/me/lessons/{lesson.public_id}/pdf", headers=auth_header(teacher.public_id))
+
+        assert response.status_code == 200
+        assert "x-inyectada" not in response.headers
+        assert response.headers["content-disposition"] == 'inline; filename="malnombreX-Inyectada si.pdf"'
+
+    def test_una_clase_de_otro_docente_responde_404(self, client: TestClient, db_session: Session) -> None:
+        teacher = create_user(db_session, email="docente@colegio.edu")
+        other_teacher = create_user(db_session, email="otro@colegio.edu")
+        pierre = create_student(db_session, teacher=other_teacher, email="pierre@correo.com")
+        lesson = create_lesson(db_session, student=pierre, teacher=other_teacher, date=datetime.now(UTC))
+
+        response = client.get(f"/teachers/me/lessons/{lesson.public_id}/pdf", headers=auth_header(teacher.public_id))
+
+        assert response.status_code == 404
+        assert response.json() == {"detail": "Clase no encontrada"}
+
+    def test_si_falta_el_archivo_responde_404(self, client: TestClient, db_session: Session) -> None:
+        teacher = create_user(db_session)
+        emma = create_student(db_session, teacher=teacher)
+        lesson = create_lesson(db_session, student=emma, teacher=teacher, date=datetime.now(UTC))
+
+        response = client.get(f"/teachers/me/lessons/{lesson.public_id}/pdf", headers=auth_header(teacher.public_id))
+
+        assert response.status_code == 404
+        assert response.json() == {"detail": "El PDF de la clase no está disponible"}
+
+    def test_un_estudiante_recibe_403(self, client: TestClient, db_session: Session) -> None:
+        teacher = create_user(db_session)
+        emma = create_student(db_session, teacher=teacher)
+        lesson = create_lesson(db_session, student=emma, teacher=teacher, date=datetime.now(UTC))
+
+        response = client.get(f"/teachers/me/lessons/{lesson.public_id}/pdf", headers=auth_header(emma.public_id))
+
+        assert response.status_code == 403
+
+    def test_sin_token_responde_401(self, client: TestClient) -> None:
+        response = client.get(f"/teachers/me/lessons/{uuid4()}/pdf")
 
         assert response.status_code == 401

@@ -93,10 +93,14 @@ def operations(spec: Schema) -> dict[tuple[str, str], Schema]:
 
 
 def success_body(operation: Schema) -> Any:
+    """Forma del cuerpo JSON de éxito; para archivos (p. ej. PDF), los tipos de contenido."""
     for status in ("200", "201"):
         response = operation["responses"].get(status)
         if response and "content" in response:
-            return shape(response["content"]["application/json"]["schema"])
+            content = response["content"]
+            if "application/json" in content:
+                return shape(content["application/json"]["schema"])
+            return {"media_types": sorted(content)}
     return None
 
 

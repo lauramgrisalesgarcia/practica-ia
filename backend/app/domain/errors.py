@@ -20,3 +20,7 @@ class StudentNotFoundError(NotFoundError):
 
 class LessonNotFoundError(NotFoundError):
     pass
+
+
+class LessonPdfNotFoundError(NotFoundError):
+    """La clase existe, pero su archivo PDF no está en el almacenamiento."""

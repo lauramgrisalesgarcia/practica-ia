@@ -2,6 +2,7 @@ import enum
 from dataclasses import dataclass
 from datetime import datetime
 from decimal import Decimal
+from typing import NamedTuple
 from uuid import UUID
 
 
@@ -108,3 +109,16 @@ class LessonDetail:
     student: Student
     material: Material | None
     submission: SubmissionSummary | None
+
+
+class LessonPdfLocation(NamedTuple):
+    """Dónde está guardado el PDF de una clase. La ruta nunca se expone fuera del backend."""
+
+    filename: str
+    path: str
+
+
+@dataclass(frozen=True, slots=True)
+class LessonFile:
+    filename: str
+    content: bytes
