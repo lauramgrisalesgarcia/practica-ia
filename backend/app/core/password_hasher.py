@@ -1,11 +1,13 @@
 from pwdlib import PasswordHash
 
+from app.domain.ports import PasswordHasher
+
 _password_hash = PasswordHash.recommended()
 # Se calcula una sola vez: hashear con argon2 es costoso a propósito.
 _DUMMY_HASH = _password_hash.hash("contraseña-de-relleno")
 
 
-class Argon2PasswordHasher:
+class Argon2PasswordHasher(PasswordHasher):
     """Implementa `PasswordHasher` del dominio con argon2."""
 
     @property

@@ -5,10 +5,12 @@ on:
     branches: [main]
     paths:
       - 'backend/**'
+      - 'docs/openapi.yaml'
       - '.github/workflows/backend.yml'
   pull_request:
     paths:
       - 'backend/**'
+      - 'docs/openapi.yaml'
       - '.github/workflows/backend.yml'
 
 concurrency:
@@ -24,7 +26,7 @@ defaults:
 
 jobs:
   ci:
-    name: Tests y migraciones
+    name: Tipos, tests, contrato y migraciones
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -59,7 +61,10 @@ jobs:
       - name: Instalar dependencias
         run: uv sync --locked
 
-      - name: Tests
+      - name: Comprobar tipos y contratos (mypy estricto)
+        run: uv run mypy
+
+      - name: Tests (incluye contrato con docs/openapi.yaml y arquitectura)
         run: uv run pytest
 
       - name: Comprobar que los modelos y las migraciones coinciden

@@ -1,30 +1,33 @@
 import secrets
 
 import pytest
-from pydantic import ValidationError
+from pydantic import SecretStr, ValidationError
 
 from app.core.config import Settings
 
 DATABASE_URL = "postgresql+psycopg://usuario:clave-de-bd@127.0.0.1:5433/base"
 
 
-def make_settings(**overrides: str) -> Settings:
-    values = {"database_url": DATABASE_URL, "jwt_secret": secrets.token_urlsafe(32)} | overrides
-    return Settings(_env_file=None, **values)  # type: ignore[arg-type]
+def make_settings(*, jwt_secret: str | None = None) -> Settings:
+    return Settings(
+        _env_file=None,
+        database_url=SecretStr(DATABASE_URL),
+        jwt_secret=SecretStr(jwt_secret or secrets.token_urlsafe(32)),
+    )
 
 
 def test_la_url_de_la_base_de_datos_es_obligatoria(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv("DATABASE_URL", raising=False)
 
     with pytest.raises(ValidationError, match="database_url"):
-        Settings(_env_file=None, jwt_secret=secrets.token_urlsafe(32))  # type: ignore[call-arg]
+        Settings(_env_file=None, jwt_secret=SecretStr(secrets.token_urlsafe(32)))
 
 
 def test_la_clave_jwt_es_obligatoria(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv("JWT_SECRET", raising=False)
 
     with pytest.raises(ValidationError, match="jwt_secret"):
-        Settings(_env_file=None, database_url=DATABASE_URL)  # type: ignore[call-arg]
+        Settings(_env_file=None, database_url=SecretStr(DATABASE_URL))
 
 
 def test_rechaza_una_clave_jwt_de_menos_de_32_caracteres() -> None:

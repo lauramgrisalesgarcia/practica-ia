@@ -2,10 +2,11 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.domain.entities import User
+from app.domain.ports import UserRepository
 from app.persistence.models import UserModel
 
 
-class SqlAlchemyUserRepository:
+class SqlAlchemyUserRepository(UserRepository):
     """Implementa `UserRepository` del dominio sobre PostgreSQL."""
 
     def __init__(self, session: Session) -> None:
