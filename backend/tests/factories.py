@@ -1,7 +1,10 @@
 from sqlalchemy.orm import Session
 
-from app.models import Role, User
-from app.security import hash_password
+from app.core.password_hasher import Argon2PasswordHasher
+from app.domain.entities import Role
+from app.persistence.models import UserModel
+
+_hasher = Argon2PasswordHasher()
 
 
 def create_user(
@@ -12,12 +15,12 @@ def create_user(
     role: Role = Role.DOCENTE,
     first_name: str = "María",
     last_name: str = "López",
-) -> User:
-    user = User(
+) -> UserModel:
+    user = UserModel(
         first_name=first_name,
         last_name=last_name,
         email=email.lower(),
-        password_hash=hash_password(password),
+        password_hash=_hasher.hash(password),
         role=role,
     )
     session.add(user)

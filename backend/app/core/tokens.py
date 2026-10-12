@@ -1,23 +1,12 @@
 from datetime import UTC, datetime, timedelta
 
 import jwt
-from pwdlib import PasswordHash
 
-from app.config import get_settings
-
-_password_hash = PasswordHash.recommended()
+from app.core.config import get_settings
 
 
 class InvalidTokenError(Exception):
     """El token no es válido, está caducado o no identifica a un usuario."""
-
-
-def hash_password(password: str) -> str:
-    return _password_hash.hash(password)
-
-
-def verify_password(password: str, password_hash: str) -> bool:
-    return _password_hash.verify(password, password_hash)
 
 
 def create_access_token(user_id: int, expires_delta: timedelta | None = None) -> str:

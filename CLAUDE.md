@@ -33,18 +33,41 @@ Reglas:
 - Tests pequeños, deterministas e independientes entre sí; nombres descriptivos del comportamiento.
 - Nivel adecuado: lógica → unit; componentes → React Testing Library; endpoints → pytest con BD de test; flujos de usuario → Playwright.
 
+## Arquitectura del backend (obligatorio)
+
+El backend se divide en **tres capas**. Las dependencias solo apuntan hacia el dominio: `transport → domain ← persistence`. Un test de arquitectura (`tests/architecture/test_layers.py`) falla si se rompe esta regla.
+
+```
+app/
+├── transport/http/   Transporte: routers FastAPI, schemas Pydantic, autenticación HTTP
+├── domain/           Dominio: entidades, errores, puertos (interfaces) y use cases
+├── persistence/      Persistencia: modelos SQLAlchemy y repositories
+├── core/             Transversal: configuración, argon2, JWT
+├── composition.py    Raíz de composición: crea repositories y los inyecta en los use cases
+└── main.py           Crea la app y registra los routers
+```
+
+- **Dominio (`app/domain`)**: Python puro. No importa FastAPI, SQLAlchemy, Pydantic ni otras capas.
+  - Entidades como `dataclass` inmutables (`entities.py`) y errores de negocio (`errors.py`).
+  - Puertos en `ports.py` (`Protocol`): lo que el dominio necesita de fuera (`UserRepository`, `PasswordHasher`…).
+  - Un **use case** por acción en `use_cases/`: una clase con dependencias inyectadas en el constructor y un método `execute`. Lanza errores de dominio; nunca `HTTPException`.
+- **Persistencia (`app/persistence`)**: modelos SQLAlchemy (`*Model`) y un **repository** por agregado en `repositories/` que implementa el puerto del dominio y devuelve **entidades**, nunca modelos.
+- **Transporte (`app/transport/http`)**: valida la entrada con Pydantic, obtiene el use case por `Depends`, llama a `execute` y traduce errores de dominio a códigos HTTP. No importa SQLAlchemy ni modelos.
+- **Composición (`app/composition.py`)**: único lugar que conoce a la vez persistencia y dominio.
+- **Tests por capa** (`tests/domain`, `tests/persistence`, `tests/transport`, `tests/core`): los use cases se prueban con fakes en memoria y sin BD; los repositories contra la BD de test; los endpoints con `TestClient`.
+
 ## Principios SOLID (obligatorio)
 
 Todo el código, frontend y backend, respeta SOLID. Antes de dar un cambio por terminado, revisa que lo cumpla.
 
 - **S — Responsabilidad única**: cada módulo, clase o componente tiene un único motivo de cambio.
-  - Backend: los routers solo traducen HTTP (validar entrada, llamar al servicio, mapear errores a códigos HTTP). La lógica de negocio vive en `app/services/` y se prueba sin HTTP.
+  - Backend: los routers solo traducen HTTP; la lógica de negocio vive en los use cases (`app/domain/use_cases/`) y el acceso a datos en los repositories.
   - Frontend: los componentes muestran y capturan datos; no llaman a la API directamente.
 - **O — Abierto/cerrado**: el comportamiento nuevo se añade con nuevas implementaciones (p. ej. otro `LLMClient` o un nuevo tipo de actividad), no modificando el código existente.
 - **L — Sustitución de Liskov**: cualquier implementación de una interfaz (servicio en memoria, cliente HTTP, LLM simulado o real) es intercambiable sin que el consumidor lo note.
 - **I — Segregación de interfaces**: interfaces pequeñas y específicas por contexto (`AuthService`, `TeacherService`…), nunca una interfaz que lo mezcle todo.
 - **D — Inversión de dependencias**: se depende de abstracciones inyectadas, no de implementaciones concretas.
-  - Backend: dependencias por `Depends` (sesión de BD, usuario actual, `LLMClient`), sustituibles en tests.
+  - Backend: los use cases dependen de puertos (`Protocol`), no de SQLAlchemy ni argon2; `app/composition.py` inyecta las implementaciones con `Depends`, sustituibles en tests.
   - Frontend: los servicios se inyectan por props/contexto; los tipos de dominio viven en `src/domain/` y no dependen de componentes.
 
 ## Gestión de secretos (obligatorio)

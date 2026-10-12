@@ -1,20 +1,16 @@
-import enum
 from datetime import datetime
 
 from sqlalchemy import DateTime, Enum, String, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+
+from app.domain.entities import Role
 
 
 class Base(DeclarativeBase):
     pass
 
 
-class Role(enum.StrEnum):
-    DOCENTE = "docente"
-    ESTUDIANTE = "estudiante"
-
-
-class User(Base):
+class UserModel(Base):
     __tablename__ = "users"
 
     id: Mapped[int] = mapped_column(primary_key=True)

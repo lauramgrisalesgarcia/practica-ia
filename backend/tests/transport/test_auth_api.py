@@ -4,8 +4,8 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
-from app.models import Role
-from app.security import create_access_token, decode_access_token
+from app.domain.entities import Role
+from app.core.tokens import create_access_token, decode_access_token
 from tests.factories import create_user
 
 PASSWORD = "Docente#2026"

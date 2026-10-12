@@ -2,19 +2,17 @@ from typing import Annotated
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from sqlalchemy.orm import Session
 
-from app.db import get_db
-from app.models import User
-from app.security import InvalidTokenError, decode_access_token
+from app.composition import get_get_user
+from app.core.tokens import InvalidTokenError, decode_access_token
+from app.domain.entities import User
+from app.domain.use_cases.get_user import GetUser
 
 _bearer = HTTPBearer(auto_error=False)
 
-DbSession = Annotated[Session, Depends(get_db)]
-
 
 def get_current_user(
-    db: DbSession,
+    get_user: Annotated[GetUser, Depends(get_get_user)],
     credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(_bearer)],
 ) -> User:
     unauthorized = HTTPException(
@@ -29,7 +27,7 @@ def get_current_user(
     except InvalidTokenError:
         raise unauthorized from None
 
-    user = db.get(User, user_id)
+    user = get_user.execute(user_id)
     if user is None:
         raise unauthorized
     return user
