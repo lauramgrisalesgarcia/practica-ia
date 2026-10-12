@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.core.tokens import create_access_token
 from app.domain.entities import Level
-from tests.factories import create_lesson, create_student, create_user
+from tests.factories import create_lesson, create_material, create_student, create_user
 
 
 def auth_header(user_id: UUID) -> dict[str, str]:
@@ -132,5 +132,61 @@ class TestDetalleDeUnEstudiante:
 
     def test_sin_token_responde_401(self, client: TestClient) -> None:
         response = client.get(f"/teachers/me/students/{uuid4()}")
+
+        assert response.status_code == 401
+
+
+class TestHistorialDeClasesDeUnEstudiante:
+    def test_devuelve_las_clases_realizadas_con_el_estado_del_material(
+        self, client: TestClient, db_session: Session
+    ) -> None:
+        teacher = create_user(db_session)
+        emma = create_student(db_session, teacher=teacher)
+        now = datetime.now(UTC).replace(microsecond=0)
+        older = create_lesson(
+            db_session, student=emma, teacher=teacher, date=now - timedelta(days=14),
+            topic="Presentarse", context="Presentarse y hablar de la familia en una reunión",
+        )
+        recent = create_lesson(
+            db_session, student=emma, teacher=teacher, date=now - timedelta(days=2), duration_minutes=45,
+            topic="Pedir en un restaurante", context="Pedir comida y bebida en un restaurante",
+        )
+        create_lesson(db_session, student=emma, teacher=teacher, date=now + timedelta(days=3))
+        create_material(db_session, lesson=recent)
+
+        response = client.get(f"/teachers/me/students/{emma.public_id}/lessons", headers=auth_header(teacher.public_id))
+
+        assert response.status_code == 200
+        body = response.json()
+        assert [lesson["id"] for lesson in body] == [str(recent.public_id), str(older.public_id)]
+        assert body[0] == {
+            "id": str(recent.public_id),
+            "date": body[0]["date"],
+            "duration_minutes": 45,
+            "topic": "Pedir en un restaurante",
+            "context": "Pedir comida y bebida en un restaurante",
+            "material_status": "pending",
+        }
+        assert datetime.fromisoformat(body[0]["date"]) == recent.date
+        assert body[1]["material_status"] == "none"
+
+    def test_un_estudiante_de_otro_docente_responde_404(self, client: TestClient, db_session: Session) -> None:
+        teacher = create_user(db_session, email="docente@colegio.edu")
+        pierre = create_student(db_session, teacher=create_user(db_session, email="otro@colegio.edu"))
+
+        response = client.get(f"/teachers/me/students/{pierre.public_id}/lessons", headers=auth_header(teacher.public_id))
+
+        assert response.status_code == 404
+        assert response.json() == {"detail": "Estudiante no encontrado"}
+
+    def test_un_estudiante_recibe_403(self, client: TestClient, db_session: Session) -> None:
+        emma = create_student(db_session, teacher=create_user(db_session))
+
+        response = client.get(f"/teachers/me/students/{emma.public_id}/lessons", headers=auth_header(emma.public_id))
+
+        assert response.status_code == 403
+
+    def test_sin_token_responde_401(self, client: TestClient) -> None:
+        response = client.get(f"/teachers/me/students/{uuid4()}/lessons")
 
         assert response.status_code == 401

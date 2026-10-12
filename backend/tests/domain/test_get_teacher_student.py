@@ -6,7 +6,7 @@ import pytest
 from app.domain.entities import Role, StudentDetail
 from app.domain.errors import AccessDeniedError, StudentNotFoundError
 from app.domain.use_cases.get_teacher_student import GetTeacherStudent
-from tests.domain.fakes import FixedClock, InMemoryLessonRepository, InMemoryStudentRepository, make_student, make_user, uid
+from tests.domain.fakes import FixedClock, InMemoryLessonRepository, InMemoryStudentRepository, make_lesson, make_student, make_user, uid
 
 NOW = datetime(2026, 10, 12, 12, 0, tzinfo=UTC)
 TEACHER = make_user(user_id=uid(1), role=Role.DOCENTE)
@@ -16,7 +16,7 @@ EMMA = make_student(student_id=uid(10))
 def build(lessons: list[tuple[UUID, datetime]] | None = None) -> GetTeacherStudent:
     return GetTeacherStudent(
         students=InMemoryStudentRepository({TEACHER.id: [EMMA]}),
-        lessons=InMemoryLessonRepository(lessons),
+        lessons=InMemoryLessonRepository([(owner, make_lesson(date=date)) for owner, date in lessons or []]),
         clock=FixedClock(NOW),
     )
 

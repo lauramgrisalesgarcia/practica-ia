@@ -3,11 +3,13 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends
 
-from app.composition import get_get_teacher_student, get_list_teacher_students
-from app.domain.entities import Student
+from app.composition import get_get_teacher_student, get_list_student_lessons, get_list_teacher_students
+from app.domain.entities import LessonSummary, Student
 from app.domain.use_cases.get_teacher_student import GetTeacherStudent
+from app.domain.use_cases.list_student_lessons import ListStudentLessons
 from app.domain.use_cases.list_teacher_students import ListTeacherStudents
 from app.transport.http.dependencies import CurrentUser
+from app.transport.http.schemas.lessons import LessonSummaryOut
 from app.transport.http.schemas.students import StudentDetailOut, StudentOut
 
 router = APIRouter(prefix="/teachers/me", tags=["Docente"])
@@ -28,3 +30,12 @@ def get_my_student(
     student_id: UUID,
 ) -> StudentDetailOut:
     return StudentDetailOut.from_entity(get_student.execute(user, student_id))
+
+
+@router.get("/students/{student_id}/lessons", response_model=list[LessonSummaryOut])
+def list_my_student_lessons(
+    user: CurrentUser,
+    list_lessons: Annotated[ListStudentLessons, Depends(get_list_student_lessons)],
+    student_id: UUID,
+) -> list[LessonSummary]:
+    return list_lessons.execute(user, student_id)
