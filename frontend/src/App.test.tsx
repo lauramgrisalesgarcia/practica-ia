@@ -1,7 +1,9 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import App from './App'
-import type { AuthService, User } from './features/auth/authService'
+import type { User } from './domain/user'
+import type { AuthService } from './features/auth/authService'
+import type { TeacherService } from './features/teacher/teacherService'
 
 const TEACHER: User = { name: 'María López', email: 'docente@colegio.edu', role: 'docente' }
 const STUDENT: User = { name: 'Ana Gómez', email: 'estudiante@colegio.edu', role: 'estudiante' }
@@ -13,8 +15,11 @@ function createAuthService(user: User | null): AuthService {
       if (!user) throw new Error('Credenciales incorrectas')
       return user
     }),
-    getAssignedStudents: vi.fn().mockResolvedValue([]),
   }
+}
+
+function createTeacherService(): TeacherService {
+  return { getAssignedStudents: vi.fn().mockResolvedValue([]) }
 }
 
 async function login(email: string) {
@@ -26,14 +31,15 @@ async function login(email: string) {
 
 describe('App', () => {
   it('muestra la pantalla de inicio de sesión', () => {
-    render(<App authService={createAuthService(TEACHER)} />)
+    render(<App authService={createAuthService(TEACHER)} teacherService={createTeacherService()} />)
 
     expect(screen.getByRole('heading', { level: 1, name: /iniciar sesión/i })).toBeInTheDocument()
   })
 
   it('lleva al docente a su dashboard tras iniciar sesión', async () => {
     const authService = createAuthService(TEACHER)
-    render(<App authService={authService} />)
+    const teacherService = createTeacherService()
+    render(<App authService={authService} teacherService={teacherService} />)
 
     await login(TEACHER.email)
 
@@ -41,10 +47,13 @@ describe('App', () => {
     expect(screen.getByRole('button', { name: /ver alumnos asignados/i })).toBeInTheDocument()
     expect(screen.queryByLabelText(/correo electrónico/i)).not.toBeInTheDocument()
     expect(authService.login).toHaveBeenCalledWith({ email: TEACHER.email, password: PASSWORD })
+
+    await userEvent.setup().click(screen.getByRole('button', { name: /ver alumnos asignados/i }))
+    expect(teacherService.getAssignedStudents).toHaveBeenCalledWith(TEACHER)
   })
 
   it('no muestra el dashboard del docente a un estudiante', async () => {
-    render(<App authService={createAuthService(STUDENT)} />)
+    render(<App authService={createAuthService(STUDENT)} teacherService={createTeacherService()} />)
 
     await login(STUDENT.email)
 
@@ -53,7 +62,7 @@ describe('App', () => {
   })
 
   it('se queda en el login si las credenciales son incorrectas', async () => {
-    render(<App authService={createAuthService(null)} />)
+    render(<App authService={createAuthService(null)} teacherService={createTeacherService()} />)
 
     await login('nadie@colegio.edu')
 

@@ -1,13 +1,17 @@
 import { useState } from 'react'
-import type { AuthService, User } from './features/auth/authService'
-import { LoginForm, type LoginCredentials } from './features/auth/LoginForm'
+import type { LoginCredentials } from './domain/auth'
+import type { User } from './domain/user'
+import type { AuthService } from './features/auth/authService'
+import { LoginForm } from './features/auth/LoginForm'
 import { TeacherDashboard } from './features/teacher/TeacherDashboard'
+import type { TeacherService } from './features/teacher/teacherService'
 
 interface AppProps {
   authService: AuthService
+  teacherService: TeacherService
 }
 
-function App({ authService }: AppProps) {
+function App({ authService, teacherService }: AppProps) {
   const [user, setUser] = useState<User | null>(null)
 
   async function handleLogin(credentials: LoginCredentials) {
@@ -19,7 +23,7 @@ function App({ authService }: AppProps) {
       <main className="min-h-screen bg-gray-50 px-4 py-10">
         <TeacherDashboard
           teacherName={user.name}
-          loadStudents={() => authService.getAssignedStudents(user)}
+          loadStudents={() => teacherService.getAssignedStudents(user)}
         />
       </main>
     )

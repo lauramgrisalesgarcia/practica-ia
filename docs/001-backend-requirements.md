@@ -318,7 +318,7 @@ Content-Type: application/json
 ```json
 200 OK
 {
-  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "access_token": "<token JWT>",
   "token_type": "bearer",
   "expires_in": 3600,
   "user": {
@@ -347,7 +347,7 @@ Datos mal formados (correo inválido, campos vacíos):
 
 ```http
 GET /auth/me
-Authorization: Bearer eyJhbGciOi...
+Authorization: Bearer <token JWT>
 ```
 ```json
 200 OK

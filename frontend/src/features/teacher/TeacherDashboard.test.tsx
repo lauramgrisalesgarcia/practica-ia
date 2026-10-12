@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { TeacherDashboard, type Student } from './TeacherDashboard'
+import type { Student } from '../../domain/student'
+import { TeacherDashboard } from './TeacherDashboard'
 
 const STUDENTS: Student[] = [
   { id: 1, name: 'Ana Gómez', email: 'ana@colegio.edu' },
