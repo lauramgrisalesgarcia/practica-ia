@@ -12,6 +12,11 @@ def require_teacher(user: User) -> None:
         raise AccessDeniedError
 
 
+def require_student(user: User) -> None:
+    if user.role is not Role.ESTUDIANTE:
+        raise AccessDeniedError
+
+
 def require_own_student(teacher: User, student_id: UUID, students: StudentRepository) -> Student:
     """El estudiante, si es del docente. Si no existe o es de otro docente: StudentNotFoundError
     (no se distingue, para no revelar qué estudiantes existen)."""

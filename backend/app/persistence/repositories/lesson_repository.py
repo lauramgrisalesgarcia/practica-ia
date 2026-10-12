@@ -79,7 +79,6 @@ class SqlAlchemyLessonRepository(LessonRepository):
             summary=to_lesson_summary(lesson, status),
             keywords=tuple(lesson.keywords),
             notes=lesson.notes,
-            pdf_filename=lesson.pdf_filename,
             student=to_student(student, profile),
             material=to_material(material) if material else None,
             submission=to_submission_summary(submission) if submission else None,
