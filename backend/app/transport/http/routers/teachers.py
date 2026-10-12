@@ -19,7 +19,7 @@ from app.domain.use_cases.get_teacher_student import GetTeacherStudent
 from app.domain.use_cases.list_student_lessons import ListStudentLessons
 from app.domain.use_cases.list_teacher_students import ListTeacherStudents
 from app.transport.http.dependencies import CurrentUser
-from app.transport.http.files import pdf_response
+from app.transport.http.files import PDF_RESPONSES, pdf_response
 from app.transport.http.schemas.lessons import LessonSummaryOut, TeacherLessonDetailOut
 from app.transport.http.schemas.materials import GeneratedMaterialOut, GenerateMaterialIn
 from app.transport.http.schemas.students import StudentDetailOut, StudentOut
@@ -66,7 +66,7 @@ def get_my_lesson(
 @router.get(
     "/lessons/{lesson_id}/pdf",
     response_class=Response,
-    responses={200: {"description": "Contenido del PDF de la clase.", "content": {"application/pdf": {}}}},
+    responses=PDF_RESPONSES,
 )
 def get_my_lesson_pdf(
     user: CurrentUser,

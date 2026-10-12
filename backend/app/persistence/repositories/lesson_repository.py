@@ -93,6 +93,14 @@ class SqlAlchemyLessonRepository(LessonRepository):
         ).one_or_none()
         return LessonPdfLocation(filename=row[0], path=row[1]) if row else None
 
+    def get_pdf_for_student(self, student_id: UUID, lesson_id: UUID) -> LessonPdfLocation | None:
+        row = self._session.execute(
+            select(LessonModel.pdf_filename, LessonModel.pdf_path)
+            .join(UserModel, UserModel.id == LessonModel.student_id)
+            .where(UserModel.public_id == student_id, LessonModel.public_id == lesson_id)
+        ).one_or_none()
+        return LessonPdfLocation(filename=row[0], path=row[1]) if row else None
+
     def get_generation_context_for_teacher(self, teacher_id: UUID, lesson_id: UUID) -> GenerationContext | None:
         row = self._session.execute(
             select(LessonModel, StudentProfileModel, MaterialSubmissionModel.id)
