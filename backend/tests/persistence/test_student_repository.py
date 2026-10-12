@@ -47,3 +47,28 @@ def test_devuelve_lista_vacia_si_no_tiene_estudiantes(db_session: Session) -> No
     teacher = create_user(db_session)
 
     assert SqlAlchemyStudentRepository(db_session).list_by_teacher(teacher.id) == []
+
+
+def test_obtiene_un_estudiante_del_docente(db_session: Session) -> None:
+    teacher = create_user(db_session)
+    emma = create_student(db_session, teacher=teacher)
+
+    student = SqlAlchemyStudentRepository(db_session).get_for_teacher(teacher.id, emma.id)
+
+    assert student is not None
+    assert student.id == emma.id
+    assert student.level == Level.A2
+
+
+def test_no_obtiene_un_estudiante_de_otro_docente(db_session: Session) -> None:
+    teacher = create_user(db_session, email="docente@colegio.edu")
+    other_teacher = create_user(db_session, email="otro@colegio.edu")
+    pierre = create_student(db_session, teacher=other_teacher, email="pierre@correo.com")
+
+    assert SqlAlchemyStudentRepository(db_session).get_for_teacher(teacher.id, pierre.id) is None
+
+
+def test_no_obtiene_un_usuario_que_no_es_estudiante(db_session: Session) -> None:
+    teacher = create_user(db_session)
+
+    assert SqlAlchemyStudentRepository(db_session).get_for_teacher(teacher.id, teacher.id) is None

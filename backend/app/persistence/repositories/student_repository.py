@@ -21,6 +21,14 @@ class SqlAlchemyStudentRepository(StudentRepository):
         ).all()
         return [_to_entity(user, profile) for user, profile in rows]
 
+    def get_for_teacher(self, teacher_id: int, student_id: int) -> Student | None:
+        row = self._session.execute(
+            select(UserModel, StudentProfileModel)
+            .join(StudentProfileModel, StudentProfileModel.user_id == UserModel.id)
+            .where(StudentProfileModel.teacher_id == teacher_id, UserModel.id == student_id)
+        ).one_or_none()
+        return _to_entity(*row) if row else None
+
 
 def _to_entity(user: UserModel, profile: StudentProfileModel) -> Student:
     return Student(

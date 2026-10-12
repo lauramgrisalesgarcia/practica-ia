@@ -36,3 +36,9 @@ class Student:
     email: str
     native_language: str
     level: Level
+
+
+@dataclass(frozen=True, slots=True)
+class StudentDetail:
+    student: Student
+    lessons_count: int
