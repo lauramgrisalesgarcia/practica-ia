@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import Protocol
 from uuid import UUID
 
-from app.domain.entities import Student, User
+from app.domain.entities import LessonSummary, Student, User
 
 
 class UserRepository(Protocol):
@@ -37,6 +37,10 @@ class StudentRepository(Protocol):
 class LessonRepository(Protocol):
     def count_completed_by_student(self, student_id: UUID, until: datetime) -> int:
         """Clases del estudiante con fecha anterior o igual a `until`."""
+        ...
+
+    def list_completed_by_student(self, student_id: UUID, until: datetime) -> list[LessonSummary]:
+        """Clases del estudiante con fecha anterior o igual a `until`, de la más reciente a la más antigua."""
         ...
 
 

@@ -1,5 +1,5 @@
-from app.domain.entities import Role, Student, User
-from app.domain.errors import AccessDeniedError
+from app.domain.entities import Student, User
+from app.domain.policies import require_teacher
 from app.domain.ports import StudentRepository
 
 
@@ -8,6 +8,5 @@ class ListTeacherStudents:
         self._students = students
 
     def execute(self, requester: User) -> list[Student]:
-        if requester.role is not Role.DOCENTE:
-            raise AccessDeniedError
+        require_teacher(requester)
         return self._students.list_by_teacher(requester.id)

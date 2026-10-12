@@ -1,9 +1,9 @@
 """Implementaciones en memoria de los puertos del dominio, para probar los casos de uso sin BD."""
 
 from datetime import UTC, datetime
-from uuid import UUID
+from uuid import UUID, uuid4
 
-from app.domain.entities import Level, Role, Student, User
+from app.domain.entities import LessonSummary, Level, MaterialStatus, Role, Student, User
 from app.domain.ports import Clock, LessonRepository, PasswordHasher, StudentRepository, UserRepository
 
 FAKE_DUMMY_HASH = "hash-de-relleno"
@@ -70,13 +70,36 @@ class InMemoryStudentRepository(StudentRepository):
 
 
 class InMemoryLessonRepository(LessonRepository):
-    """Guarda solo lo necesario para contar: (id del estudiante, fecha de la clase)."""
+    """Guarda pares (id del estudiante, clase)."""
 
-    def __init__(self, lessons: list[tuple[UUID, datetime]] | None = None) -> None:
+    def __init__(self, lessons: list[tuple[UUID, LessonSummary]] | None = None) -> None:
         self._lessons = lessons or []
 
+    def _completed(self, student_id: UUID, until: datetime) -> list[LessonSummary]:
+        return [lesson for owner, lesson in self._lessons if owner == student_id and lesson.date <= until]
+
     def count_completed_by_student(self, student_id: UUID, until: datetime) -> int:
-        return sum(1 for owner, date in self._lessons if owner == student_id and date <= until)
+        return len(self._completed(student_id, until))
+
+    def list_completed_by_student(self, student_id: UUID, until: datetime) -> list[LessonSummary]:
+        return sorted(self._completed(student_id, until), key=lambda lesson: lesson.date, reverse=True)
+
+
+def make_lesson(
+    *,
+    date: datetime,
+    lesson_id: UUID | None = None,
+    topic: str = "Pedir en un restaurante",
+    material_status: MaterialStatus = MaterialStatus.NONE,
+) -> LessonSummary:
+    return LessonSummary(
+        id=lesson_id or uuid4(),
+        date=date,
+        duration_minutes=60,
+        topic=topic,
+        context="Pedir comida y bebida en un restaurante y pedir la cuenta",
+        material_status=material_status,
+    )
 
 
 class FixedClock(Clock):

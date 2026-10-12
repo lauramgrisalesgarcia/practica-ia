@@ -4,7 +4,13 @@ from sqlalchemy.orm import Session
 
 from app.core.password_hasher import Argon2PasswordHasher
 from app.domain.entities import Level, Role
-from app.persistence.models import LessonModel, StudentProfileModel, UserModel
+from app.persistence.models import (
+    LessonModel,
+    MaterialSubmissionModel,
+    ReinforcementMaterialModel,
+    StudentProfileModel,
+    UserModel,
+)
 
 _hasher = Argon2PasswordHasher()
 
@@ -80,3 +86,37 @@ def create_lesson(
     session.add(lesson)
     session.flush()
     return lesson
+
+
+def create_material(session: Session, *, lesson: LessonModel, exercise_count: int = 1) -> ReinforcementMaterialModel:
+    exercises = [
+        {"id": n, "sentence": f"Frase ___ {n}", "options": ["a", "b"], "correct_option": "a"}
+        for n in range(1, exercise_count + 1)
+    ]
+    material = ReinforcementMaterialModel(
+        lesson_id=lesson.id,
+        activity_type="complete_sentence",
+        exercise_count=exercise_count,
+        llm_request={"task": "generate_reinforcement_material"},
+        content={"title": "Actividad", "instructions": "Completa", "exercises": exercises},
+    )
+    session.add(material)
+    session.flush()
+    return material
+
+
+def create_submission(
+    session: Session, *, material: ReinforcementMaterialModel, student: UserModel
+) -> MaterialSubmissionModel:
+    submission = MaterialSubmissionModel(
+        material_id=material.id,
+        student_id=student.id,
+        answers=[{"exercise_id": 1, "selected_option": "a"}],
+        correct_count=1,
+        incorrect_count=0,
+        score=100,
+        recommendations={"feedback": "¡Muy bien!", "recommendations": ["Sigue así."]},
+    )
+    session.add(submission)
+    session.flush()
+    return submission

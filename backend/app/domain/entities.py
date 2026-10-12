@@ -1,11 +1,20 @@
 import enum
 from dataclasses import dataclass
+from datetime import datetime
 from uuid import UUID
 
 
 class Role(enum.StrEnum):
     DOCENTE = "docente"
     ESTUDIANTE = "estudiante"
+
+
+class MaterialStatus(enum.StrEnum):
+    """Estado del material de refuerzo de una clase."""
+
+    NONE = "none"  # sin material
+    PENDING = "pending"  # generado, sin resolver
+    COMPLETED = "completed"  # resuelto por el estudiante
 
 
 class Level(enum.StrEnum):
@@ -43,3 +52,13 @@ class Student:
 class StudentDetail:
     student: Student
     lessons_count: int
+
+
+@dataclass(frozen=True, slots=True)
+class LessonSummary:
+    id: UUID
+    date: datetime
+    duration_minutes: int
+    topic: str
+    context: str
+    material_status: MaterialStatus

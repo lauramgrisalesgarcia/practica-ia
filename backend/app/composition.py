@@ -15,6 +15,7 @@ from app.domain.ports import LessonRepository, StudentRepository, UserRepository
 from app.domain.use_cases.authenticate_user import AuthenticateUser
 from app.domain.use_cases.get_teacher_student import GetTeacherStudent
 from app.domain.use_cases.get_user import GetUser
+from app.domain.use_cases.list_student_lessons import ListStudentLessons
 from app.domain.use_cases.list_teacher_students import ListTeacherStudents
 from app.persistence.database import get_session
 from app.persistence.repositories.lesson_repository import SqlAlchemyLessonRepository
@@ -53,3 +54,10 @@ def get_get_teacher_student(
     lessons: Annotated[LessonRepository, Depends(get_lesson_repository)],
 ) -> GetTeacherStudent:
     return GetTeacherStudent(students=students, lessons=lessons, clock=SystemClock())
+
+
+def get_list_student_lessons(
+    students: Annotated[StudentRepository, Depends(get_student_repository)],
+    lessons: Annotated[LessonRepository, Depends(get_lesson_repository)],
+) -> ListStudentLessons:
+    return ListStudentLessons(students=students, lessons=lessons, clock=SystemClock())
