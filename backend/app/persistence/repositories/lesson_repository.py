@@ -93,6 +93,14 @@ class SqlAlchemyLessonRepository(LessonRepository):
         ).one_or_none()
         return LessonPdfLocation(filename=row[0], path=row[1]) if row else None
 
+    def exists_for_student(self, student_id: UUID, lesson_id: UUID) -> bool:
+        found = self._session.scalar(
+            select(LessonModel.id)
+            .join(UserModel, UserModel.id == LessonModel.student_id)
+            .where(UserModel.public_id == student_id, LessonModel.public_id == lesson_id)
+        )
+        return found is not None
+
     def get_pdf_for_student(self, student_id: UUID, lesson_id: UUID) -> LessonPdfLocation | None:
         row = self._session.execute(
             select(LessonModel.pdf_filename, LessonModel.pdf_path)

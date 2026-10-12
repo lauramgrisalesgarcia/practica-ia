@@ -1,4 +1,6 @@
 from datetime import datetime
+from decimal import Decimal
+from typing import Any
 
 from sqlalchemy.orm import Session
 
@@ -107,15 +109,22 @@ def create_material(session: Session, *, lesson: LessonModel, exercise_count: in
 
 
 def create_submission(
-    session: Session, *, material: ReinforcementMaterialModel, student: UserModel
+    session: Session,
+    *,
+    material: ReinforcementMaterialModel,
+    student: UserModel,
+    answers: list[dict[str, Any]] | None = None,
+    correct_count: int = 1,
+    incorrect_count: int = 0,
+    score: Decimal = Decimal("100.00"),
 ) -> MaterialSubmissionModel:
     submission = MaterialSubmissionModel(
         material_id=material.id,
         student_id=student.id,
-        answers=[{"exercise_id": 1, "selected_option": "a"}],
-        correct_count=1,
-        incorrect_count=0,
-        score=100,
+        answers=answers or [{"exercise_id": 1, "selected_option": "a"}],
+        correct_count=correct_count,
+        incorrect_count=incorrect_count,
+        score=score,
         recommendations={"feedback": "¡Muy bien!", "recommendations": ["Sigue así."]},
     )
     session.add(submission)

@@ -40,3 +40,7 @@ class MaterialAlreadySubmittedError(ConflictError):
 
 class InvalidLLMResponseError(DomainError):
     """El LLM falló o su respuesta no cumple el esquema del material."""
+
+
+class MaterialNotFoundError(NotFoundError):
+    """La clase no tiene material de refuerzo."""

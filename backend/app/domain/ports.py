@@ -12,6 +12,7 @@ from app.domain.entities import (
     LessonSummary,
     Material,
     Student,
+    Submission,
     User,
 )
 
@@ -60,6 +61,10 @@ class LessonRepository(Protocol):
         """Ubicación del PDF de la clase, solo si es de un estudiante asignado a ese docente."""
         ...
 
+    def exists_for_student(self, student_id: UUID, lesson_id: UUID) -> bool:
+        """True si la clase existe y es de ese estudiante."""
+        ...
+
     def get_pdf_for_student(self, student_id: UUID, lesson_id: UUID) -> LessonPdfLocation | None:
         """Ubicación del PDF de la clase, solo si es una clase de ese estudiante."""
         ...
@@ -72,6 +77,10 @@ class LessonRepository(Protocol):
 class MaterialRepository(Protocol):
     def save(self, lesson_id: UUID, llm_request: Mapping[str, Any], material: Material) -> None:
         """Guarda el material de la clase (reemplaza el anterior) junto con la petición enviada al LLM."""
+        ...
+
+    def get_for_lesson(self, lesson_id: UUID) -> tuple[Material, Submission | None] | None:
+        """Material de la clase y el intento del estudiante (si lo hay), o None si no hay material."""
         ...
 
 

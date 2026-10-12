@@ -1,10 +1,11 @@
 from datetime import UTC, datetime, timedelta
+from decimal import Decimal
 from uuid import uuid4
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.domain.entities import ActivityType, Exercise, Level, Material
+from app.domain.entities import ActivityType, Answer, Exercise, Level, Material, Submission
 from app.persistence.models import ReinforcementMaterialModel
 from app.persistence.repositories.lesson_repository import SqlAlchemyLessonRepository
 from app.persistence.repositories.material_repository import SqlAlchemyMaterialRepository
@@ -107,3 +108,67 @@ def test_no_hay_contexto_para_clases_de_otro_docente(db_session: Session) -> Non
 
     assert repository.get_generation_context_for_teacher(teacher.public_id, lesson.public_id) is None
     assert repository.get_generation_context_for_teacher(teacher.public_id, uuid4()) is None
+
+
+def test_obtiene_el_material_de_una_clase_sin_resolver(db_session: Session) -> None:
+    teacher = create_user(db_session)
+    emma = create_student(db_session, teacher=teacher)
+    lesson = create_lesson(db_session, student=emma, teacher=teacher, date=NOW - timedelta(days=1))
+    create_material(db_session, lesson=lesson, exercise_count=2)
+
+    found = SqlAlchemyMaterialRepository(db_session).get_for_lesson(lesson.public_id)
+
+    assert found is not None
+    material, submission = found
+    assert material.exercise_count == 2
+    assert submission is None
+
+
+def test_obtiene_el_intento_del_estudiante(db_session: Session) -> None:
+    teacher = create_user(db_session)
+    emma = create_student(db_session, teacher=teacher)
+    lesson = create_lesson(db_session, student=emma, teacher=teacher, date=NOW - timedelta(days=1))
+    material = create_material(db_session, lesson=lesson, exercise_count=2)
+    model = create_submission(
+        db_session,
+        material=material,
+        student=emma,
+        answers=[{"exercise_id": 1, "selected_option": "a"}, {"exercise_id": 2, "selected_option": "b"}],
+        correct_count=1,
+        incorrect_count=1,
+        score=Decimal("50.00"),
+    )
+
+    found = SqlAlchemyMaterialRepository(db_session).get_for_lesson(lesson.public_id)
+
+    assert found is not None
+    _, submission = found
+    assert submission == Submission(
+        submitted_at=model.submitted_at,
+        answers=(Answer(1, "a"), Answer(2, "b")),
+        correct_count=1,
+        incorrect_count=1,
+        score=Decimal("50.00"),
+        feedback="¡Muy bien!",
+        recommendations=("Sigue así.",),
+    )
+
+
+def test_no_hay_material_para_una_clase_sin_material(db_session: Session) -> None:
+    teacher = create_user(db_session)
+    emma = create_student(db_session, teacher=teacher)
+    lesson = create_lesson(db_session, student=emma, teacher=teacher, date=NOW)
+
+    assert SqlAlchemyMaterialRepository(db_session).get_for_lesson(lesson.public_id) is None
+
+
+def test_comprueba_si_una_clase_es_del_estudiante(db_session: Session) -> None:
+    teacher = create_user(db_session)
+    emma = create_student(db_session, teacher=teacher, email="emma@correo.com")
+    john = create_student(db_session, teacher=teacher, email="john@correo.com")
+    lesson = create_lesson(db_session, student=emma, teacher=teacher, date=NOW)
+    repository = SqlAlchemyLessonRepository(db_session)
+
+    assert repository.exists_for_student(emma.public_id, lesson.public_id) is True
+    assert repository.exists_for_student(john.public_id, lesson.public_id) is False
+    assert repository.exists_for_student(emma.public_id, uuid4()) is False
