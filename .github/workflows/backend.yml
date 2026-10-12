@@ -1,0 +1,70 @@
+name: Backend CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend.yml'
+  pull_request:
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend.yml'
+
+concurrency:
+  group: backend-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: backend
+
+jobs:
+  ci:
+    name: Tests y migraciones
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    services:
+      # BD efímera, solo accesible desde este job y destruida al terminar.
+      # Usa autenticación "trust" para no necesitar ninguna contraseña (ni escrita ni como secreto).
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: practica
+          POSTGRES_DB: practica_ia_test
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U practica -d practica_ia_test"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 20
+
+    env:
+      TEST_DATABASE_URL: postgresql+psycopg://practica@127.0.0.1:5432/practica_ia_test
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          cache-dependency-glob: backend/uv.lock
+
+      - name: Instalar dependencias
+        run: uv sync --locked
+
+      - name: Tests
+        run: uv run pytest
+
+      - name: Comprobar que los modelos y las migraciones coinciden
+        run: |
+          # La clave solo existe durante este paso; se genera al azar y nunca se imprime.
+          JWT_SECRET="$(uv run python -c 'import secrets; print(secrets.token_urlsafe(32))')" \
+          DATABASE_URL="$TEST_DATABASE_URL" \
+          uv run alembic check
