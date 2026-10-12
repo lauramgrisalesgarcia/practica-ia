@@ -1,0 +1,1113 @@
+openapi: 3.1.0
+info:
+  title: Práctica IA — API
+  version: 0.1.0
+  summary: API para docentes y estudiantes extranjeros que aprenden español.
+  description: |
+    API REST de la plataforma de refuerzo para extranjeros que aprenden español.
+
+    **Flujo principal**
+    1. El docente genera material de refuerzo para una clase realizada (actividad *completar la frase*, 1–15 ejercicios). La generación se delega a un LLM, simulado en este proyecto con un JSON fijo.
+    2. El estudiante resuelve el material **una única vez**.
+    3. El backend corrige, calcula el porcentaje de aciertos y devuelve recomendaciones (también simuladas como respuesta de un LLM).
+
+    **Autenticación**: JWT de acceso (HS256, caducidad 60 minutos) en la cabecera `Authorization: Bearer <token>`.
+
+    **Propiedad de recursos**: un recurso que existe pero pertenece a otro usuario responde `404` para no revelar su existencia.
+
+    Fuente: `docs/backend-requirements.md`.
+servers:
+  - url: http://localhost:8001
+    description: Desarrollo local
+tags:
+  - name: Sistema
+    description: Estado del servicio
+  - name: Autenticación
+    description: Inicio de sesión y usuario actual
+  - name: Docente
+    description: Estudiantes, clases y generación de material de refuerzo
+  - name: Estudiante
+    description: Historial de clases, PDF y resolución del material
+
+security:
+  - bearerAuth: []
+
+paths:
+  /health:
+    get:
+      tags: [Sistema]
+      operationId: getHealth
+      summary: Estado del servicio
+      security: []
+      responses:
+        '200':
+          description: El servicio está operativo.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Health'
+              example:
+                status: ok
+
+  /auth/login:
+    post:
+      tags: [Autenticación]
+      operationId: login
+      summary: Iniciar sesión
+      description: |
+        Autentica con correo y contraseña. El correo no distingue mayúsculas.
+        No se aplican reglas de complejidad de contraseña en el login.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+            example:
+              email: docente@colegio.edu
+              password: Docente#2026
+      responses:
+        '200':
+          description: Credenciales correctas.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+              example:
+                access_token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                token_type: bearer
+                expires_in: 3600
+                user:
+                  id: 1
+                  first_name: María
+                  last_name: López
+                  email: docente@colegio.edu
+                  role: docente
+        '401':
+          description: Credenciales incorrectas (mensaje genérico, no revela si el correo existe).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                detail: Credenciales incorrectas
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /auth/me:
+    get:
+      tags: [Autenticación]
+      operationId: getCurrentUser
+      summary: Usuario actual
+      responses:
+        '200':
+          description: Datos del usuario autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+              example:
+                id: 1
+                first_name: María
+                last_name: López
+                email: docente@colegio.edu
+                role: docente
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /teachers/me/students:
+    get:
+      tags: [Docente]
+      operationId: listTeacherStudents
+      summary: Listar mis estudiantes
+      description: Estudiantes asignados al docente, ordenados por apellido y nombre.
+      responses:
+        '200':
+          description: Lista de estudiantes asignados.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Student'
+              example:
+                - id: 3
+                  first_name: John
+                  last_name: Miller
+                  email: john@correo.com
+                  native_language: en
+                  level: B1
+                - id: 2
+                  first_name: Emma
+                  last_name: Schmidt
+                  email: emma@correo.com
+                  native_language: de
+                  level: A2
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /teachers/me/students/{student_id}:
+    parameters:
+      - $ref: '#/components/parameters/StudentId'
+    get:
+      tags: [Docente]
+      operationId: getTeacherStudent
+      summary: Detalle de un estudiante
+      responses:
+        '200':
+          description: Datos del estudiante.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudentDetail'
+              example:
+                id: 2
+                first_name: Emma
+                last_name: Schmidt
+                email: emma@correo.com
+                native_language: de
+                level: A2
+                lessons_count: 12
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: Estudiante inexistente o asignado a otro docente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                detail: Estudiante no encontrado
+
+  /teachers/me/students/{student_id}/lessons:
+    parameters:
+      - $ref: '#/components/parameters/StudentId'
+    get:
+      tags: [Docente]
+      operationId: listTeacherStudentLessons
+      summary: Historial de clases de un estudiante
+      description: Clases ya realizadas, de la más reciente a la más antigua.
+      responses:
+        '200':
+          description: Historial de clases.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TeacherLessonSummary'
+              example:
+                - id: 15
+                  date: '2026-10-08T16:00:00Z'
+                  duration_minutes: 60
+                  topic: Pedir en un restaurante
+                  context: Pedir comida y bebida en un restaurante y pedir la cuenta
+                  material_status: completed
+                - id: 11
+                  date: '2026-10-01T16:00:00Z'
+                  duration_minutes: 60
+                  topic: Presentarse
+                  context: Presentarse y hablar de la familia en una reunión
+                  material_status: none
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: Estudiante inexistente o asignado a otro docente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                detail: Estudiante no encontrado
+
+  /teachers/me/lessons/{lesson_id}:
+    parameters:
+      - $ref: '#/components/parameters/LessonId'
+    get:
+      tags: [Docente]
+      operationId: getTeacherLesson
+      summary: Detalle de una clase
+      description: Incluye el material con respuestas correctas y el resultado del estudiante, si existen.
+      responses:
+        '200':
+          description: Detalle de la clase.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TeacherLessonDetail'
+              example:
+                id: 15
+                date: '2026-10-08T16:00:00Z'
+                duration_minutes: 60
+                topic: Pedir en un restaurante
+                context: Pedir comida y bebida en un restaurante y pedir la cuenta
+                keywords: [la carta, quisiera, de primero, la cuenta, para beber]
+                notes: Confunde 'quiero' y 'quisiera'. Le cuesta el orden primero/segundo/postre.
+                pdf:
+                  filename: restaurante-a2.pdf
+                  url: /teachers/me/lessons/15/pdf
+                material_status: completed
+                student:
+                  id: 2
+                  first_name: Emma
+                  last_name: Schmidt
+                  native_language: de
+                  level: A2
+                material:
+                  generated_at: '2026-10-12T10:30:00Z'
+                  activity_type: complete_sentence
+                  exercise_count: 1
+                  title: En el restaurante
+                  instructions: Completa cada frase con la opción correcta.
+                  exercises:
+                    - id: 1
+                      sentence: Camarero, ¿nos trae ___, por favor? Queremos ver los platos.
+                      options: [la carta, la cuenta, la mesa]
+                      correct_option: la carta
+                submission:
+                  submitted_at: '2026-10-12T18:05:00Z'
+                  correct_count: 1
+                  incorrect_count: 0
+                  score: 100.0
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/LessonNotFound'
+
+  /teachers/me/lessons/{lesson_id}/pdf:
+    parameters:
+      - $ref: '#/components/parameters/LessonId'
+    get:
+      tags: [Docente]
+      operationId: getTeacherLessonPdf
+      summary: Descargar el PDF de la clase
+      responses:
+        '200':
+          $ref: '#/components/responses/Pdf'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/LessonNotFound'
+
+  /teachers/me/lessons/{lesson_id}/material:
+    parameters:
+      - $ref: '#/components/parameters/LessonId'
+    post:
+      tags: [Docente]
+      operationId: generateMaterial
+      summary: Generar (o regenerar) el material de refuerzo
+      description: |
+        Construye la petición al LLM con el nivel e idioma natal del estudiante, el PDF, las palabras clave,
+        el contexto, el tema y las notas de la clase, y el tipo y cantidad de ejercicios pedidos.
+
+        - Si se envían `keywords`, sustituyen a las de la clase **solo para esta generación** (no modifican la clase).
+        - La respuesta del LLM se valida; si no es válida responde `502` y no se guarda nada.
+        - Regenerar reemplaza el material anterior, salvo que el estudiante ya lo haya resuelto (`409`).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateMaterialRequest'
+            examples:
+              conPalabrasClaveRevisadas:
+                summary: El docente revisa las palabras clave
+                value:
+                  activity_type: complete_sentence
+                  exercise_count: 3
+                  keywords: [la carta, quisiera, de primero, de segundo, la cuenta]
+              conPalabrasClaveDeLaClase:
+                summary: Usa las palabras clave guardadas en la clase
+                value:
+                  activity_type: complete_sentence
+                  exercise_count: 10
+      responses:
+        '201':
+          description: Material generado y guardado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneratedMaterial'
+              example:
+                lesson_id: 15
+                generated_at: '2026-10-12T10:30:00Z'
+                activity_type: complete_sentence
+                exercise_count: 3
+                title: En el restaurante
+                instructions: Completa cada frase con la opción correcta.
+                exercises:
+                  - id: 1
+                    sentence: Camarero, ¿nos trae ___, por favor? Queremos ver los platos.
+                    options: [la carta, la cuenta, la mesa]
+                    correct_option: la carta
+                  - id: 2
+                    sentence: Buenas noches. ___ una mesa para dos personas.
+                    options: [Quisiera, Quiero que, Quería que]
+                    correct_option: Quisiera
+                  - id: 3
+                    sentence: ___ voy a tomar una sopa de verduras y de segundo, pescado.
+                    options: [De primero, Para primero, En primero]
+                    correct_option: De primero
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/LessonNotFound'
+        '409':
+          description: La clase aún no se ha realizado o el estudiante ya resolvió el material.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                claseFutura:
+                  value:
+                    detail: Solo se puede generar material para clases ya realizadas
+                materialResuelto:
+                  value:
+                    detail: El material ya fue resuelto por el estudiante y no se puede regenerar
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '502':
+          description: La respuesta del LLM no cumple el esquema del material.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                detail: No se pudo generar el material de refuerzo
+
+  /students/me/lessons:
+    get:
+      tags: [Estudiante]
+      operationId: listStudentLessons
+      summary: Mi historial de clases
+      description: Clases ya realizadas con su docente, de la más reciente a la más antigua.
+      responses:
+        '200':
+          description: Historial de clases.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/StudentLessonSummary'
+              example:
+                - id: 15
+                  date: '2026-10-08T16:00:00Z'
+                  duration_minutes: 60
+                  topic: Pedir en un restaurante
+                  context: Pedir comida y bebida en un restaurante y pedir la cuenta
+                  pdf:
+                    filename: restaurante-a2.pdf
+                    url: /students/me/lessons/15/pdf
+                  material_status: pending
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /students/me/lessons/{lesson_id}/pdf:
+    parameters:
+      - $ref: '#/components/parameters/LessonId'
+    get:
+      tags: [Estudiante]
+      operationId: getStudentLessonPdf
+      summary: Descargar el PDF de mi clase
+      responses:
+        '200':
+          $ref: '#/components/responses/Pdf'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/LessonNotFound'
+
+  /students/me/lessons/{lesson_id}/material:
+    parameters:
+      - $ref: '#/components/parameters/LessonId'
+    get:
+      tags: [Estudiante]
+      operationId: getStudentMaterial
+      summary: Ver el material de refuerzo
+      description: |
+        Devuelve la actividad **sin las respuestas correctas**.
+        Si el estudiante ya la resolvió, `submission` contiene su resultado.
+      responses:
+        '200':
+          description: Material de la clase.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudentMaterial'
+              example:
+                lesson_id: 15
+                activity_type: complete_sentence
+                title: En el restaurante
+                instructions: Completa cada frase con la opción correcta.
+                exercises:
+                  - id: 1
+                    sentence: Camarero, ¿nos trae ___, por favor? Queremos ver los platos.
+                    options: [la carta, la cuenta, la mesa]
+                  - id: 2
+                    sentence: Buenas noches. ___ una mesa para dos personas.
+                    options: [Quisiera, Quiero que, Quería que]
+                  - id: 3
+                    sentence: ___ voy a tomar una sopa de verduras y de segundo, pescado.
+                    options: [De primero, Para primero, En primero]
+                submission: null
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: Clase inexistente, de otro estudiante o sin material.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                claseNoEncontrada:
+                  value:
+                    detail: Clase no encontrada
+                sinMaterial:
+                  value:
+                    detail: La clase no tiene material de refuerzo
+
+  /students/me/lessons/{lesson_id}/material/submission:
+    parameters:
+      - $ref: '#/components/parameters/LessonId'
+    post:
+      tags: [Estudiante]
+      operationId: submitMaterial
+      summary: Resolver el material (una única vez)
+      description: |
+        Envía una respuesta por cada ejercicio. El backend corrige, calcula aciertos, desaciertos y porcentaje
+        (`score` = aciertos / total × 100, 2 decimales) y pide recomendaciones al LLM.
+
+        - Hay que responder **todos** los ejercicios, una vez cada uno, con opciones existentes.
+        - Si la respuesta de recomendaciones del LLM no es válida, responde `502` y **el intento no se guarda**.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubmissionRequest'
+            example:
+              answers:
+                - exercise_id: 1
+                  selected_option: la carta
+                - exercise_id: 2
+                  selected_option: Quisiera
+                - exercise_id: 3
+                  selected_option: Para primero
+      responses:
+        '201':
+          description: Intento corregido y guardado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Submission'
+              examples:
+                resultado:
+                  $ref: '#/components/examples/SubmissionResult'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: Clase inexistente, de otro estudiante o sin material.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                detail: La clase no tiene material de refuerzo
+        '409':
+          description: El material ya fue resuelto.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                detail: El material ya fue resuelto
+        '422':
+          description: Faltan ejercicios, hay ejercicios repetidos u opciones inexistentes, o el cuerpo es inválido.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/Error'
+                  - $ref: '#/components/schemas/HTTPValidationError'
+              example:
+                detail: Debes responder todos los ejercicios con una opción válida
+        '502':
+          description: La respuesta de recomendaciones del LLM no es válida. El intento no se guarda.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                detail: No se pudieron generar las recomendaciones
+    get:
+      tags: [Estudiante]
+      operationId: getSubmission
+      summary: Ver mi resultado
+      responses:
+        '200':
+          description: Resultado y recomendaciones.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Submission'
+              examples:
+                resultado:
+                  $ref: '#/components/examples/SubmissionResult'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: Clase inexistente, sin material o aún sin resolver.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                detail: Aún no has resuelto este material
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Token obtenido en `POST /auth/login`. Caduca a los 60 minutos.
+
+  parameters:
+    StudentId:
+      name: student_id
+      in: path
+      required: true
+      description: Identificador del estudiante.
+      schema:
+        type: integer
+        minimum: 1
+    LessonId:
+      name: lesson_id
+      in: path
+      required: true
+      description: Identificador de la clase.
+      schema:
+        type: integer
+        minimum: 1
+
+  responses:
+    Unauthorized:
+      description: Token ausente, inválido o caducado.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            detail: No autenticado
+    Forbidden:
+      description: El rol del usuario no permite acceder a este recurso.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            detail: No tienes permiso para acceder a este recurso
+    LessonNotFound:
+      description: Clase inexistente o perteneciente a otro usuario.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            detail: Clase no encontrada
+    ValidationError:
+      description: El cuerpo de la petición no es válido.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/HTTPValidationError'
+          example:
+            detail:
+              - loc: [body, exercise_count]
+                msg: Input should be less than or equal to 15
+                type: less_than_equal
+    Pdf:
+      description: Contenido del PDF de la clase.
+      headers:
+        Content-Disposition:
+          description: Nombre del archivo, p. ej. `inline; filename="restaurante-a2.pdf"`.
+          schema:
+            type: string
+      content:
+        application/pdf:
+          schema:
+            type: string
+            format: binary
+
+  examples:
+    SubmissionResult:
+      summary: Resultado con un fallo
+      value:
+        lesson_id: 15
+        submitted_at: '2026-10-12T18:05:00Z'
+        correct_count: 2
+        incorrect_count: 1
+        score: 66.67
+        results:
+          - exercise_id: 1
+            selected_option: la carta
+            correct_option: la carta
+            is_correct: true
+          - exercise_id: 2
+            selected_option: Quisiera
+            correct_option: Quisiera
+            is_correct: true
+          - exercise_id: 3
+            selected_option: Para primero
+            correct_option: De primero
+            is_correct: false
+        feedback: ¡Muy bien! Ya sabes pedir la carta y usar 'quisiera' para ser cortés.
+        recommendations:
+          - Para ordenar los platos se dice 'de primero', 'de segundo' y 'de postre'.
+          - 'Practica en voz alta un pedido completo: primero, segundo, bebida y postre.'
+
+  schemas:
+    Health:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          const: ok
+
+    Error:
+      type: object
+      required: [detail]
+      properties:
+        detail:
+          type: string
+          description: Mensaje en español para el usuario.
+
+    HTTPValidationError:
+      type: object
+      required: [detail]
+      properties:
+        detail:
+          type: array
+          items:
+            $ref: '#/components/schemas/ValidationErrorItem'
+
+    ValidationErrorItem:
+      type: object
+      required: [loc, msg, type]
+      properties:
+        loc:
+          type: array
+          items:
+            oneOf:
+              - type: string
+              - type: integer
+        msg:
+          type: string
+        type:
+          type: string
+
+    Role:
+      type: string
+      enum: [docente, estudiante]
+
+    Level:
+      type: string
+      description: Nivel del Marco Común Europeo de Referencia (MCER).
+      enum: [A1, A2, B1, B2, C1, C2]
+
+    LanguageCode:
+      type: string
+      description: Código ISO 639-1 del idioma natal.
+      pattern: '^[a-z]{2}$'
+      examples: [en, de, fr]
+
+    MaterialStatus:
+      type: string
+      description: |
+        - `none`: sin material.
+        - `pending`: material generado, sin resolver.
+        - `completed`: material resuelto por el estudiante.
+      enum: [none, pending, completed]
+
+    ActivityType:
+      type: string
+      description: Tipo de actividad. En el alcance del proyecto solo existe *completar la frase*.
+      enum: [complete_sentence]
+
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 1
+          format: password
+
+    LoginResponse:
+      type: object
+      required: [access_token, token_type, expires_in, user]
+      properties:
+        access_token:
+          type: string
+          description: JWT de acceso.
+        token_type:
+          type: string
+          const: bearer
+        expires_in:
+          type: integer
+          description: Segundos hasta la caducidad del token.
+          examples: [3600]
+        user:
+          $ref: '#/components/schemas/User'
+
+    User:
+      type: object
+      required: [id, first_name, last_name, email, role]
+      properties:
+        id:
+          type: integer
+        first_name:
+          type: string
+        last_name:
+          type: string
+        email:
+          type: string
+          format: email
+        role:
+          $ref: '#/components/schemas/Role'
+
+    Student:
+      type: object
+      required: [id, first_name, last_name, email, native_language, level]
+      properties:
+        id:
+          type: integer
+        first_name:
+          type: string
+        last_name:
+          type: string
+        email:
+          type: string
+          format: email
+        native_language:
+          $ref: '#/components/schemas/LanguageCode'
+        level:
+          $ref: '#/components/schemas/Level'
+
+    StudentDetail:
+      allOf:
+        - $ref: '#/components/schemas/Student'
+        - type: object
+          required: [lessons_count]
+          properties:
+            lessons_count:
+              type: integer
+              minimum: 0
+              description: Número de clases realizadas.
+
+    LessonStudent:
+      type: object
+      description: Datos básicos del estudiante dentro del detalle de una clase.
+      required: [id, first_name, last_name, native_language, level]
+      properties:
+        id:
+          type: integer
+        first_name:
+          type: string
+        last_name:
+          type: string
+        native_language:
+          $ref: '#/components/schemas/LanguageCode'
+        level:
+          $ref: '#/components/schemas/Level'
+
+    PdfRef:
+      type: object
+      required: [filename, url]
+      properties:
+        filename:
+          type: string
+          examples: [restaurante-a2.pdf]
+        url:
+          type: string
+          description: Ruta de la API para descargar el PDF.
+
+    LessonBase:
+      type: object
+      required: [id, date, duration_minutes, topic, context, material_status]
+      properties:
+        id:
+          type: integer
+        date:
+          type: string
+          format: date-time
+        duration_minutes:
+          type: integer
+          minimum: 1
+        topic:
+          type: string
+          examples: [Pedir en un restaurante]
+        context:
+          type: string
+          description: Situación comunicativa de la clase.
+          examples: [Pedir comida y bebida en un restaurante y pedir la cuenta]
+        material_status:
+          $ref: '#/components/schemas/MaterialStatus'
+
+    TeacherLessonSummary:
+      $ref: '#/components/schemas/LessonBase'
+
+    StudentLessonSummary:
+      allOf:
+        - $ref: '#/components/schemas/LessonBase'
+        - type: object
+          required: [pdf]
+          properties:
+            pdf:
+              $ref: '#/components/schemas/PdfRef'
+
+    TeacherLessonDetail:
+      allOf:
+        - $ref: '#/components/schemas/LessonBase'
+        - type: object
+          required: [keywords, notes, pdf, student, material, submission]
+          properties:
+            keywords:
+              type: array
+              minItems: 1
+              items:
+                type: string
+            notes:
+              type: [string, 'null']
+            pdf:
+              $ref: '#/components/schemas/PdfRef'
+            student:
+              $ref: '#/components/schemas/LessonStudent'
+            material:
+              description: Material con respuestas correctas, o `null` si no se ha generado.
+              oneOf:
+                - $ref: '#/components/schemas/TeacherMaterial'
+                - type: 'null'
+            submission:
+              description: Resumen del resultado del estudiante, o `null` si no lo ha resuelto.
+              oneOf:
+                - $ref: '#/components/schemas/SubmissionSummary'
+                - type: 'null'
+
+    GenerateMaterialRequest:
+      type: object
+      required: [activity_type, exercise_count]
+      properties:
+        activity_type:
+          $ref: '#/components/schemas/ActivityType'
+        exercise_count:
+          type: integer
+          minimum: 1
+          maximum: 15
+        keywords:
+          type: array
+          description: |
+            Palabras clave revisadas por el docente. Opcional: si se omite se usan las de la clase.
+            Se eliminan espacios sobrantes y duplicados. No modifica las palabras clave guardadas en la clase.
+          minItems: 1
+          maxItems: 20
+          items:
+            type: string
+            minLength: 1
+            maxLength: 50
+
+    ExerciseForStudent:
+      type: object
+      required: [id, sentence, options]
+      properties:
+        id:
+          type: integer
+          description: Identificador único dentro de la actividad.
+        sentence:
+          type: string
+          description: Frase con exactamente un hueco `___`.
+          examples: ['Camarero, ¿nos trae ___, por favor? Queremos ver los platos.']
+        options:
+          type: array
+          minItems: 2
+          maxItems: 4
+          uniqueItems: true
+          items:
+            type: string
+            minLength: 1
+
+    ExerciseWithAnswer:
+      allOf:
+        - $ref: '#/components/schemas/ExerciseForStudent'
+        - type: object
+          required: [correct_option]
+          properties:
+            correct_option:
+              type: string
+              description: Una de las `options`.
+
+    TeacherMaterial:
+      type: object
+      required: [generated_at, activity_type, exercise_count, title, instructions, exercises]
+      properties:
+        generated_at:
+          type: string
+          format: date-time
+        activity_type:
+          $ref: '#/components/schemas/ActivityType'
+        exercise_count:
+          type: integer
+          minimum: 1
+          maximum: 15
+        title:
+          type: string
+        instructions:
+          type: string
+        exercises:
+          type: array
+          minItems: 1
+          maxItems: 15
+          items:
+            $ref: '#/components/schemas/ExerciseWithAnswer'
+
+    GeneratedMaterial:
+      allOf:
+        - type: object
+          required: [lesson_id]
+          properties:
+            lesson_id:
+              type: integer
+        - $ref: '#/components/schemas/TeacherMaterial'
+
+    StudentMaterial:
+      type: object
+      required: [lesson_id, activity_type, title, instructions, exercises, submission]
+      properties:
+        lesson_id:
+          type: integer
+        activity_type:
+          $ref: '#/components/schemas/ActivityType'
+        title:
+          type: string
+        instructions:
+          type: string
+        exercises:
+          type: array
+          minItems: 1
+          maxItems: 15
+          items:
+            $ref: '#/components/schemas/ExerciseForStudent'
+        submission:
+          description: Resultado del estudiante, o `null` si aún no lo ha resuelto.
+          oneOf:
+            - $ref: '#/components/schemas/Submission'
+            - type: 'null'
+
+    Answer:
+      type: object
+      required: [exercise_id, selected_option]
+      properties:
+        exercise_id:
+          type: integer
+        selected_option:
+          type: string
+          minLength: 1
+
+    SubmissionRequest:
+      type: object
+      required: [answers]
+      properties:
+        answers:
+          type: array
+          description: Una respuesta por cada ejercicio del material.
+          minItems: 1
+          maxItems: 15
+          items:
+            $ref: '#/components/schemas/Answer'
+
+    ExerciseResult:
+      type: object
+      required: [exercise_id, selected_option, correct_option, is_correct]
+      properties:
+        exercise_id:
+          type: integer
+        selected_option:
+          type: string
+        correct_option:
+          type: string
+        is_correct:
+          type: boolean
+
+    SubmissionSummary:
+      type: object
+      required: [submitted_at, correct_count, incorrect_count, score]
+      properties:
+        submitted_at:
+          type: string
+          format: date-time
+        correct_count:
+          type: integer
+          minimum: 0
+        incorrect_count:
+          type: integer
+          minimum: 0
+        score:
+          type: number
+          minimum: 0
+          maximum: 100
+          description: Porcentaje de aciertos con 2 decimales.
+
+    Submission:
+      allOf:
+        - type: object
+          required: [lesson_id]
+          properties:
+            lesson_id:
+              type: integer
+        - $ref: '#/components/schemas/SubmissionSummary'
+        - type: object
+          required: [results, feedback, recommendations]
+          properties:
+            results:
+              type: array
+              items:
+                $ref: '#/components/schemas/ExerciseResult'
+            feedback:
+              type: string
+              description: Comentario general generado por el LLM.
+            recommendations:
+              type: array
+              minItems: 1
+              maxItems: 5
+              items:
+                type: string
+                minLength: 1
