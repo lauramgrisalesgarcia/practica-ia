@@ -1,6 +1,8 @@
 from datetime import timedelta
 
 import pytest
+from uuid import uuid4
+
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
@@ -21,9 +23,9 @@ class TestLogin:
         body = response.json()
         assert body["token_type"] == "bearer"
         assert body["expires_in"] == 3600
-        assert decode_access_token(body["access_token"]) == user.id
+        assert decode_access_token(body["access_token"]) == user.public_id
         assert body["user"] == {
-            "id": user.id,
+            "id": str(user.public_id),
             "first_name": "María",
             "last_name": "López",
             "email": "docente@colegio.edu",
@@ -90,13 +92,13 @@ class TestLogin:
 class TestUsuarioActual:
     def test_devuelve_el_usuario_del_token(self, client: TestClient, db_session: Session) -> None:
         user = create_user(db_session, email="emma@correo.com", role=Role.ESTUDIANTE, first_name="Emma", last_name="Schmidt")
-        token = create_access_token(user_id=user.id)
+        token = create_access_token(user_id=user.public_id)
 
         response = client.get("/auth/me", headers={"Authorization": f"Bearer {token}"})
 
         assert response.status_code == 200
         assert response.json() == {
-            "id": user.id,
+            "id": str(user.public_id),
             "first_name": "Emma",
             "last_name": "Schmidt",
             "email": "emma@correo.com",
@@ -129,14 +131,14 @@ class TestUsuarioActual:
 
     def test_token_caducado_responde_401(self, client: TestClient, db_session: Session) -> None:
         user = create_user(db_session)
-        token = create_access_token(user_id=user.id, expires_delta=timedelta(seconds=-1))
+        token = create_access_token(user_id=user.public_id, expires_delta=timedelta(seconds=-1))
 
         response = client.get("/auth/me", headers={"Authorization": f"Bearer {token}"})
 
         assert response.status_code == 401
 
     def test_token_de_un_usuario_que_ya_no_existe_responde_401(self, client: TestClient) -> None:
-        token = create_access_token(user_id=999_999)
+        token = create_access_token(user_id=uuid4())
 
         response = client.get("/auth/me", headers={"Authorization": f"Bearer {token}"})
 

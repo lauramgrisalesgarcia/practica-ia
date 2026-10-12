@@ -1,7 +1,7 @@
 """Test de contrato: la API implementada cumple la especificación `docs/openapi.yaml`.
 
-Para cada endpoint implementado compara, con el contrato documentado, el cuerpo de la petición
-y el de la respuesta de éxito: campos, obligatorios, tipos, valores permitidos y restricciones.
+Para cada endpoint implementado compara, con el contrato documentado, los parámetros de ruta,
+el cuerpo de la petición y el de la respuesta de éxito: campos, obligatorios, tipos, valores permitidos y restricciones.
 Descripciones, ejemplos y formatos informativos no forman parte de la comparación.
 """
 
@@ -15,6 +15,8 @@ from app.main import create_app
 
 SPEC_PATH = Path(__file__).resolve().parents[3] / "docs" / "openapi.yaml"
 HTTP_METHODS = {"get", "post", "put", "patch", "delete"}
+# Formatos que forman parte del contrato (el resto, como "email" o "password", son informativos).
+CONTRACT_FORMATS = {"uuid"}
 CONSTRAINTS = ("minLength", "maxLength", "minimum", "maximum", "minItems", "maxItems", "pattern", "uniqueItems")
 
 Schema = dict[str, Any]
@@ -64,6 +66,8 @@ def shape(schema: Schema) -> Any:
     types = schema.get("type")
     result: Schema = {"type": sorted(types) if isinstance(types, list) else types}
     result |= {key: schema[key] for key in CONSTRAINTS if key in schema}
+    if schema.get("format") in CONTRACT_FORMATS:
+        result["format"] = schema["format"]
     if types == "object" or "properties" in schema:
         result["type"] = "object"
         result["properties"] = {name: shape(prop) for name, prop in schema.get("properties", {}).items()}
@@ -74,12 +78,15 @@ def shape(schema: Schema) -> Any:
 
 
 def operations(spec: Schema) -> dict[tuple[str, str], Schema]:
-    return {
-        (path, method): resolve(spec, operation)
-        for path, item in spec["paths"].items()
-        for method, operation in item.items()
-        if method in HTTP_METHODS
-    }
+    """Operaciones por (ruta, método). Los parámetros declarados a nivel de ruta se heredan."""
+    result: dict[tuple[str, str], Schema] = {}
+    for path, item in spec["paths"].items():
+        shared = item.get("parameters", [])
+        for method, operation in item.items():
+            if method in HTTP_METHODS:
+                merged = operation | {"parameters": shared + operation.get("parameters", [])}
+                result[(path, method)] = resolve(spec, merged)
+    return result
 
 
 def success_body(operation: Schema) -> Any:
@@ -88,6 +95,14 @@ def success_body(operation: Schema) -> Any:
         if response and "content" in response:
             return shape(response["content"]["application/json"]["schema"])
     return None
+
+
+def path_parameters(operation: Schema) -> dict[str, Any]:
+    return {
+        parameter["name"]: shape(parameter["schema"])
+        for parameter in operation.get("parameters", [])
+        if parameter["in"] == "path"
+    }
 
 
 def request_body(operation: Schema) -> Any:
@@ -103,6 +118,11 @@ ENDPOINTS = sorted(IMPLEMENTED)
 @pytest.mark.parametrize("endpoint", ENDPOINTS, ids=[f"{m.upper()} {p}" for p, m in ENDPOINTS])
 def test_el_endpoint_esta_documentado(endpoint: tuple[str, str]) -> None:
     assert endpoint in DOCUMENTED
+
+
+@pytest.mark.parametrize("endpoint", ENDPOINTS, ids=[f"{m.upper()} {p}" for p, m in ENDPOINTS])
+def test_los_parametros_de_ruta_cumplen_el_contrato(endpoint: tuple[str, str]) -> None:
+    assert path_parameters(IMPLEMENTED[endpoint]) == path_parameters(DOCUMENTED[endpoint])
 
 
 @pytest.mark.parametrize("endpoint", ENDPOINTS, ids=[f"{m.upper()} {p}" for p, m in ENDPOINTS])

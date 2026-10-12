@@ -1,10 +1,11 @@
 from datetime import datetime
+from uuid import UUID
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.domain.ports import LessonRepository
-from app.persistence.models import LessonModel
+from app.persistence.models import LessonModel, UserModel
 
 
 class SqlAlchemyLessonRepository(LessonRepository):
@@ -13,10 +14,11 @@ class SqlAlchemyLessonRepository(LessonRepository):
     def __init__(self, session: Session) -> None:
         self._session = session
 
-    def count_completed_by_student(self, student_id: int, until: datetime) -> int:
+    def count_completed_by_student(self, student_id: UUID, until: datetime) -> int:
         count = self._session.scalar(
             select(func.count())
             .select_from(LessonModel)
-            .where(LessonModel.student_id == student_id, LessonModel.date <= until)
+            .join(UserModel, UserModel.id == LessonModel.student_id)
+            .where(UserModel.public_id == student_id, LessonModel.date <= until)
         )
         return count or 0

@@ -1,4 +1,5 @@
 from datetime import UTC, datetime, timedelta
+from uuid import UUID, uuid4
 
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
@@ -8,7 +9,7 @@ from app.domain.entities import Level
 from tests.factories import create_lesson, create_student, create_user
 
 
-def auth_header(user_id: int) -> dict[str, str]:
+def auth_header(user_id: UUID) -> dict[str, str]:
     return {"Authorization": f"Bearer {create_access_token(user_id=user_id)}"}
 
 
@@ -24,12 +25,12 @@ class TestListarMisEstudiantes:
             native_language="en", level=Level.B1,
         )
 
-        response = client.get("/teachers/me/students", headers=auth_header(teacher.id))
+        response = client.get("/teachers/me/students", headers=auth_header(teacher.public_id))
 
         assert response.status_code == 200
         assert response.json() == [
             {
-                "id": john.id,
+                "id": str(john.public_id),
                 "first_name": "John",
                 "last_name": "Miller",
                 "email": "john@correo.com",
@@ -37,7 +38,7 @@ class TestListarMisEstudiantes:
                 "level": "B1",
             },
             {
-                "id": emma.id,
+                "id": str(emma.public_id),
                 "first_name": "Emma",
                 "last_name": "Schmidt",
                 "email": "emma@correo.com",
@@ -51,7 +52,7 @@ class TestListarMisEstudiantes:
         other_teacher = create_user(db_session, email="otro@colegio.edu")
         create_student(db_session, teacher=other_teacher, email="pierre@correo.com")
 
-        response = client.get("/teachers/me/students", headers=auth_header(teacher.id))
+        response = client.get("/teachers/me/students", headers=auth_header(teacher.public_id))
 
         assert response.status_code == 200
         assert response.json() == []
@@ -60,7 +61,7 @@ class TestListarMisEstudiantes:
         teacher = create_user(db_session)
         student = create_student(db_session, teacher=teacher)
 
-        response = client.get("/teachers/me/students", headers=auth_header(student.id))
+        response = client.get("/teachers/me/students", headers=auth_header(student.public_id))
 
         assert response.status_code == 403
         assert response.json() == {"detail": "No tienes permiso para acceder a este recurso"}
@@ -84,11 +85,11 @@ class TestDetalleDeUnEstudiante:
         create_lesson(db_session, student=emma, teacher=teacher, date=now - timedelta(days=1))
         create_lesson(db_session, student=emma, teacher=teacher, date=now + timedelta(days=7))
 
-        response = client.get(f"/teachers/me/students/{emma.id}", headers=auth_header(teacher.id))
+        response = client.get(f"/teachers/me/students/{emma.public_id}", headers=auth_header(teacher.public_id))
 
         assert response.status_code == 200
         assert response.json() == {
-            "id": emma.id,
+            "id": str(emma.public_id),
             "first_name": "Emma",
             "last_name": "Schmidt",
             "email": "emma@correo.com",
@@ -102,15 +103,22 @@ class TestDetalleDeUnEstudiante:
         other_teacher = create_user(db_session, email="otro@colegio.edu")
         pierre = create_student(db_session, teacher=other_teacher, email="pierre@correo.com")
 
-        response = client.get(f"/teachers/me/students/{pierre.id}", headers=auth_header(teacher.id))
+        response = client.get(f"/teachers/me/students/{pierre.public_id}", headers=auth_header(teacher.public_id))
 
         assert response.status_code == 404
         assert response.json() == {"detail": "Estudiante no encontrado"}
 
+    def test_un_id_que_no_es_uuid_responde_422(self, client: TestClient, db_session: Session) -> None:
+        teacher = create_user(db_session)
+
+        response = client.get("/teachers/me/students/1", headers=auth_header(teacher.public_id))
+
+        assert response.status_code == 422
+
     def test_un_estudiante_inexistente_responde_404(self, client: TestClient, db_session: Session) -> None:
         teacher = create_user(db_session)
 
-        response = client.get("/teachers/me/students/999999", headers=auth_header(teacher.id))
+        response = client.get(f"/teachers/me/students/{uuid4()}", headers=auth_header(teacher.public_id))
 
         assert response.status_code == 404
 
@@ -118,11 +126,11 @@ class TestDetalleDeUnEstudiante:
         teacher = create_user(db_session)
         emma = create_student(db_session, teacher=teacher)
 
-        response = client.get(f"/teachers/me/students/{emma.id}", headers=auth_header(emma.id))
+        response = client.get(f"/teachers/me/students/{emma.public_id}", headers=auth_header(emma.public_id))
 
         assert response.status_code == 403
 
     def test_sin_token_responde_401(self, client: TestClient) -> None:
-        response = client.get("/teachers/me/students/1")
+        response = client.get(f"/teachers/me/students/{uuid4()}")
 
         assert response.status_code == 401
