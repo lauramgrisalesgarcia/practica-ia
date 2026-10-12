@@ -88,36 +88,13 @@ describe('LoginForm', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('Credenciales incorrectas')
   })
 
-  describe('requisitos de la contraseña', () => {
-    it.each([
-      ['Sec#1ab', /al menos 8 caracteres/i],
-      ['secreto#123', /una letra mayúscula/i],
-      ['SECRETO#123', /una letra minúscula/i],
-      ['Secreto#abc', /un número/i],
-      ['Secreto1234', /un carácter especial/i],
-    ])('rechaza %s indicando el requisito incumplido', async (password, requirement) => {
-      const { user, onSubmit, emailInput, passwordInput, submitButton } = setup()
+  it('no aplica reglas de complejidad a la contraseña al iniciar sesión', async () => {
+    const { user, onSubmit, emailInput, passwordInput, submitButton } = setup()
 
-      await user.type(emailInput, 'docente@colegio.edu')
-      await user.type(passwordInput, password)
-      await user.click(submitButton)
+    await user.type(emailInput, 'docente@colegio.edu')
+    await user.type(passwordInput, 'abc')
+    await user.click(submitButton)
 
-      expect(screen.getByText(requirement)).toBeInTheDocument()
-      expect(onSubmit).not.toHaveBeenCalled()
-    })
-
-    it('indica todos los requisitos incumplidos a la vez', async () => {
-      const { user, emailInput, passwordInput, submitButton } = setup()
-
-      await user.type(emailInput, 'docente@colegio.edu')
-      await user.type(passwordInput, 'abc')
-      await user.click(submitButton)
-
-      expect(screen.getByText(/al menos 8 caracteres/i)).toBeInTheDocument()
-      expect(screen.getByText(/una letra mayúscula/i)).toBeInTheDocument()
-      expect(screen.getByText(/un número/i)).toBeInTheDocument()
-      expect(screen.getByText(/un carácter especial/i)).toBeInTheDocument()
-      expect(screen.queryByText(/una letra minúscula/i)).not.toBeInTheDocument()
-    })
+    expect(onSubmit).toHaveBeenCalledWith({ email: 'docente@colegio.edu', password: 'abc' })
   })
 })
