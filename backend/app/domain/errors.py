@@ -16,3 +16,7 @@ class NotFoundError(DomainError):
 
 class StudentNotFoundError(NotFoundError):
     pass
+
+
+class LessonNotFoundError(NotFoundError):
+    pass

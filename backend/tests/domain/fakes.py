@@ -3,7 +3,7 @@
 from datetime import UTC, datetime
 from uuid import UUID, uuid4
 
-from app.domain.entities import LessonSummary, Level, MaterialStatus, Role, Student, User
+from app.domain.entities import LessonDetail, LessonSummary, Level, MaterialStatus, Role, Student, User
 from app.domain.ports import Clock, LessonRepository, PasswordHasher, StudentRepository, UserRepository
 
 FAKE_DUMMY_HASH = "hash-de-relleno"
@@ -72,8 +72,13 @@ class InMemoryStudentRepository(StudentRepository):
 class InMemoryLessonRepository(LessonRepository):
     """Guarda pares (id del estudiante, clase)."""
 
-    def __init__(self, lessons: list[tuple[UUID, LessonSummary]] | None = None) -> None:
+    def __init__(
+        self,
+        lessons: list[tuple[UUID, LessonSummary]] | None = None,
+        details_by_teacher: dict[UUID, list[LessonDetail]] | None = None,
+    ) -> None:
         self._lessons = lessons or []
+        self._details_by_teacher = details_by_teacher or {}
 
     def _completed(self, student_id: UUID, until: datetime) -> list[LessonSummary]:
         return [lesson for owner, lesson in self._lessons if owner == student_id and lesson.date <= until]
@@ -83,6 +88,9 @@ class InMemoryLessonRepository(LessonRepository):
 
     def list_completed_by_student(self, student_id: UUID, until: datetime) -> list[LessonSummary]:
         return sorted(self._completed(student_id, until), key=lambda lesson: lesson.date, reverse=True)
+
+    def get_detail_for_teacher(self, teacher_id: UUID, lesson_id: UUID) -> LessonDetail | None:
+        return next((d for d in self._details_by_teacher.get(teacher_id, []) if d.summary.id == lesson_id), None)
 
 
 def make_lesson(
@@ -126,4 +134,16 @@ def make_student(
         email=email,
         native_language=native_language,
         level=level,
+    )
+
+
+def make_lesson_detail(*, student: Student, date: datetime, lesson_id: UUID | None = None) -> LessonDetail:
+    return LessonDetail(
+        summary=make_lesson(date=date, lesson_id=lesson_id),
+        keywords=("la carta", "quisiera"),
+        notes=None,
+        pdf_filename="restaurante-a2.pdf",
+        student=student,
+        material=None,
+        submission=None,
     )

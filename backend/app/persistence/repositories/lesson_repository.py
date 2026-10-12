@@ -2,11 +2,20 @@ from datetime import datetime
 from uuid import UUID
 
 from sqlalchemy import case, func, select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, aliased
 
-from app.domain.entities import LessonSummary, MaterialStatus
+from app.domain.entities import LessonDetail, LessonSummary, MaterialStatus
 from app.domain.ports import LessonRepository
-from app.persistence.models import LessonModel, MaterialSubmissionModel, ReinforcementMaterialModel, UserModel
+from app.persistence.mappers import to_lesson_summary, to_material, to_student, to_submission_summary
+from app.persistence.models import (
+    LessonModel,
+    MaterialSubmissionModel,
+    ReinforcementMaterialModel,
+    StudentProfileModel,
+    UserModel,
+)
+
+_Teacher = aliased(UserModel)
 
 _MATERIAL_STATUS = case(
     (MaterialSubmissionModel.id.is_not(None), MaterialStatus.COMPLETED.value),
@@ -39,14 +48,34 @@ class SqlAlchemyLessonRepository(LessonRepository):
             .where(UserModel.public_id == student_id, LessonModel.date <= until)
             .order_by(LessonModel.date.desc())
         ).all()
-        return [
-            LessonSummary(
-                id=lesson.public_id,
-                date=lesson.date,
-                duration_minutes=lesson.duration_minutes,
-                topic=lesson.topic,
-                context=lesson.context,
-                material_status=MaterialStatus(status),
+        return [to_lesson_summary(lesson, status) for lesson, status in rows]
+
+    def get_detail_for_teacher(self, teacher_id: UUID, lesson_id: UUID) -> LessonDetail | None:
+        row = self._session.execute(
+            select(
+                LessonModel,
+                UserModel,
+                StudentProfileModel,
+                ReinforcementMaterialModel,
+                MaterialSubmissionModel,
+                _MATERIAL_STATUS,
             )
-            for lesson, status in rows
-        ]
+            .join(UserModel, UserModel.id == LessonModel.student_id)
+            .join(StudentProfileModel, StudentProfileModel.user_id == UserModel.id)
+            .join(_Teacher, _Teacher.id == StudentProfileModel.teacher_id)
+            .outerjoin(ReinforcementMaterialModel, ReinforcementMaterialModel.lesson_id == LessonModel.id)
+            .outerjoin(MaterialSubmissionModel, MaterialSubmissionModel.material_id == ReinforcementMaterialModel.id)
+            .where(_Teacher.public_id == teacher_id, LessonModel.public_id == lesson_id)
+        ).one_or_none()
+        if row is None:
+            return None
+        lesson, student, profile, material, submission, status = row
+        return LessonDetail(
+            summary=to_lesson_summary(lesson, status),
+            keywords=tuple(lesson.keywords),
+            notes=lesson.notes,
+            pdf_filename=lesson.pdf_filename,
+            student=to_student(student, profile),
+            material=to_material(material) if material else None,
+            submission=to_submission_summary(submission) if submission else None,
+        )
