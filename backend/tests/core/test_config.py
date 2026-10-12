@@ -3,7 +3,7 @@ import secrets
 import pytest
 from pydantic import ValidationError
 
-from app.config import Settings
+from app.core.config import Settings
 
 DATABASE_URL = "postgresql+psycopg://usuario:clave-de-bd@127.0.0.1:5433/base"
 

@@ -1,6 +1,6 @@
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
-from app.models import Role
+from app.domain.entities import Role
 
 
 class LoginRequest(BaseModel):
