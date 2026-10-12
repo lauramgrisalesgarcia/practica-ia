@@ -44,8 +44,9 @@ def test_las_tres_capas_existen() -> None:
         ("domain", ("app.transport", "app.persistence", "app.core", "fastapi", "sqlalchemy", "pydantic")),
         ("persistence", ("app.transport", "fastapi")),
         ("transport", ("app.persistence.models", "sqlalchemy")),
+        ("llm", ("app.transport", "app.persistence", "fastapi", "sqlalchemy")),
     ],
-    ids=["dominio", "persistencia", "transporte"],
+    ids=["dominio", "persistencia", "transporte", "adaptador LLM"],
 )
 def test_cada_capa_respeta_sus_dependencias(package: str, forbidden: tuple[str, ...]) -> None:
     assert violations(package, forbidden) == []

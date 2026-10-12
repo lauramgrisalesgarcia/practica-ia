@@ -69,3 +69,20 @@ def to_submission_summary(model: MaterialSubmissionModel) -> SubmissionSummary:
         incorrect_count=model.incorrect_count,
         score=model.score,
     )
+
+
+def to_material_content(material: Material) -> dict[str, Any]:
+    """Contenido JSONB del material (el tipo de actividad y la cantidad van en columnas propias)."""
+    return {
+        "title": material.title,
+        "instructions": material.instructions,
+        "exercises": [
+            {
+                "id": exercise.id,
+                "sentence": exercise.sentence,
+                "options": list(exercise.options),
+                "correct_option": exercise.correct_option,
+            }
+            for exercise in material.exercises
+        ],
+    }

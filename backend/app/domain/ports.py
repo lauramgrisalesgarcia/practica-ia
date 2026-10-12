@@ -1,10 +1,19 @@
 """Interfaces que el dominio necesita y que implementan otras capas (inversión de dependencias)."""
 
+from collections.abc import Mapping
 from datetime import datetime
-from typing import Protocol
+from typing import Any, Protocol
 from uuid import UUID
 
-from app.domain.entities import LessonDetail, LessonPdfLocation, LessonSummary, Student, User
+from app.domain.entities import (
+    GenerationContext,
+    LessonDetail,
+    LessonPdfLocation,
+    LessonSummary,
+    Material,
+    Student,
+    User,
+)
 
 
 class UserRepository(Protocol):
@@ -49,6 +58,22 @@ class LessonRepository(Protocol):
 
     def get_pdf_for_teacher(self, teacher_id: UUID, lesson_id: UUID) -> LessonPdfLocation | None:
         """Ubicación del PDF de la clase, solo si es de un estudiante asignado a ese docente."""
+        ...
+
+    def get_generation_context_for_teacher(self, teacher_id: UUID, lesson_id: UUID) -> GenerationContext | None:
+        """Datos para generar material, solo si la clase es de un estudiante asignado a ese docente."""
+        ...
+
+
+class MaterialRepository(Protocol):
+    def save(self, lesson_id: UUID, llm_request: Mapping[str, Any], material: Material) -> None:
+        """Guarda el material de la clase (reemplaza el anterior) junto con la petición enviada al LLM."""
+        ...
+
+
+class LLMClient(Protocol):
+    def generate_material(self, request: Mapping[str, Any]) -> object:
+        """Envía la petición al LLM y devuelve su respuesta JSON sin validar."""
         ...
 
 

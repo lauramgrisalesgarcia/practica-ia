@@ -4,7 +4,7 @@ from uuid import UUID
 from sqlalchemy import ColumnElement, case, func, select
 from sqlalchemy.orm import Session, aliased
 
-from app.domain.entities import LessonDetail, LessonPdfLocation, LessonSummary, MaterialStatus
+from app.domain.entities import GenerationContext, LessonDetail, LessonPdfLocation, LessonSummary, MaterialStatus
 from app.domain.ports import LessonRepository
 from app.persistence.mappers import to_lesson_summary, to_material, to_student, to_submission_summary
 from app.persistence.models import (
@@ -93,3 +93,29 @@ class SqlAlchemyLessonRepository(LessonRepository):
             .where(_of_teacher(teacher_id), LessonModel.public_id == lesson_id)
         ).one_or_none()
         return LessonPdfLocation(filename=row[0], path=row[1]) if row else None
+
+    def get_generation_context_for_teacher(self, teacher_id: UUID, lesson_id: UUID) -> GenerationContext | None:
+        row = self._session.execute(
+            select(LessonModel, StudentProfileModel, MaterialSubmissionModel.id)
+            .join(StudentProfileModel, StudentProfileModel.user_id == LessonModel.student_id)
+            .join(_Teacher, _Teacher.id == StudentProfileModel.teacher_id)
+            .outerjoin(ReinforcementMaterialModel, ReinforcementMaterialModel.lesson_id == LessonModel.id)
+            .outerjoin(MaterialSubmissionModel, MaterialSubmissionModel.material_id == ReinforcementMaterialModel.id)
+            .where(_of_teacher(teacher_id), LessonModel.public_id == lesson_id)
+        ).one_or_none()
+        if row is None:
+            return None
+        lesson, profile, submission_id = row
+        return GenerationContext(
+            lesson_id=lesson.public_id,
+            date=lesson.date,
+            topic=lesson.topic,
+            context=lesson.context,
+            keywords=tuple(lesson.keywords),
+            notes=lesson.notes,
+            pdf_filename=lesson.pdf_filename,
+            pdf_path=lesson.pdf_path,
+            student_level=profile.level,
+            native_language=profile.native_language,
+            has_submission=submission_id is not None,
+        )
