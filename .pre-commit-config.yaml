@@ -1,0 +1,6 @@
+# Hooks locales. Instalación (una vez): uvx pre-commit install
+repos:
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.18.4
+    hooks:
+      - id: gitleaks-docker # usa Docker: no requiere instalar Go ni gitleaks

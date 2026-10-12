@@ -75,7 +75,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/LoginResponse'
               example:
-                access_token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                access_token: <token JWT>
                 token_type: bearer
                 expires_in: 3600
                 user:

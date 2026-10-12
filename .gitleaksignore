@@ -1,0 +1,4 @@
+# Falsos positivos ya presentes en el historial: token JWT de ejemplo en la documentación.
+# Solo contenía la cabecera pública {"alg":"HS256","typ":"JWT"}, sin datos ni firma.
+a7374766f430a6df0b164fb5fe3c28ee956f5f5a:docs/openapi.yaml:generic-api-key:78
+b5fbc907184289bc5741b107ffaf17db87fcddb2:docs/backend-requirements.md:generic-api-key:321
