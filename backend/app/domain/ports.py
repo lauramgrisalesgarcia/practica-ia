@@ -2,7 +2,7 @@
 
 from typing import Protocol
 
-from app.domain.entities import User
+from app.domain.entities import Student, User
 
 
 class UserRepository(Protocol):
@@ -20,3 +20,9 @@ class PasswordHasher(Protocol):
         ...
 
     def verify(self, password: str, password_hash: str) -> bool: ...
+
+
+class StudentRepository(Protocol):
+    def list_by_teacher(self, teacher_id: int) -> list[Student]:
+        """Estudiantes asignados al docente, ordenados por apellido y nombre."""
+        ...

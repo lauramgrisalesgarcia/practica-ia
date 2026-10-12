@@ -1,11 +1,12 @@
 """Implementaciones en memoria de los puertos del dominio, para probar los casos de uso sin BD."""
 
-from app.domain.entities import Role, User
+from app.domain.entities import Level, Role, Student, User
+from app.domain.ports import PasswordHasher, StudentRepository, UserRepository
 
 FAKE_DUMMY_HASH = "hash-de-relleno"
 
 
-class InMemoryUserRepository:
+class InMemoryUserRepository(UserRepository):
     def __init__(self, users: list[User] | None = None) -> None:
         self._users = {user.id: user for user in users or []}
 
@@ -16,7 +17,7 @@ class InMemoryUserRepository:
         return next((u for u in self._users.values() if u.email == email), None)
 
 
-class FakePasswordHasher:
+class FakePasswordHasher(PasswordHasher):
     """Simula un hasher: el hash de "x" es "hash:x". Registra las verificaciones."""
 
     dummy_hash = FAKE_DUMMY_HASH
@@ -46,4 +47,31 @@ def make_user(
         email=email,
         password_hash=FakePasswordHasher().hash(password),
         role=role,
+    )
+
+
+class InMemoryStudentRepository(StudentRepository):
+    def __init__(self, students_by_teacher: dict[int, list[Student]] | None = None) -> None:
+        self._students_by_teacher = students_by_teacher or {}
+
+    def list_by_teacher(self, teacher_id: int) -> list[Student]:
+        return list(self._students_by_teacher.get(teacher_id, []))
+
+
+def make_student(
+    *,
+    student_id: int = 10,
+    first_name: str = "Emma",
+    last_name: str = "Schmidt",
+    email: str = "emma@correo.com",
+    native_language: str = "de",
+    level: Level = Level.A2,
+) -> Student:
+    return Student(
+        id=student_id,
+        first_name=first_name,
+        last_name=last_name,
+        email=email,
+        native_language=native_language,
+        level=level,
     )

@@ -7,6 +7,17 @@ class Role(enum.StrEnum):
     ESTUDIANTE = "estudiante"
 
 
+class Level(enum.StrEnum):
+    """Nivel del Marco Común Europeo de Referencia (MCER)."""
+
+    A1 = "A1"
+    A2 = "A2"
+    B1 = "B1"
+    B2 = "B2"
+    C1 = "C1"
+    C2 = "C2"
+
+
 @dataclass(frozen=True, slots=True)
 class User:
     id: int
@@ -15,3 +26,13 @@ class User:
     email: str
     password_hash: str
     role: Role
+
+
+@dataclass(frozen=True, slots=True)
+class Student:
+    id: int
+    first_name: str
+    last_name: str
+    email: str
+    native_language: str
+    level: Level
