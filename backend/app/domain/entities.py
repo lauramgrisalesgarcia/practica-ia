@@ -64,6 +64,7 @@ class LessonSummary:
     topic: str
     context: str
     material_status: MaterialStatus
+    pdf_filename: str
 
 
 class ActivityType(enum.StrEnum):
@@ -105,7 +106,6 @@ class LessonDetail:
     summary: LessonSummary
     keywords: tuple[str, ...]
     notes: str | None
-    pdf_filename: str
     student: Student
     material: Material | None
     submission: SubmissionSummary | None

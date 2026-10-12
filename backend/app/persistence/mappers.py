@@ -39,6 +39,7 @@ def to_lesson_summary(lesson: LessonModel, material_status: str) -> LessonSummar
         topic=lesson.topic,
         context=lesson.context,
         material_status=MaterialStatus(material_status),
+        pdf_filename=lesson.pdf_filename,
     )
 
 

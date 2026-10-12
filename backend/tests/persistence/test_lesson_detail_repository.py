@@ -31,7 +31,7 @@ def test_detalle_de_una_clase_sin_material(db_session: Session) -> None:
     assert detail.summary.material_status is MaterialStatus.NONE
     assert detail.keywords == ("la carta", "quisiera")
     assert detail.notes == "Confunde quiero y quisiera."
-    assert detail.pdf_filename == "restaurante-a2.pdf"
+    assert detail.summary.pdf_filename == "restaurante-a2.pdf"
     assert detail.student.id == emma.public_id
     assert detail.student.level is Level.A2
     assert detail.material is None

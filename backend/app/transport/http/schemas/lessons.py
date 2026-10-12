@@ -7,6 +7,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from app.domain.entities import (
     ActivityType,
     LessonDetail,
+    LessonSummary,
     Level,
     MaterialStatus,
     Material,
@@ -29,6 +30,22 @@ class LessonSummaryOut(BaseModel):
 class PdfRefOut(BaseModel):
     filename: str
     url: str = Field(description="Ruta de la API para descargar el PDF")
+
+
+class StudentLessonSummaryOut(LessonSummaryOut):
+    pdf: PdfRefOut
+
+    @classmethod
+    def from_entity(cls, summary: LessonSummary, *, pdf_url: str) -> "StudentLessonSummaryOut":
+        return cls(
+            id=summary.id,
+            date=summary.date,
+            duration_minutes=summary.duration_minutes,
+            topic=summary.topic,
+            context=summary.context,
+            material_status=summary.material_status,
+            pdf=PdfRefOut(filename=summary.pdf_filename, url=pdf_url),
+        )
 
 
 class LessonStudentOut(BaseModel):
@@ -123,7 +140,7 @@ class TeacherLessonDetailOut(LessonSummaryOut):
             material_status=summary.material_status,
             keywords=list(detail.keywords),
             notes=detail.notes,
-            pdf=PdfRefOut(filename=detail.pdf_filename, url=pdf_url),
+            pdf=PdfRefOut(filename=summary.pdf_filename, url=pdf_url),
             student=LessonStudentOut.from_entity(detail.student),
             material=TeacherMaterialOut.from_entity(detail.material) if detail.material else None,
             submission=SubmissionSummaryOut.from_entity(detail.submission) if detail.submission else None,

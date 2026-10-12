@@ -168,6 +168,7 @@ def make_lesson(
     lesson_id: UUID | None = None,
     topic: str = "Pedir en un restaurante",
     material_status: MaterialStatus = MaterialStatus.NONE,
+    pdf_filename: str = "restaurante-a2.pdf",
 ) -> LessonSummary:
     return LessonSummary(
         id=lesson_id or uuid4(),
@@ -176,6 +177,7 @@ def make_lesson(
         topic=topic,
         context="Pedir comida y bebida en un restaurante y pedir la cuenta",
         material_status=material_status,
+        pdf_filename=pdf_filename,
     )
 
 
@@ -211,7 +213,6 @@ def make_lesson_detail(*, student: Student, date: datetime, lesson_id: UUID | No
         summary=make_lesson(date=date, lesson_id=lesson_id),
         keywords=("la carta", "quisiera"),
         notes=None,
-        pdf_filename="restaurante-a2.pdf",
         student=student,
         material=None,
         submission=None,
