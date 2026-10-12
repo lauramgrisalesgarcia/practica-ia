@@ -38,3 +38,6 @@ __pycache__/
 !.env.example
 *.pem
 *.key
+
+# Archivos subidos o generados (PDF de las clases)
+backend/storage/

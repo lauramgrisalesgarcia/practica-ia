@@ -1,10 +1,10 @@
 from datetime import datetime
 from uuid import UUID
 
-from sqlalchemy import case, func, select
+from sqlalchemy import ColumnElement, case, func, select
 from sqlalchemy.orm import Session, aliased
 
-from app.domain.entities import LessonDetail, LessonSummary, MaterialStatus
+from app.domain.entities import LessonDetail, LessonPdfLocation, LessonSummary, MaterialStatus
 from app.domain.ports import LessonRepository
 from app.persistence.mappers import to_lesson_summary, to_material, to_student, to_submission_summary
 from app.persistence.models import (
@@ -22,6 +22,11 @@ _MATERIAL_STATUS = case(
     (ReinforcementMaterialModel.id.is_not(None), MaterialStatus.PENDING.value),
     else_=MaterialStatus.NONE.value,
 )
+
+
+def _of_teacher(teacher_id: UUID) -> ColumnElement[bool]:
+    """Condición: la clase es de un estudiante asignado al docente (requiere el join con `_Teacher`)."""
+    return _Teacher.public_id == teacher_id
 
 
 class SqlAlchemyLessonRepository(LessonRepository):
@@ -65,7 +70,7 @@ class SqlAlchemyLessonRepository(LessonRepository):
             .join(_Teacher, _Teacher.id == StudentProfileModel.teacher_id)
             .outerjoin(ReinforcementMaterialModel, ReinforcementMaterialModel.lesson_id == LessonModel.id)
             .outerjoin(MaterialSubmissionModel, MaterialSubmissionModel.material_id == ReinforcementMaterialModel.id)
-            .where(_Teacher.public_id == teacher_id, LessonModel.public_id == lesson_id)
+            .where(_of_teacher(teacher_id), LessonModel.public_id == lesson_id)
         ).one_or_none()
         if row is None:
             return None
@@ -79,3 +84,12 @@ class SqlAlchemyLessonRepository(LessonRepository):
             material=to_material(material) if material else None,
             submission=to_submission_summary(submission) if submission else None,
         )
+
+    def get_pdf_for_teacher(self, teacher_id: UUID, lesson_id: UUID) -> LessonPdfLocation | None:
+        row = self._session.execute(
+            select(LessonModel.pdf_filename, LessonModel.pdf_path)
+            .join(StudentProfileModel, StudentProfileModel.user_id == LessonModel.student_id)
+            .join(_Teacher, _Teacher.id == StudentProfileModel.teacher_id)
+            .where(_of_teacher(teacher_id), LessonModel.public_id == lesson_id)
+        ).one_or_none()
+        return LessonPdfLocation(filename=row[0], path=row[1]) if row else None

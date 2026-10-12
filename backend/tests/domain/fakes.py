@@ -3,8 +3,24 @@
 from datetime import UTC, datetime
 from uuid import UUID, uuid4
 
-from app.domain.entities import LessonDetail, LessonSummary, Level, MaterialStatus, Role, Student, User
-from app.domain.ports import Clock, LessonRepository, PasswordHasher, StudentRepository, UserRepository
+from app.domain.entities import (
+    LessonDetail,
+    LessonPdfLocation,
+    LessonSummary,
+    Level,
+    MaterialStatus,
+    Role,
+    Student,
+    User,
+)
+from app.domain.ports import (
+    Clock,
+    FileStorage,
+    LessonRepository,
+    PasswordHasher,
+    StudentRepository,
+    UserRepository,
+)
 
 FAKE_DUMMY_HASH = "hash-de-relleno"
 
@@ -76,9 +92,11 @@ class InMemoryLessonRepository(LessonRepository):
         self,
         lessons: list[tuple[UUID, LessonSummary]] | None = None,
         details_by_teacher: dict[UUID, list[LessonDetail]] | None = None,
+        pdfs_by_teacher: dict[UUID, dict[UUID, tuple[str, str]]] | None = None,
     ) -> None:
         self._lessons = lessons or []
         self._details_by_teacher = details_by_teacher or {}
+        self._pdfs_by_teacher = pdfs_by_teacher or {}
 
     def _completed(self, student_id: UUID, until: datetime) -> list[LessonSummary]:
         return [lesson for owner, lesson in self._lessons if owner == student_id and lesson.date <= until]
@@ -91,6 +109,21 @@ class InMemoryLessonRepository(LessonRepository):
 
     def get_detail_for_teacher(self, teacher_id: UUID, lesson_id: UUID) -> LessonDetail | None:
         return next((d for d in self._details_by_teacher.get(teacher_id, []) if d.summary.id == lesson_id), None)
+
+    def get_pdf_for_teacher(self, teacher_id: UUID, lesson_id: UUID) -> LessonPdfLocation | None:
+        location = self._pdfs_by_teacher.get(teacher_id, {}).get(lesson_id)
+        return LessonPdfLocation(*location) if location else None
+
+
+class InMemoryFileStorage(FileStorage):
+    def __init__(self, files: dict[str, bytes] | None = None) -> None:
+        self.files = dict(files or {})
+
+    def read(self, path: str) -> bytes | None:
+        return self.files.get(path)
+
+    def write(self, path: str, content: bytes) -> None:
+        self.files[path] = content
 
 
 def make_lesson(

@@ -16,7 +16,9 @@ from sqlalchemy.orm import Session
 
 from app.core.password_hasher import Argon2PasswordHasher
 from app.domain.entities import Level, Role
+from app.domain.ports import FileStorage
 from app.persistence.models import LessonModel, StudentProfileModel, UserModel
+from app.persistence.sample_pdf import build_sample_pdf
 
 
 @dataclass(frozen=True)
@@ -88,8 +90,11 @@ LESSONS = (
 )
 
 
-def seed(session: Session, *, password: str, now: datetime) -> bool:
-    """Inserta los datos de prueba. Devuelve False si ya existían (no hace nada)."""
+def seed(session: Session, *, password: str, now: datetime, files: FileStorage) -> bool:
+    """Inserta los datos de prueba y guarda un PDF de ejemplo por clase.
+
+    Devuelve False si ya existían (no hace nada).
+    """
     if session.scalar(select(UserModel.id).where(UserModel.email == TEACHERS[0].email)) is not None:
         return False
 
@@ -128,6 +133,14 @@ def seed(session: Session, *, password: str, now: datetime) -> bool:
     teacher_of = {student.email: student.teacher_email for student in STUDENTS}
     for lesson in LESSONS:
         student_user = users[lesson.student_email]
+        pdf_path = f"lessons/{student_user.public_id}/{lesson.pdf_filename}"
+        files.write(
+            pdf_path,
+            build_sample_pdf(
+                lesson.topic,
+                [lesson.context, "", "Palabras clave:", *(f"- {keyword}" for keyword in lesson.keywords)],
+            ),
+        )
         session.add(
             LessonModel(
                 student_id=student_user.id,
@@ -139,7 +152,7 @@ def seed(session: Session, *, password: str, now: datetime) -> bool:
                 keywords=list(lesson.keywords),
                 notes=lesson.notes,
                 pdf_filename=lesson.pdf_filename,
-                pdf_path=f"lessons/{student_user.id}/{lesson.pdf_filename}",
+                pdf_path=pdf_path,
             )
         )
     session.flush()
@@ -153,11 +166,14 @@ class _SeedSettings(BaseSettings):
 
 
 def main() -> None:
+    from app.core.config import get_settings
     from app.persistence.database import SessionLocal
+    from app.persistence.file_storage import LocalFileStorage
 
     password = _SeedSettings().seed_user_password.get_secret_value()
+    files = LocalFileStorage(get_settings().storage_dir)
     with SessionLocal() as session:
-        created = seed(session, password=password, now=datetime.now(UTC))
+        created = seed(session, password=password, now=datetime.now(UTC), files=files)
         session.commit()
 
     if not created:

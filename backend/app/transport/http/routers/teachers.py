@@ -1,20 +1,23 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Response
 
 from app.composition import (
     get_get_teacher_lesson,
+    get_get_teacher_lesson_pdf,
     get_get_teacher_student,
     get_list_student_lessons,
     get_list_teacher_students,
 )
 from app.domain.entities import LessonSummary, Student
 from app.domain.use_cases.get_teacher_lesson import GetTeacherLesson
+from app.domain.use_cases.get_teacher_lesson_pdf import GetTeacherLessonPdf
 from app.domain.use_cases.get_teacher_student import GetTeacherStudent
 from app.domain.use_cases.list_student_lessons import ListStudentLessons
 from app.domain.use_cases.list_teacher_students import ListTeacherStudents
 from app.transport.http.dependencies import CurrentUser
+from app.transport.http.files import pdf_response
 from app.transport.http.schemas.lessons import LessonSummaryOut, TeacherLessonDetailOut
 from app.transport.http.schemas.students import StudentDetailOut, StudentOut
 
@@ -55,3 +58,16 @@ def get_my_lesson(
 ) -> TeacherLessonDetailOut:
     detail = get_lesson.execute(user, lesson_id)
     return TeacherLessonDetailOut.from_entity(detail, pdf_url=f"{router.prefix}/lessons/{lesson_id}/pdf")
+
+
+@router.get(
+    "/lessons/{lesson_id}/pdf",
+    response_class=Response,
+    responses={200: {"description": "Contenido del PDF de la clase.", "content": {"application/pdf": {}}}},
+)
+def get_my_lesson_pdf(
+    user: CurrentUser,
+    get_pdf: Annotated[GetTeacherLessonPdf, Depends(get_get_teacher_lesson_pdf)],
+    lesson_id: UUID,
+) -> Response:
+    return pdf_response(get_pdf.execute(user, lesson_id))

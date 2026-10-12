@@ -70,6 +70,7 @@ def create_lesson(
     keywords: list[str] | None = None,
     notes: str | None = None,
     pdf_filename: str = "restaurante-a2.pdf",
+    pdf_path: str | None = None,
 ) -> LessonModel:
     lesson = LessonModel(
         student_id=student.id,
@@ -81,7 +82,7 @@ def create_lesson(
         keywords=keywords or ["la carta", "quisiera", "la cuenta"],
         notes=notes,
         pdf_filename=pdf_filename,
-        pdf_path=f"lessons/{student.id}/{pdf_filename}",
+        pdf_path=pdf_path or f"lessons/{student.id}/{pdf_filename}",
     )
     session.add(lesson)
     session.flush()

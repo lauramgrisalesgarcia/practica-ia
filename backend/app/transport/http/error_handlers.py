@@ -8,6 +8,7 @@ from app.domain.errors import (
     DomainError,
     InvalidCredentialsError,
     LessonNotFoundError,
+    LessonPdfNotFoundError,
     StudentNotFoundError,
 )
 
@@ -16,6 +17,7 @@ _RESPONSES: dict[type[DomainError], tuple[int, str]] = {
     AccessDeniedError: (status.HTTP_403_FORBIDDEN, "No tienes permiso para acceder a este recurso"),
     StudentNotFoundError: (status.HTTP_404_NOT_FOUND, "Estudiante no encontrado"),
     LessonNotFoundError: (status.HTTP_404_NOT_FOUND, "Clase no encontrada"),
+    LessonPdfNotFoundError: (status.HTTP_404_NOT_FOUND, "El PDF de la clase no está disponible"),
 }
 
 
