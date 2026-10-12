@@ -1,9 +1,11 @@
+from datetime import UTC, datetime, timedelta
+
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
 from app.core.tokens import create_access_token
 from app.domain.entities import Level
-from tests.factories import create_student, create_user
+from tests.factories import create_lesson, create_student, create_user
 
 
 def auth_header(user_id: int) -> dict[str, str]:
@@ -68,3 +70,59 @@ class TestListarMisEstudiantes:
 
         assert response.status_code == 401
 
+
+
+class TestDetalleDeUnEstudiante:
+    def test_devuelve_los_datos_y_las_clases_tomadas(self, client: TestClient, db_session: Session) -> None:
+        teacher = create_user(db_session)
+        emma = create_student(
+            db_session, teacher=teacher, email="emma@correo.com", first_name="Emma", last_name="Schmidt",
+            native_language="de", level=Level.A2,
+        )
+        now = datetime.now(UTC)
+        create_lesson(db_session, student=emma, teacher=teacher, date=now - timedelta(days=7))
+        create_lesson(db_session, student=emma, teacher=teacher, date=now - timedelta(days=1))
+        create_lesson(db_session, student=emma, teacher=teacher, date=now + timedelta(days=7))
+
+        response = client.get(f"/teachers/me/students/{emma.id}", headers=auth_header(teacher.id))
+
+        assert response.status_code == 200
+        assert response.json() == {
+            "id": emma.id,
+            "first_name": "Emma",
+            "last_name": "Schmidt",
+            "email": "emma@correo.com",
+            "native_language": "de",
+            "level": "A2",
+            "lessons_count": 2,
+        }
+
+    def test_un_estudiante_de_otro_docente_responde_404(self, client: TestClient, db_session: Session) -> None:
+        teacher = create_user(db_session, email="docente@colegio.edu")
+        other_teacher = create_user(db_session, email="otro@colegio.edu")
+        pierre = create_student(db_session, teacher=other_teacher, email="pierre@correo.com")
+
+        response = client.get(f"/teachers/me/students/{pierre.id}", headers=auth_header(teacher.id))
+
+        assert response.status_code == 404
+        assert response.json() == {"detail": "Estudiante no encontrado"}
+
+    def test_un_estudiante_inexistente_responde_404(self, client: TestClient, db_session: Session) -> None:
+        teacher = create_user(db_session)
+
+        response = client.get("/teachers/me/students/999999", headers=auth_header(teacher.id))
+
+        assert response.status_code == 404
+
+    def test_un_estudiante_recibe_403(self, client: TestClient, db_session: Session) -> None:
+        teacher = create_user(db_session)
+        emma = create_student(db_session, teacher=teacher)
+
+        response = client.get(f"/teachers/me/students/{emma.id}", headers=auth_header(emma.id))
+
+        assert response.status_code == 403
+
+    def test_sin_token_responde_401(self, client: TestClient) -> None:
+        response = client.get("/teachers/me/students/1")
+
+        assert response.status_code == 401

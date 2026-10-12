@@ -1,6 +1,7 @@
 from datetime import datetime
 
-from sqlalchemy import CheckConstraint, DateTime, Enum, ForeignKey, String, func
+from sqlalchemy import CheckConstraint, DateTime, Enum, ForeignKey, Index, String, Text, func
+from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 from app.domain.entities import Level, Role
@@ -38,3 +39,26 @@ class StudentProfileModel(Base):
     level: Mapped[Level] = mapped_column(
         Enum(Level, name="student_level", values_callable=lambda levels: [lv.value for lv in levels])
     )
+
+
+class LessonModel(Base):
+    """Clase tomada por un estudiante con su docente."""
+
+    __tablename__ = "lessons"
+    __table_args__ = (
+        CheckConstraint("duration_minutes > 0", name="duration_minutes_positive"),
+        CheckConstraint("cardinality(keywords) >= 1", name="keywords_not_empty"),
+        Index("ix_lessons_student_id_date", "student_id", "date"),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    student_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
+    teacher_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    date: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    duration_minutes: Mapped[int]
+    topic: Mapped[str] = mapped_column(String(200))
+    context: Mapped[str] = mapped_column(Text)
+    keywords: Mapped[list[str]] = mapped_column(ARRAY(String(50)))
+    notes: Mapped[str | None] = mapped_column(Text)
+    pdf_filename: Mapped[str] = mapped_column(String(255))
+    pdf_path: Mapped[str] = mapped_column(String(500))

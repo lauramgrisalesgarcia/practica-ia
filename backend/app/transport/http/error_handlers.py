@@ -3,11 +3,12 @@
 from fastapi import FastAPI, Request, status
 from fastapi.responses import JSONResponse
 
-from app.domain.errors import AccessDeniedError, DomainError, InvalidCredentialsError
+from app.domain.errors import AccessDeniedError, DomainError, InvalidCredentialsError, StudentNotFoundError
 
 _RESPONSES: dict[type[DomainError], tuple[int, str]] = {
     InvalidCredentialsError: (status.HTTP_401_UNAUTHORIZED, "Credenciales incorrectas"),
     AccessDeniedError: (status.HTTP_403_FORBIDDEN, "No tienes permiso para acceder a este recurso"),
+    StudentNotFoundError: (status.HTTP_404_NOT_FOUND, "Estudiante no encontrado"),
 }
 
 

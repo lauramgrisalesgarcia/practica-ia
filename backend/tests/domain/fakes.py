@@ -1,7 +1,9 @@
 """Implementaciones en memoria de los puertos del dominio, para probar los casos de uso sin BD."""
 
+from datetime import UTC, datetime
+
 from app.domain.entities import Level, Role, Student, User
-from app.domain.ports import PasswordHasher, StudentRepository, UserRepository
+from app.domain.ports import Clock, LessonRepository, PasswordHasher, StudentRepository, UserRepository
 
 FAKE_DUMMY_HASH = "hash-de-relleno"
 
@@ -56,6 +58,27 @@ class InMemoryStudentRepository(StudentRepository):
 
     def list_by_teacher(self, teacher_id: int) -> list[Student]:
         return list(self._students_by_teacher.get(teacher_id, []))
+
+    def get_for_teacher(self, teacher_id: int, student_id: int) -> Student | None:
+        return next((s for s in self._students_by_teacher.get(teacher_id, []) if s.id == student_id), None)
+
+
+class InMemoryLessonRepository(LessonRepository):
+    """Guarda solo lo necesario para contar: (id del estudiante, fecha de la clase)."""
+
+    def __init__(self, lessons: list[tuple[int, datetime]] | None = None) -> None:
+        self._lessons = lessons or []
+
+    def count_completed_by_student(self, student_id: int, until: datetime) -> int:
+        return sum(1 for owner, date in self._lessons if owner == student_id and date <= until)
+
+
+class FixedClock(Clock):
+    def __init__(self, now: datetime = datetime(2026, 10, 12, 12, 0, tzinfo=UTC)) -> None:
+        self._now = now
+
+    def now(self) -> datetime:
+        return self._now
 
 
 def make_student(

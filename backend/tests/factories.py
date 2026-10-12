@@ -1,8 +1,10 @@
+from datetime import datetime
+
 from sqlalchemy.orm import Session
 
 from app.core.password_hasher import Argon2PasswordHasher
 from app.domain.entities import Level, Role
-from app.persistence.models import StudentProfileModel, UserModel
+from app.persistence.models import LessonModel, StudentProfileModel, UserModel
 
 _hasher = Argon2PasswordHasher()
 
@@ -48,3 +50,33 @@ def create_student(
     )
     session.flush()
     return student
+
+
+def create_lesson(
+    session: Session,
+    *,
+    student: UserModel,
+    teacher: UserModel,
+    date: datetime,
+    duration_minutes: int = 60,
+    topic: str = "Pedir en un restaurante",
+    context: str = "Pedir comida y bebida en un restaurante y pedir la cuenta",
+    keywords: list[str] | None = None,
+    notes: str | None = None,
+    pdf_filename: str = "restaurante-a2.pdf",
+) -> LessonModel:
+    lesson = LessonModel(
+        student_id=student.id,
+        teacher_id=teacher.id,
+        date=date,
+        duration_minutes=duration_minutes,
+        topic=topic,
+        context=context,
+        keywords=keywords or ["la carta", "quisiera", "la cuenta"],
+        notes=notes,
+        pdf_filename=pdf_filename,
+        pdf_path=f"lessons/{student.id}/{pdf_filename}",
+    )
+    session.add(lesson)
+    session.flush()
+    return lesson
