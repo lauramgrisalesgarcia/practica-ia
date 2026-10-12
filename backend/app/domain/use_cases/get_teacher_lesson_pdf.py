@@ -1,7 +1,7 @@
 from uuid import UUID
 
 from app.domain.entities import LessonFile, User
-from app.domain.errors import LessonNotFoundError, LessonPdfNotFoundError
+from app.domain.lesson_files import read_lesson_pdf
 from app.domain.policies import require_teacher
 from app.domain.ports import FileStorage, LessonRepository
 
@@ -15,10 +15,4 @@ class GetTeacherLessonPdf:
 
     def execute(self, requester: User, lesson_id: UUID) -> LessonFile:
         require_teacher(requester)
-        location = self._lessons.get_pdf_for_teacher(requester.id, lesson_id)
-        if location is None:
-            raise LessonNotFoundError
-        content = self._files.read(location.path)
-        if content is None:
-            raise LessonPdfNotFoundError
-        return LessonFile(filename=location.filename, content=content)
+        return read_lesson_pdf(self._lessons.get_pdf_for_teacher(requester.id, lesson_id), self._files)

@@ -1,11 +1,17 @@
 """Respuestas HTTP con archivos."""
 
 import re
+from typing import Any
 from urllib.parse import quote
 
 from fastapi import Response
 
 from app.domain.entities import LessonFile
+
+# Documentación OpenAPI de la respuesta de éxito de un endpoint que devuelve un PDF.
+PDF_RESPONSES: dict[int | str, dict[str, Any]] = {
+    200: {"description": "Contenido del PDF de la clase.", "content": {"application/pdf": {}}}
+}
 
 # Comillas, barras invertidas, dos puntos y caracteres de control no pueden ir en la cabecera.
 _UNSAFE = re.compile(r'["\:\x00-\x1f\x7f]')

@@ -100,7 +100,9 @@ class InMemoryLessonRepository(LessonRepository):
         details_by_teacher: dict[UUID, list[LessonDetail]] | None = None,
         pdfs_by_teacher: dict[UUID, dict[UUID, tuple[str, str]]] | None = None,
         contexts_by_teacher: dict[UUID, list[GenerationContext]] | None = None,
+        pdfs_by_student: dict[UUID, dict[UUID, tuple[str, str]]] | None = None,
     ) -> None:
+        self._pdfs_by_student = pdfs_by_student or {}
         self._contexts_by_teacher = contexts_by_teacher or {}
         self._lessons = lessons or []
         self._details_by_teacher = details_by_teacher or {}
@@ -120,6 +122,10 @@ class InMemoryLessonRepository(LessonRepository):
 
     def get_pdf_for_teacher(self, teacher_id: UUID, lesson_id: UUID) -> LessonPdfLocation | None:
         location = self._pdfs_by_teacher.get(teacher_id, {}).get(lesson_id)
+        return LessonPdfLocation(*location) if location else None
+
+    def get_pdf_for_student(self, student_id: UUID, lesson_id: UUID) -> LessonPdfLocation | None:
+        location = self._pdfs_by_student.get(student_id, {}).get(lesson_id)
         return LessonPdfLocation(*location) if location else None
 
     def get_generation_context_for_teacher(self, teacher_id: UUID, lesson_id: UUID) -> GenerationContext | None:

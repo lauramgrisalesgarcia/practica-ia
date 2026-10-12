@@ -60,6 +60,10 @@ class LessonRepository(Protocol):
         """Ubicación del PDF de la clase, solo si es de un estudiante asignado a ese docente."""
         ...
 
+    def get_pdf_for_student(self, student_id: UUID, lesson_id: UUID) -> LessonPdfLocation | None:
+        """Ubicación del PDF de la clase, solo si es una clase de ese estudiante."""
+        ...
+
     def get_generation_context_for_teacher(self, teacher_id: UUID, lesson_id: UUID) -> GenerationContext | None:
         """Datos para generar material, solo si la clase es de un estudiante asignado a ese docente."""
         ...
