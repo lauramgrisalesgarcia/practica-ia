@@ -1,4 +1,4 @@
-from collections.abc import Iterator
+from collections.abc import Generator
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
@@ -9,9 +9,15 @@ engine = create_engine(get_settings().database_url.get_secret_value(), pool_pre_
 SessionLocal = sessionmaker(bind=engine, autoflush=False, expire_on_commit=False)
 
 
-def get_session() -> Iterator[Session]:
+def get_session() -> Generator[Session]:
+    """Una sesión (unidad de trabajo) por petición: confirma si la petición termina bien
+    y descarta todos los cambios si falla."""
     session = SessionLocal()
     try:
         yield session
+        session.commit()
+    except BaseException:
+        session.rollback()
+        raise
     finally:
         session.close()

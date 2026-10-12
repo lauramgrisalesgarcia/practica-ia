@@ -1,0 +1,97 @@
+{
+  "activity_type": "complete_sentence",
+  "title": "En el restaurante",
+  "instructions": "Completa cada frase con la opción correcta.",
+  "exercises": [
+    {
+      "id": 1,
+      "sentence": "Camarero, ¿nos trae ___, por favor? Queremos ver los platos.",
+      "options": ["la carta", "la cuenta", "la mesa"],
+      "correct_option": "la carta"
+    },
+    {
+      "id": 2,
+      "sentence": "Buenas noches. ___ una mesa para dos personas.",
+      "options": ["Quisiera", "Quiero que", "Quería que"],
+      "correct_option": "Quisiera"
+    },
+    {
+      "id": 3,
+      "sentence": "___ voy a tomar una sopa de verduras y de segundo, pescado.",
+      "options": ["De primero", "Para primero", "En primero"],
+      "correct_option": "De primero"
+    },
+    {
+      "id": 4,
+      "sentence": "Y ___, ¿qué van a tomar? ¿Agua o vino?",
+      "options": ["para beber", "por beber", "a beber"],
+      "correct_option": "para beber"
+    },
+    {
+      "id": 5,
+      "sentence": "Ya hemos terminado. ¿Nos trae ___, por favor?",
+      "options": ["la cuenta", "la carta", "el menú"],
+      "correct_option": "la cuenta"
+    },
+    {
+      "id": 6,
+      "sentence": "De segundo, ___ el pollo asado con patatas.",
+      "options": ["me gustaría", "me gusta que", "me gustan"],
+      "correct_option": "me gustaría"
+    },
+    {
+      "id": 7,
+      "sentence": "¿Qué ___ de postre? Tenemos flan y fruta.",
+      "options": ["desean", "desea que", "desearon"],
+      "correct_option": "desean"
+    },
+    {
+      "id": 8,
+      "sentence": "Perdone, ¿el plato del día ___ pescado?",
+      "options": ["lleva", "llevan", "llevando"],
+      "correct_option": "lleva"
+    },
+    {
+      "id": 9,
+      "sentence": "Soy vegetariana. ¿Este plato ___ carne?",
+      "options": ["tiene", "tienen", "es"],
+      "correct_option": "tiene"
+    },
+    {
+      "id": 10,
+      "sentence": "¿Me ___ un poco más de pan, por favor?",
+      "options": ["trae", "traes que", "traigo"],
+      "correct_option": "trae"
+    },
+    {
+      "id": 11,
+      "sentence": "Para mí, un café ___ leche, por favor.",
+      "options": ["con", "de", "en"],
+      "correct_option": "con"
+    },
+    {
+      "id": 12,
+      "sentence": "¿Se puede pagar ___ tarjeta?",
+      "options": ["con", "por", "en"],
+      "correct_option": "con"
+    },
+    {
+      "id": 13,
+      "sentence": "La comida estaba ___. ¡Muchas gracias!",
+      "options": ["buenísima", "buenísimo", "bien"],
+      "correct_option": "buenísima"
+    },
+    {
+      "id": 14,
+      "sentence": "Tenemos una reserva ___ nombre de Schmidt.",
+      "options": ["a", "en", "con"],
+      "correct_option": "a"
+    },
+    {
+      "id": 15,
+      "sentence": "¿Está ___ esta mesa o podemos sentarnos?",
+      "options": ["libre", "vacío", "abierta"],
+      "correct_option": "libre"
+    }
+  ]
+}

@@ -1,9 +1,10 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Response
+from fastapi import APIRouter, Depends, Response, status
 
 from app.composition import (
+    get_generate_material,
     get_get_teacher_lesson,
     get_get_teacher_lesson_pdf,
     get_get_teacher_student,
@@ -11,6 +12,7 @@ from app.composition import (
     get_list_teacher_students,
 )
 from app.domain.entities import LessonSummary, Student
+from app.domain.use_cases.generate_material import GenerateMaterial
 from app.domain.use_cases.get_teacher_lesson import GetTeacherLesson
 from app.domain.use_cases.get_teacher_lesson_pdf import GetTeacherLessonPdf
 from app.domain.use_cases.get_teacher_student import GetTeacherStudent
@@ -19,6 +21,7 @@ from app.domain.use_cases.list_teacher_students import ListTeacherStudents
 from app.transport.http.dependencies import CurrentUser
 from app.transport.http.files import pdf_response
 from app.transport.http.schemas.lessons import LessonSummaryOut, TeacherLessonDetailOut
+from app.transport.http.schemas.materials import GeneratedMaterialOut, GenerateMaterialIn
 from app.transport.http.schemas.students import StudentDetailOut, StudentOut
 
 router = APIRouter(prefix="/teachers/me", tags=["Docente"])
@@ -71,3 +74,24 @@ def get_my_lesson_pdf(
     lesson_id: UUID,
 ) -> Response:
     return pdf_response(get_pdf.execute(user, lesson_id))
+
+
+@router.post(
+    "/lessons/{lesson_id}/material",
+    response_model=GeneratedMaterialOut,
+    status_code=status.HTTP_201_CREATED,
+)
+def generate_material(
+    user: CurrentUser,
+    generate: Annotated[GenerateMaterial, Depends(get_generate_material)],
+    lesson_id: UUID,
+    body: GenerateMaterialIn,
+) -> GeneratedMaterialOut:
+    material = generate.execute(
+        user,
+        lesson_id,
+        activity_type=body.activity_type,
+        exercise_count=body.exercise_count,
+        keywords=body.keywords,
+    )
+    return GeneratedMaterialOut.from_material(lesson_id, material)

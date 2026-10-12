@@ -2,7 +2,7 @@ import enum
 from dataclasses import dataclass
 from datetime import datetime
 from decimal import Decimal
-from typing import NamedTuple
+from typing import Any, NamedTuple
 from uuid import UUID
 
 
@@ -122,3 +122,53 @@ class LessonPdfLocation(NamedTuple):
 class LessonFile:
     filename: str
     content: bytes
+
+
+@dataclass(frozen=True, slots=True)
+class GenerationContext:
+    """Datos de una clase necesarios para generar su material de refuerzo."""
+
+    lesson_id: UUID
+    date: datetime
+    topic: str
+    context: str
+    keywords: tuple[str, ...]
+    notes: str | None
+    pdf_filename: str
+    pdf_path: str
+    student_level: Level
+    native_language: str
+    has_submission: bool
+
+
+@dataclass(frozen=True, slots=True)
+class MaterialGenerationRequest:
+    """Lo que se pide al LLM para generar el material de refuerzo de una clase."""
+
+    activity_type: ActivityType
+    exercise_count: int
+    student_level: Level
+    native_language: str
+    topic: str
+    context: str
+    keywords: tuple[str, ...]
+    notes: str | None
+    pdf_filename: str
+    pdf_path: str
+
+    def to_llm_payload(self) -> dict[str, Any]:
+        """Petición al LLM en el formato definido en los requerimientos (docs/001-backend-requirements.md)."""
+        return {
+            "task": "generate_reinforcement_material",
+            "activity_type": self.activity_type.value,
+            "exercise_count": self.exercise_count,
+            "student": {"level": self.student_level.value, "native_language": self.native_language},
+            "lesson": {
+                "topic": self.topic,
+                "context": self.context,
+                "keywords": list(self.keywords),
+                "notes": self.notes,
+                "pdf": {"filename": self.pdf_filename, "path": self.pdf_path},
+            },
+            "output_language": "es",
+        }

@@ -1,13 +1,17 @@
 """Implementaciones en memoria de los puertos del dominio, para probar los casos de uso sin BD."""
 
+from collections.abc import Mapping
 from datetime import UTC, datetime
+from typing import Any
 from uuid import UUID, uuid4
 
 from app.domain.entities import (
+    GenerationContext,
     LessonDetail,
     LessonPdfLocation,
     LessonSummary,
     Level,
+    Material,
     MaterialStatus,
     Role,
     Student,
@@ -17,6 +21,8 @@ from app.domain.ports import (
     Clock,
     FileStorage,
     LessonRepository,
+    LLMClient,
+    MaterialRepository,
     PasswordHasher,
     StudentRepository,
     UserRepository,
@@ -93,7 +99,9 @@ class InMemoryLessonRepository(LessonRepository):
         lessons: list[tuple[UUID, LessonSummary]] | None = None,
         details_by_teacher: dict[UUID, list[LessonDetail]] | None = None,
         pdfs_by_teacher: dict[UUID, dict[UUID, tuple[str, str]]] | None = None,
+        contexts_by_teacher: dict[UUID, list[GenerationContext]] | None = None,
     ) -> None:
+        self._contexts_by_teacher = contexts_by_teacher or {}
         self._lessons = lessons or []
         self._details_by_teacher = details_by_teacher or {}
         self._pdfs_by_teacher = pdfs_by_teacher or {}
@@ -113,6 +121,34 @@ class InMemoryLessonRepository(LessonRepository):
     def get_pdf_for_teacher(self, teacher_id: UUID, lesson_id: UUID) -> LessonPdfLocation | None:
         location = self._pdfs_by_teacher.get(teacher_id, {}).get(lesson_id)
         return LessonPdfLocation(*location) if location else None
+
+    def get_generation_context_for_teacher(self, teacher_id: UUID, lesson_id: UUID) -> GenerationContext | None:
+        return next((c for c in self._contexts_by_teacher.get(teacher_id, []) if c.lesson_id == lesson_id), None)
+
+
+class InMemoryMaterialRepository(MaterialRepository):
+    """Guarda por clase el último material y la petición enviada al LLM."""
+
+    def __init__(self) -> None:
+        self.saved: dict[UUID, tuple[dict[str, Any], Material]] = {}
+
+    def save(self, lesson_id: UUID, llm_request: Mapping[str, Any], material: Material) -> None:
+        self.saved[lesson_id] = (dict(llm_request), material)
+
+
+class FakeLLMClient(LLMClient):
+    """Devuelve la respuesta indicada (o lanza el error indicado) y registra las peticiones."""
+
+    def __init__(self, response: object = None, error: Exception | None = None) -> None:
+        self._response = response
+        self._error = error
+        self.requests: list[dict[str, Any]] = []
+
+    def generate_material(self, request: Mapping[str, Any]) -> object:
+        self.requests.append(dict(request))
+        if self._error is not None:
+            raise self._error
+        return self._response
 
 
 class InMemoryFileStorage(FileStorage):
