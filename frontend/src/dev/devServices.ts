@@ -1,6 +1,7 @@
-import { createMockAuthService } from './mockAuthService'
+import { createMockAuthService } from '../features/auth/mockAuthService'
+import { createMockTeacherService } from '../features/teacher/mockTeacherService'
 
-// Usuarios de prueba para desarrollo local (no son credenciales reales)
+// Datos de prueba para desarrollo local (no son credenciales reales)
 export const devAuthService = createMockAuthService({
   users: [
     {
@@ -12,6 +13,9 @@ export const devAuthService = createMockAuthService({
       password: 'Estudiante#2026',
     },
   ],
+})
+
+export const devTeacherService = createMockTeacherService({
   students: {
     'docente@colegio.edu': [
       { id: 1, name: 'Ana Gómez', email: 'estudiante@colegio.edu' },

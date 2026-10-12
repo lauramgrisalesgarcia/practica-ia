@@ -1,10 +1,5 @@
 import { useState } from 'react'
-
-export interface Student {
-  id: number
-  name: string
-  email: string
-}
+import type { Student } from '../../domain/student'
 
 interface TeacherDashboardProps {
   teacherName: string
