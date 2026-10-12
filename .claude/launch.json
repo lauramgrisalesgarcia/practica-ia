@@ -7,6 +7,14 @@
       "runtimeArgs": ["--prefix", "frontend", "run", "dev", "--", "--port", "5180", "--strictPort"],
       "port": 5180,
       "autoPort": false
+    },
+    {
+      "name": "backend",
+      "runtimeExecutable": "uv",
+      "runtimeArgs": ["--directory", "backend", "run", "uvicorn", "app.main:app", "--reload", "--port", "8001"],
+      "port": 8001,
+      "url": "http://localhost:8001",
+      "autoPort": false
     }
   ]
 }

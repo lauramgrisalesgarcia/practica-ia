@@ -118,6 +118,7 @@ uv run uvicorn app.main:app --reload --port 8001
 uv run pytest
 uv run mypy
 uv run alembic upgrade head
+uv run python -m app.persistence.seed   # datos de prueba (contraseña: SEED_USER_PASSWORD en backend/.env)
 uv run alembic revision --autogenerate -m "descripción"
 
 # E2E
