@@ -11,30 +11,16 @@ interface LoginFormProps {
 
 interface FieldErrors {
   email?: string
-  password?: string[]
+  password?: string
 }
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-
-const PASSWORD_RULES: { test: (password: string) => boolean; message: string }[] = [
-  { test: (p) => p.length >= 8, message: 'Debe tener al menos 8 caracteres' },
-  { test: (p) => /[A-Z]/.test(p), message: 'Debe incluir una letra mayúscula' },
-  { test: (p) => /[a-z]/.test(p), message: 'Debe incluir una letra minúscula' },
-  { test: (p) => /\d/.test(p), message: 'Debe incluir un número' },
-  { test: (p) => /[^A-Za-z0-9]/.test(p), message: 'Debe incluir un carácter especial' },
-]
-
-function validatePassword(password: string): string[] {
-  if (!password) return ['La contraseña es obligatoria']
-  return PASSWORD_RULES.filter((rule) => !rule.test(password)).map((rule) => rule.message)
-}
 
 function validate({ email, password }: LoginCredentials): FieldErrors {
   const errors: FieldErrors = {}
   if (!email.trim()) errors.email = 'El correo es obligatorio'
   else if (!EMAIL_PATTERN.test(email)) errors.email = 'El correo no es válido'
-  const passwordErrors = validatePassword(password)
-  if (passwordErrors.length > 0) errors.password = passwordErrors
+  if (!password) errors.password = 'La contraseña es obligatoria'
   return errors
 }
 
@@ -102,11 +88,9 @@ export function LoginForm({ onSubmit }: LoginFormProps) {
           className="rounded-md border border-gray-300 px-3 py-2"
         />
         {errors.password && (
-          <ul id="password-error" className="flex flex-col gap-0.5 text-sm text-red-600">
-            {errors.password.map((message) => (
-              <li key={message}>{message}</li>
-            ))}
-          </ul>
+          <p id="password-error" className="text-sm text-red-600">
+            {errors.password}
+          </p>
         )}
       </div>
 
