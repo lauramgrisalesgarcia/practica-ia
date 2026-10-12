@@ -221,3 +221,24 @@ class StudentMaterialView:
     material: Material
     submission: Submission | None
     grade: Grade | None
+
+
+@dataclass(frozen=True, slots=True)
+class LessonContext:
+    """Contexto de una clase del estudiante, para pedir recomendaciones al LLM."""
+
+    lesson_id: UUID
+    topic: str
+    context: str
+    keywords: tuple[str, ...]
+    student_level: Level
+    native_language: str
+
+
+@dataclass(frozen=True, slots=True)
+class GradedSubmission:
+    """Resultado de resolver un material: el intento guardado y su corrección."""
+
+    lesson_id: UUID
+    submission: Submission
+    grade: Grade

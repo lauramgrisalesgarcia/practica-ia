@@ -1,16 +1,18 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Response
+from fastapi import APIRouter, Depends, Response, status
 
-from app.composition import get_get_my_lesson_pdf, get_get_my_material, get_list_my_lessons
+from app.composition import get_get_my_lesson_pdf, get_get_my_material, get_list_my_lessons, get_submit_material
+from app.domain.entities import Answer
 from app.domain.use_cases.get_my_lesson_pdf import GetMyLessonPdf
 from app.domain.use_cases.get_my_material import GetMyMaterial
 from app.domain.use_cases.list_my_lessons import ListMyLessons
+from app.domain.use_cases.submit_material import SubmitMaterial
 from app.transport.http.dependencies import CurrentUser
 from app.transport.http.files import PDF_RESPONSES, pdf_response
 from app.transport.http.schemas.lessons import StudentLessonSummaryOut
-from app.transport.http.schemas.materials import StudentMaterialOut
+from app.transport.http.schemas.materials import StudentMaterialOut, SubmissionOut, SubmitMaterialIn
 
 router = APIRouter(prefix="/students/me", tags=["Estudiante"])
 
@@ -42,3 +44,19 @@ def get_my_material(
     lesson_id: UUID,
 ) -> StudentMaterialOut:
     return StudentMaterialOut.from_entity(get_material.execute(user, lesson_id))
+
+
+@router.post(
+    "/lessons/{lesson_id}/material/submission",
+    response_model=SubmissionOut,
+    status_code=status.HTTP_201_CREATED,
+)
+def submit_material(
+    user: CurrentUser,
+    submit: Annotated[SubmitMaterial, Depends(get_submit_material)],
+    lesson_id: UUID,
+    body: SubmitMaterialIn,
+) -> SubmissionOut:
+    answers = [Answer(answer.exercise_id, answer.selected_option) for answer in body.answers]
+    result = submit.execute(user, lesson_id, answers)
+    return SubmissionOut.from_entity(result.lesson_id, result.submission, result.grade)

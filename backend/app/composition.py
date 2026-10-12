@@ -29,6 +29,7 @@ from app.domain.use_cases.get_teacher_lesson_pdf import GetTeacherLessonPdf
 from app.domain.use_cases.get_teacher_student import GetTeacherStudent
 from app.domain.use_cases.get_user import GetUser
 from app.domain.use_cases.list_my_lessons import ListMyLessons
+from app.domain.use_cases.submit_material import SubmitMaterial
 from app.domain.use_cases.list_student_lessons import ListStudentLessons
 from app.domain.use_cases.list_teacher_students import ListTeacherStudents
 from app.persistence.database import get_session
@@ -128,3 +129,11 @@ def get_get_my_material(
     materials: Annotated[MaterialRepository, Depends(get_material_repository)],
 ) -> GetMyMaterial:
     return GetMyMaterial(lessons=lessons, materials=materials)
+
+
+def get_submit_material(
+    lessons: Annotated[LessonRepository, Depends(get_lesson_repository)],
+    materials: Annotated[MaterialRepository, Depends(get_material_repository)],
+    llm: Annotated[LLMClient, Depends(get_llm_client)],
+) -> SubmitMaterial:
+    return SubmitMaterial(lessons=lessons, materials=materials, llm=llm, clock=SystemClock())

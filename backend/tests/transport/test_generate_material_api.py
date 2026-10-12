@@ -154,6 +154,9 @@ class BrokenLLMClient(LLMClient):
     def generate_material(self, request: Mapping[str, Any]) -> object:
         return {"title": "sin ejercicios"}
 
+    def generate_recommendations(self, request: Mapping[str, Any]) -> object:
+        return {}
+
 
 @pytest.fixture
 def broken_llm(client: TestClient) -> Iterator[None]:

@@ -7,6 +7,7 @@ from uuid import UUID, uuid4
 
 from app.domain.entities import (
     GenerationContext,
+    LessonContext,
     LessonDetail,
     LessonPdfLocation,
     LessonSummary,
@@ -18,6 +19,7 @@ from app.domain.entities import (
     Student,
     User,
 )
+from app.domain.errors import SubmissionAlreadyExistsError
 from app.domain.ports import (
     Clock,
     FileStorage,
@@ -103,7 +105,9 @@ class InMemoryLessonRepository(LessonRepository):
         contexts_by_teacher: dict[UUID, list[GenerationContext]] | None = None,
         pdfs_by_student: dict[UUID, dict[UUID, tuple[str, str]]] | None = None,
         lessons_by_student: dict[UUID, set[UUID]] | None = None,
+        student_contexts: dict[UUID, list[LessonContext]] | None = None,
     ) -> None:
+        self._student_contexts = student_contexts or {}
         self._lessons_by_student = lessons_by_student or {}
         self._pdfs_by_student = pdfs_by_student or {}
         self._contexts_by_teacher = contexts_by_teacher or {}
@@ -127,6 +131,9 @@ class InMemoryLessonRepository(LessonRepository):
         location = self._pdfs_by_teacher.get(teacher_id, {}).get(lesson_id)
         return LessonPdfLocation(*location) if location else None
 
+    def get_context_for_student(self, student_id: UUID, lesson_id: UUID) -> LessonContext | None:
+        return next((c for c in self._student_contexts.get(student_id, []) if c.lesson_id == lesson_id), None)
+
     def exists_for_student(self, student_id: UUID, lesson_id: UUID) -> bool:
         return lesson_id in self._lessons_by_student.get(student_id, set())
 
@@ -148,6 +155,12 @@ class InMemoryMaterialRepository(MaterialRepository):
     def save(self, lesson_id: UUID, llm_request: Mapping[str, Any], material: Material) -> None:
         self.saved[lesson_id] = (dict(llm_request), material)
 
+    def save_submission(self, lesson_id: UUID, student_id: UUID, submission: Submission) -> None:
+        # Igual que la restricción única de la BD: un solo intento por material.
+        if lesson_id in self.submissions:
+            raise SubmissionAlreadyExistsError
+        self.submissions[lesson_id] = submission
+
     def get_for_lesson(self, lesson_id: UUID) -> tuple[Material, Submission | None] | None:
         if lesson_id not in self.saved:
             return None
@@ -163,6 +176,12 @@ class FakeLLMClient(LLMClient):
         self.requests: list[dict[str, Any]] = []
 
     def generate_material(self, request: Mapping[str, Any]) -> object:
+        return self._respond(request)
+
+    def generate_recommendations(self, request: Mapping[str, Any]) -> object:
+        return self._respond(request)
+
+    def _respond(self, request: Mapping[str, Any]) -> object:
         self.requests.append(dict(request))
         if self._error is not None:
             raise self._error
