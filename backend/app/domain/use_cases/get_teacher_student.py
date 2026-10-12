@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from app.domain.entities import Role, StudentDetail, User
 from app.domain.errors import AccessDeniedError, StudentNotFoundError
 from app.domain.ports import Clock, LessonRepository, StudentRepository
@@ -9,7 +11,7 @@ class GetTeacherStudent:
         self._lessons = lessons
         self._clock = clock
 
-    def execute(self, requester: User, student_id: int) -> StudentDetail:
+    def execute(self, requester: User, student_id: UUID) -> StudentDetail:
         if requester.role is not Role.DOCENTE:
             raise AccessDeniedError
         student = self._students.get_for_teacher(requester.id, student_id)

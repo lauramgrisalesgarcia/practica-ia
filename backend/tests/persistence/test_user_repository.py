@@ -1,3 +1,5 @@
+from uuid import uuid4
+
 from sqlalchemy.orm import Session
 
 from app.domain.entities import Role, User
@@ -13,7 +15,7 @@ def test_busca_por_correo_y_devuelve_una_entidad_del_dominio(db_session: Session
     user = SqlAlchemyUserRepository(db_session).get_by_email("emma@correo.com")
 
     assert user == User(
-        id=model.id,
+        id=model.public_id,
         first_name="Emma",
         last_name="Schmidt",
         email="emma@correo.com",
@@ -25,7 +27,7 @@ def test_busca_por_correo_y_devuelve_una_entidad_del_dominio(db_session: Session
 def test_busca_por_id(db_session: Session) -> None:
     model = create_user(db_session)
 
-    user = SqlAlchemyUserRepository(db_session).get_by_id(model.id)
+    user = SqlAlchemyUserRepository(db_session).get_by_id(model.public_id)
 
     assert user is not None
     assert user.email == model.email
@@ -35,4 +37,4 @@ def test_devuelve_none_si_no_existe(db_session: Session) -> None:
     repository = SqlAlchemyUserRepository(db_session)
 
     assert repository.get_by_email("nadie@colegio.edu") is None
-    assert repository.get_by_id(999_999) is None
+    assert repository.get_by_id(uuid4()) is None

@@ -1,6 +1,7 @@
+import uuid
 from datetime import datetime
 
-from sqlalchemy import CheckConstraint, DateTime, Enum, ForeignKey, Index, String, Text, func
+from sqlalchemy import CheckConstraint, DateTime, Enum, ForeignKey, Index, String, Text, Uuid, func, text
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
@@ -11,10 +12,17 @@ class Base(DeclarativeBase):
     pass
 
 
+def public_id_column() -> Mapped[uuid.UUID]:
+    """Identificador público: UUID v4 aleatorio. Es el único id que sale de la persistencia;
+    el `id` numérico solo se usa internamente para relacionar tablas."""
+    return mapped_column(Uuid, unique=True, default=uuid.uuid4, server_default=text("gen_random_uuid()"))
+
+
 class UserModel(Base):
     __tablename__ = "users"
 
     id: Mapped[int] = mapped_column(primary_key=True)
+    public_id: Mapped[uuid.UUID] = public_id_column()
     first_name: Mapped[str] = mapped_column(String(100))
     last_name: Mapped[str] = mapped_column(String(100))
     email: Mapped[str] = mapped_column(String(255), unique=True)
@@ -52,6 +60,7 @@ class LessonModel(Base):
     )
 
     id: Mapped[int] = mapped_column(primary_key=True)
+    public_id: Mapped[uuid.UUID] = public_id_column()
     student_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
     teacher_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
     date: Mapped[datetime] = mapped_column(DateTime(timezone=True))

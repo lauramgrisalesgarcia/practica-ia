@@ -1,6 +1,7 @@
 """Implementaciones en memoria de los puertos del dominio, para probar los casos de uso sin BD."""
 
 from datetime import UTC, datetime
+from uuid import UUID
 
 from app.domain.entities import Level, Role, Student, User
 from app.domain.ports import Clock, LessonRepository, PasswordHasher, StudentRepository, UserRepository
@@ -8,11 +9,16 @@ from app.domain.ports import Clock, LessonRepository, PasswordHasher, StudentRep
 FAKE_DUMMY_HASH = "hash-de-relleno"
 
 
+def uid(n: int) -> UUID:
+    """UUID fijo y legible para los tests (uid(1) == 00000000-0000-0000-0000-000000000001)."""
+    return UUID(int=n)
+
+
 class InMemoryUserRepository(UserRepository):
     def __init__(self, users: list[User] | None = None) -> None:
         self._users = {user.id: user for user in users or []}
 
-    def get_by_id(self, user_id: int) -> User | None:
+    def get_by_id(self, user_id: UUID) -> User | None:
         return self._users.get(user_id)
 
     def get_by_email(self, email: str) -> User | None:
@@ -37,7 +43,7 @@ class FakePasswordHasher(PasswordHasher):
 
 def make_user(
     *,
-    user_id: int = 1,
+    user_id: UUID = UUID(int=1),
     email: str = "docente@colegio.edu",
     password: str = "Docente#2026",
     role: Role = Role.DOCENTE,
@@ -53,23 +59,23 @@ def make_user(
 
 
 class InMemoryStudentRepository(StudentRepository):
-    def __init__(self, students_by_teacher: dict[int, list[Student]] | None = None) -> None:
+    def __init__(self, students_by_teacher: dict[UUID, list[Student]] | None = None) -> None:
         self._students_by_teacher = students_by_teacher or {}
 
-    def list_by_teacher(self, teacher_id: int) -> list[Student]:
+    def list_by_teacher(self, teacher_id: UUID) -> list[Student]:
         return list(self._students_by_teacher.get(teacher_id, []))
 
-    def get_for_teacher(self, teacher_id: int, student_id: int) -> Student | None:
+    def get_for_teacher(self, teacher_id: UUID, student_id: UUID) -> Student | None:
         return next((s for s in self._students_by_teacher.get(teacher_id, []) if s.id == student_id), None)
 
 
 class InMemoryLessonRepository(LessonRepository):
     """Guarda solo lo necesario para contar: (id del estudiante, fecha de la clase)."""
 
-    def __init__(self, lessons: list[tuple[int, datetime]] | None = None) -> None:
+    def __init__(self, lessons: list[tuple[UUID, datetime]] | None = None) -> None:
         self._lessons = lessons or []
 
-    def count_completed_by_student(self, student_id: int, until: datetime) -> int:
+    def count_completed_by_student(self, student_id: UUID, until: datetime) -> int:
         return sum(1 for owner, date in self._lessons if owner == student_id and date <= until)
 
 
@@ -83,7 +89,7 @@ class FixedClock(Clock):
 
 def make_student(
     *,
-    student_id: int = 10,
+    student_id: UUID = UUID(int=10),
     first_name: str = "Emma",
     last_name: str = "Schmidt",
     email: str = "emma@correo.com",

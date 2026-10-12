@@ -13,6 +13,8 @@ info:
 
     **Autenticación**: JWT de acceso (HS256, caducidad 60 minutos) en la cabecera `Authorization: Bearer <token>`.
 
+    **Identificadores**: todos los recursos se identifican con un UUID aleatorio (no secuencial ni adivinable). Los ids internos de la BD nunca se exponen.
+
     **Propiedad de recursos**: un recurso que existe pero pertenece a otro usuario responde `404` para no revelar su existencia.
 
     Fuente: `docs/001-backend-requirements.md`.
@@ -79,7 +81,7 @@ paths:
                 token_type: bearer
                 expires_in: 3600
                 user:
-                  id: 1
+                  id: '8d3f6c2a-1b4e-4f7a-9c2d-5e6f7a8b9c01'
                   first_name: María
                   last_name: López
                   email: docente@colegio.edu
@@ -108,7 +110,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/User'
               example:
-                id: 1
+                id: '8d3f6c2a-1b4e-4f7a-9c2d-5e6f7a8b9c01'
                 first_name: María
                 last_name: López
                 email: docente@colegio.edu
@@ -132,13 +134,13 @@ paths:
                 items:
                   $ref: '#/components/schemas/Student'
               example:
-                - id: 3
+                - id: 'b71e4a90-2c5d-4f3e-8a1b-6d7c8e9f0a12'
                   first_name: John
                   last_name: Miller
                   email: john@correo.com
                   native_language: en
                   level: B1
-                - id: 2
+                - id: '3f2b8c1e-9a4d-4e7b-b6a2-1c9d0e5f7a83'
                   first_name: Emma
                   last_name: Schmidt
                   email: emma@correo.com
@@ -164,7 +166,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/StudentDetail'
               example:
-                id: 2
+                id: '3f2b8c1e-9a4d-4e7b-b6a2-1c9d0e5f7a83'
                 first_name: Emma
                 last_name: Schmidt
                 email: emma@correo.com
@@ -202,13 +204,13 @@ paths:
                 items:
                   $ref: '#/components/schemas/TeacherLessonSummary'
               example:
-                - id: 15
+                - id: 'c4a9e2d7-5f1b-4c8e-a3d6-7b2e9f0c1d45'
                   date: '2026-10-08T16:00:00Z'
                   duration_minutes: 60
                   topic: Pedir en un restaurante
                   context: Pedir comida y bebida en un restaurante y pedir la cuenta
                   material_status: completed
-                - id: 11
+                - id: '1e7d3b5a-8c2f-4a6e-9d0b-3f5a7c9e1b28'
                   date: '2026-10-01T16:00:00Z'
                   duration_minutes: 60
                   topic: Presentarse
@@ -243,7 +245,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/TeacherLessonDetail'
               example:
-                id: 15
+                id: 'c4a9e2d7-5f1b-4c8e-a3d6-7b2e9f0c1d45'
                 date: '2026-10-08T16:00:00Z'
                 duration_minutes: 60
                 topic: Pedir en un restaurante
@@ -252,10 +254,10 @@ paths:
                 notes: Confunde 'quiero' y 'quisiera'. Le cuesta el orden primero/segundo/postre.
                 pdf:
                   filename: restaurante-a2.pdf
-                  url: /teachers/me/lessons/15/pdf
+                  url: /teachers/me/lessons/c4a9e2d7-5f1b-4c8e-a3d6-7b2e9f0c1d45/pdf
                 material_status: completed
                 student:
-                  id: 2
+                  id: '3f2b8c1e-9a4d-4e7b-b6a2-1c9d0e5f7a83'
                   first_name: Emma
                   last_name: Schmidt
                   native_language: de
@@ -340,7 +342,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/GeneratedMaterial'
               example:
-                lesson_id: 15
+                lesson_id: 'c4a9e2d7-5f1b-4c8e-a3d6-7b2e9f0c1d45'
                 generated_at: '2026-10-12T10:30:00Z'
                 activity_type: complete_sentence
                 exercise_count: 3
@@ -405,14 +407,14 @@ paths:
                 items:
                   $ref: '#/components/schemas/StudentLessonSummary'
               example:
-                - id: 15
+                - id: 'c4a9e2d7-5f1b-4c8e-a3d6-7b2e9f0c1d45'
                   date: '2026-10-08T16:00:00Z'
                   duration_minutes: 60
                   topic: Pedir en un restaurante
                   context: Pedir comida y bebida en un restaurante y pedir la cuenta
                   pdf:
                     filename: restaurante-a2.pdf
-                    url: /students/me/lessons/15/pdf
+                    url: /students/me/lessons/c4a9e2d7-5f1b-4c8e-a3d6-7b2e9f0c1d45/pdf
                   material_status: pending
         '401':
           $ref: '#/components/responses/Unauthorized'
@@ -454,7 +456,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/StudentMaterial'
               example:
-                lesson_id: 15
+                lesson_id: 'c4a9e2d7-5f1b-4c8e-a3d6-7b2e9f0c1d45'
                 activity_type: complete_sentence
                 title: En el restaurante
                 instructions: Completa cada frase con la opción correcta.
@@ -602,18 +604,18 @@ components:
       name: student_id
       in: path
       required: true
-      description: Identificador del estudiante.
+      description: Identificador público (UUID) del estudiante.
       schema:
-        type: integer
-        minimum: 1
+        type: string
+        format: uuid
     LessonId:
       name: lesson_id
       in: path
       required: true
-      description: Identificador de la clase.
+      description: Identificador público (UUID) de la clase.
       schema:
-        type: integer
-        minimum: 1
+        type: string
+        format: uuid
 
   responses:
     Unauthorized:
@@ -668,7 +670,7 @@ components:
     SubmissionResult:
       summary: Resultado con un fallo
       value:
-        lesson_id: 15
+        lesson_id: 'c4a9e2d7-5f1b-4c8e-a3d6-7b2e9f0c1d45'
         submitted_at: '2026-10-12T18:05:00Z'
         correct_count: 2
         incorrect_count: 1
@@ -794,7 +796,8 @@ components:
       required: [id, first_name, last_name, email, role]
       properties:
         id:
-          type: integer
+          type: string
+          format: uuid
         first_name:
           type: string
         last_name:
@@ -810,7 +813,8 @@ components:
       required: [id, first_name, last_name, email, native_language, level]
       properties:
         id:
-          type: integer
+          type: string
+          format: uuid
         first_name:
           type: string
         last_name:
@@ -840,7 +844,8 @@ components:
       required: [id, first_name, last_name, native_language, level]
       properties:
         id:
-          type: integer
+          type: string
+          format: uuid
         first_name:
           type: string
         last_name:
@@ -866,7 +871,8 @@ components:
       required: [id, date, duration_minutes, topic, context, material_status]
       properties:
         id:
-          type: integer
+          type: string
+          format: uuid
         date:
           type: string
           format: date-time
@@ -1005,7 +1011,8 @@ components:
           required: [lesson_id]
           properties:
             lesson_id:
-              type: integer
+              type: string
+              format: uuid
         - $ref: '#/components/schemas/TeacherMaterial'
 
     StudentMaterial:
@@ -1013,7 +1020,8 @@ components:
       required: [lesson_id, activity_type, title, instructions, exercises, submission]
       properties:
         lesson_id:
-          type: integer
+          type: string
+          format: uuid
         activity_type:
           $ref: '#/components/schemas/ActivityType'
         title:
@@ -1092,7 +1100,8 @@ components:
           required: [lesson_id]
           properties:
             lesson_id:
-              type: integer
+              type: string
+              format: uuid
         - $ref: '#/components/schemas/SubmissionSummary'
         - type: object
           required: [results, feedback, recommendations]

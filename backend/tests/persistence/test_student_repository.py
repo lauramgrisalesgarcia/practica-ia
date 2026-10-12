@@ -14,11 +14,11 @@ def test_devuelve_solo_los_estudiantes_del_docente_como_entidades(db_session: Se
     )
     create_student(db_session, teacher=other_teacher, email="pierre@correo.com")
 
-    students = SqlAlchemyStudentRepository(db_session).list_by_teacher(teacher.id)
+    students = SqlAlchemyStudentRepository(db_session).list_by_teacher(teacher.public_id)
 
     assert students == [
         Student(
-            id=emma.id,
+            id=emma.public_id,
             first_name="Emma",
             last_name="Schmidt",
             email="emma@correo.com",
@@ -34,7 +34,7 @@ def test_ordena_por_apellido_y_nombre(db_session: Session) -> None:
     create_student(db_session, teacher=teacher, email="c@correo.com", first_name="John", last_name="Miller")
     create_student(db_session, teacher=teacher, email="a@correo.com", first_name="Anna", last_name="Schmidt")
 
-    students = SqlAlchemyStudentRepository(db_session).list_by_teacher(teacher.id)
+    students = SqlAlchemyStudentRepository(db_session).list_by_teacher(teacher.public_id)
 
     assert [(s.last_name, s.first_name) for s in students] == [
         ("Miller", "John"),
@@ -46,17 +46,17 @@ def test_ordena_por_apellido_y_nombre(db_session: Session) -> None:
 def test_devuelve_lista_vacia_si_no_tiene_estudiantes(db_session: Session) -> None:
     teacher = create_user(db_session)
 
-    assert SqlAlchemyStudentRepository(db_session).list_by_teacher(teacher.id) == []
+    assert SqlAlchemyStudentRepository(db_session).list_by_teacher(teacher.public_id) == []
 
 
 def test_obtiene_un_estudiante_del_docente(db_session: Session) -> None:
     teacher = create_user(db_session)
     emma = create_student(db_session, teacher=teacher)
 
-    student = SqlAlchemyStudentRepository(db_session).get_for_teacher(teacher.id, emma.id)
+    student = SqlAlchemyStudentRepository(db_session).get_for_teacher(teacher.public_id, emma.public_id)
 
     assert student is not None
-    assert student.id == emma.id
+    assert student.id == emma.public_id
     assert student.level == Level.A2
 
 
@@ -65,10 +65,10 @@ def test_no_obtiene_un_estudiante_de_otro_docente(db_session: Session) -> None:
     other_teacher = create_user(db_session, email="otro@colegio.edu")
     pierre = create_student(db_session, teacher=other_teacher, email="pierre@correo.com")
 
-    assert SqlAlchemyStudentRepository(db_session).get_for_teacher(teacher.id, pierre.id) is None
+    assert SqlAlchemyStudentRepository(db_session).get_for_teacher(teacher.public_id, pierre.public_id) is None
 
 
 def test_no_obtiene_un_usuario_que_no_es_estudiante(db_session: Session) -> None:
     teacher = create_user(db_session)
 
-    assert SqlAlchemyStudentRepository(db_session).get_for_teacher(teacher.id, teacher.id) is None
+    assert SqlAlchemyStudentRepository(db_session).get_for_teacher(teacher.public_id, teacher.public_id) is None

@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.domain.entities import Level, StudentDetail
@@ -6,7 +8,7 @@ from app.domain.entities import Level, StudentDetail
 class StudentOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
-    id: int
+    id: UUID
     first_name: str
     last_name: str
     email: str

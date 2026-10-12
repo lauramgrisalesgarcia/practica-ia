@@ -1,5 +1,6 @@
 import enum
 from dataclasses import dataclass
+from uuid import UUID
 
 
 class Role(enum.StrEnum):
@@ -20,7 +21,7 @@ class Level(enum.StrEnum):
 
 @dataclass(frozen=True, slots=True)
 class User:
-    id: int
+    id: UUID
     first_name: str
     last_name: str
     email: str
@@ -30,7 +31,7 @@ class User:
 
 @dataclass(frozen=True, slots=True)
 class Student:
-    id: int
+    id: UUID
     first_name: str
     last_name: str
     email: str

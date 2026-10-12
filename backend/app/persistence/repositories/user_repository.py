@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -12,8 +14,8 @@ class SqlAlchemyUserRepository(UserRepository):
     def __init__(self, session: Session) -> None:
         self._session = session
 
-    def get_by_id(self, user_id: int) -> User | None:
-        model = self._session.get(UserModel, user_id)
+    def get_by_id(self, user_id: UUID) -> User | None:
+        model = self._session.scalar(select(UserModel).where(UserModel.public_id == user_id))
         return _to_entity(model) if model else None
 
     def get_by_email(self, email: str) -> User | None:
@@ -23,7 +25,7 @@ class SqlAlchemyUserRepository(UserRepository):
 
 def _to_entity(model: UserModel) -> User:
     return User(
-        id=model.id,
+        id=model.public_id,
         first_name=model.first_name,
         last_name=model.last_name,
         email=model.email,

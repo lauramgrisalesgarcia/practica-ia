@@ -17,7 +17,7 @@ def test_cuenta_solo_las_clases_realizadas_del_estudiante(db_session: Session) -
     create_lesson(db_session, student=emma, teacher=teacher, date=NOW + timedelta(days=1))
     create_lesson(db_session, student=john, teacher=teacher, date=NOW - timedelta(days=1))
 
-    count = SqlAlchemyLessonRepository(db_session).count_completed_by_student(emma.id, until=NOW)
+    count = SqlAlchemyLessonRepository(db_session).count_completed_by_student(emma.public_id, until=NOW)
 
     assert count == 2
 
@@ -26,4 +26,4 @@ def test_cuenta_cero_si_no_hay_clases(db_session: Session) -> None:
     teacher = create_user(db_session)
     emma = create_student(db_session, teacher=teacher)
 
-    assert SqlAlchemyLessonRepository(db_session).count_completed_by_student(emma.id, until=NOW) == 0
+    assert SqlAlchemyLessonRepository(db_session).count_completed_by_student(emma.public_id, until=NOW) == 0

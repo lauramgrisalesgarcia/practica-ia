@@ -51,6 +51,7 @@ app/
   - Entidades como `dataclass` inmutables (`entities.py`) y errores de negocio (`errors.py`).
   - Puertos en `ports.py` (`Protocol`): lo que el dominio necesita de fuera (`UserRepository`, `PasswordHasher`…).
   - Un **use case** por acción en `use_cases/`: una clase con dependencias inyectadas en el constructor y un método `execute`. Lanza errores de dominio; nunca `HTTPException`.
+- **Identificadores públicos**: la API, el dominio y los tokens identifican cada recurso con un **UUID v4 aleatorio** (`public_id`). El `id` numérico de la BD solo existe dentro de la persistencia (claves foráneas) y nunca se expone. Todo recurso nuevo debe tener `public_id` (`public_id_column()` en `models.py`).
 - **Persistencia (`app/persistence`)**: modelos SQLAlchemy (`*Model`) y un **repository** por agregado en `repositories/` que implementa el puerto del dominio y devuelve **entidades**, nunca modelos.
 - **Transporte (`app/transport/http`)**: valida la entrada con Pydantic, obtiene el use case por `Depends` y llama a `execute`. Los errores de dominio se traducen a códigos HTTP en un único lugar, `error_handlers.py` (los routers no usan `try/except` para ello). No importa SQLAlchemy ni modelos.
 - **Composición (`app/composition.py`)**: único lugar que conoce a la vez persistencia y dominio.

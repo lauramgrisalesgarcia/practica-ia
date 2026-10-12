@@ -97,6 +97,7 @@ Roles:
 - El docente ve ese mismo resultado en el detalle de la clase (RF7).
 
 ## Reglas de negocio
+- Todos los recursos se identifican en la API con un **UUID v4 aleatorio** (`public_id`), no secuencial ni adivinable. Los ids numéricos internos de la BD nunca se exponen.
 - Los estudiantes son extranjeros que aprenden **español**; el idioma de aprendizaje no se almacena porque siempre es `es`.
 - El nivel del estudiante sigue el **MCER**: `A1`, `A2`, `B1`, `B2`, `C1`, `C2`.
 - Un estudiante tiene **exactamente un** docente asignado. Un docente puede tener varios estudiantes.
@@ -112,7 +113,8 @@ Roles:
 
 ```
 users
-  id              PK
+  id              PK (interno, nunca se expone)
+  public_id       UUID v4, único (identificador en la API)
   first_name      texto, obligatorio
   last_name       texto, obligatorio
   email           texto, único (en minúsculas)
@@ -127,7 +129,8 @@ student_profiles                  (solo usuarios con rol estudiante)
   level              'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2'
 
 lessons
-  id                 PK
+  id                 PK (interno, nunca se expone)
+  public_id          UUID v4, único (identificador en la API)
   student_id         FK → users.id
   teacher_id         FK → users.id
   date               timestamp con zona horaria

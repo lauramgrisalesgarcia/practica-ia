@@ -1,18 +1,19 @@
 from datetime import UTC, datetime, timedelta
+from uuid import UUID
 
 import pytest
 
 from app.domain.entities import Role, StudentDetail
 from app.domain.errors import AccessDeniedError, StudentNotFoundError
 from app.domain.use_cases.get_teacher_student import GetTeacherStudent
-from tests.domain.fakes import FixedClock, InMemoryLessonRepository, InMemoryStudentRepository, make_student, make_user
+from tests.domain.fakes import FixedClock, InMemoryLessonRepository, InMemoryStudentRepository, make_student, make_user, uid
 
 NOW = datetime(2026, 10, 12, 12, 0, tzinfo=UTC)
-TEACHER = make_user(user_id=1, role=Role.DOCENTE)
-EMMA = make_student(student_id=10)
+TEACHER = make_user(user_id=uid(1), role=Role.DOCENTE)
+EMMA = make_student(student_id=uid(10))
 
 
-def build(lessons: list[tuple[int, datetime]] | None = None) -> GetTeacherStudent:
+def build(lessons: list[tuple[UUID, datetime]] | None = None) -> GetTeacherStudent:
     return GetTeacherStudent(
         students=InMemoryStudentRepository({TEACHER.id: [EMMA]}),
         lessons=InMemoryLessonRepository(lessons),
@@ -33,7 +34,7 @@ def test_no_cuenta_las_clases_futuras() -> None:
 
 
 def test_un_estudiante_de_otro_docente_no_se_encuentra() -> None:
-    other_teacher = make_user(user_id=2, role=Role.DOCENTE)
+    other_teacher = make_user(user_id=uid(2), role=Role.DOCENTE)
 
     with pytest.raises(StudentNotFoundError):
         build().execute(other_teacher, EMMA.id)
@@ -41,7 +42,7 @@ def test_un_estudiante_de_otro_docente_no_se_encuentra() -> None:
 
 def test_un_estudiante_inexistente_no_se_encuentra() -> None:
     with pytest.raises(StudentNotFoundError):
-        build().execute(TEACHER, 999)
+        build().execute(TEACHER, uid(999))
 
 
 def test_un_estudiante_no_puede_ver_el_detalle() -> None:
