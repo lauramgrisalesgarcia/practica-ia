@@ -3,13 +3,19 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends
 
-from app.composition import get_get_teacher_student, get_list_student_lessons, get_list_teacher_students
+from app.composition import (
+    get_get_teacher_lesson,
+    get_get_teacher_student,
+    get_list_student_lessons,
+    get_list_teacher_students,
+)
 from app.domain.entities import LessonSummary, Student
+from app.domain.use_cases.get_teacher_lesson import GetTeacherLesson
 from app.domain.use_cases.get_teacher_student import GetTeacherStudent
 from app.domain.use_cases.list_student_lessons import ListStudentLessons
 from app.domain.use_cases.list_teacher_students import ListTeacherStudents
 from app.transport.http.dependencies import CurrentUser
-from app.transport.http.schemas.lessons import LessonSummaryOut
+from app.transport.http.schemas.lessons import LessonSummaryOut, TeacherLessonDetailOut
 from app.transport.http.schemas.students import StudentDetailOut, StudentOut
 
 router = APIRouter(prefix="/teachers/me", tags=["Docente"])
@@ -39,3 +45,13 @@ def list_my_student_lessons(
     student_id: UUID,
 ) -> list[LessonSummary]:
     return list_lessons.execute(user, student_id)
+
+
+@router.get("/lessons/{lesson_id}", response_model=TeacherLessonDetailOut)
+def get_my_lesson(
+    user: CurrentUser,
+    get_lesson: Annotated[GetTeacherLesson, Depends(get_get_teacher_lesson)],
+    lesson_id: UUID,
+) -> TeacherLessonDetailOut:
+    detail = get_lesson.execute(user, lesson_id)
+    return TeacherLessonDetailOut.from_entity(detail, pdf_url=f"{router.prefix}/lessons/{lesson_id}/pdf")

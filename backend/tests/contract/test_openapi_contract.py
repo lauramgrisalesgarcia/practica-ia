@@ -64,7 +64,10 @@ def shape(schema: Schema) -> Any:
         return {"enum": sorted(schema["enum"])}
 
     types = schema.get("type")
-    result: Schema = {"type": sorted(types) if isinstance(types, list) else types}
+    if isinstance(types, list):
+        # `type: [string, "null"]` equivale a `anyOf: [{type: string}, {type: null}]`.
+        return shape({"oneOf": [{**schema, "type": single} for single in types]})
+    result: Schema = {"type": types}
     result |= {key: schema[key] for key in CONSTRAINTS if key in schema}
     if schema.get("format") in CONTRACT_FORMATS:
         result["format"] = schema["format"]

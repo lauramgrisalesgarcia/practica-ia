@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session, aliased
 
 from app.domain.entities import Student
 from app.domain.ports import StudentRepository
+from app.persistence.mappers import to_student
 from app.persistence.models import StudentProfileModel, UserModel
 
 _Teacher = aliased(UserModel)
@@ -20,7 +21,7 @@ class SqlAlchemyStudentRepository(StudentRepository):
         rows = self._session.execute(
             _students_of(teacher_id).order_by(UserModel.last_name, UserModel.first_name)
         ).all()
-        return [_to_entity(user, profile) for user, profile in rows]
+        return [to_student(user, profile) for user, profile in rows]
 
     def get_for_teacher(self, teacher_id: UUID, student_id: UUID) -> Student | None:
         row = self._session.execute(
@@ -29,7 +30,7 @@ class SqlAlchemyStudentRepository(StudentRepository):
         if row is None:
             return None
         user, profile = row
-        return _to_entity(user, profile)
+        return to_student(user, profile)
 
 
 def _students_of(teacher_id: UUID) -> Select[UserModel, StudentProfileModel]:
@@ -40,13 +41,3 @@ def _students_of(teacher_id: UUID) -> Select[UserModel, StudentProfileModel]:
         .where(_Teacher.public_id == teacher_id)
     )
 
-
-def _to_entity(user: UserModel, profile: StudentProfileModel) -> Student:
-    return Student(
-        id=user.public_id,
-        first_name=user.first_name,
-        last_name=user.last_name,
-        email=user.email,
-        native_language=profile.native_language,
-        level=profile.level,
-    )

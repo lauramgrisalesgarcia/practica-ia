@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import Protocol
 from uuid import UUID
 
-from app.domain.entities import LessonSummary, Student, User
+from app.domain.entities import LessonDetail, LessonSummary, Student, User
 
 
 class UserRepository(Protocol):
@@ -41,6 +41,10 @@ class LessonRepository(Protocol):
 
     def list_completed_by_student(self, student_id: UUID, until: datetime) -> list[LessonSummary]:
         """Clases del estudiante con fecha anterior o igual a `until`, de la más reciente a la más antigua."""
+        ...
+
+    def get_detail_for_teacher(self, teacher_id: UUID, lesson_id: UUID) -> LessonDetail | None:
+        """Detalle de la clase, solo si es de un estudiante asignado a ese docente."""
         ...
 
 

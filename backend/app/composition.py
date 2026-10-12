@@ -13,6 +13,7 @@ from app.core.clock import SystemClock
 from app.core.password_hasher import Argon2PasswordHasher
 from app.domain.ports import LessonRepository, StudentRepository, UserRepository
 from app.domain.use_cases.authenticate_user import AuthenticateUser
+from app.domain.use_cases.get_teacher_lesson import GetTeacherLesson
 from app.domain.use_cases.get_teacher_student import GetTeacherStudent
 from app.domain.use_cases.get_user import GetUser
 from app.domain.use_cases.list_student_lessons import ListStudentLessons
@@ -61,3 +62,7 @@ def get_list_student_lessons(
     lessons: Annotated[LessonRepository, Depends(get_lesson_repository)],
 ) -> ListStudentLessons:
     return ListStudentLessons(students=students, lessons=lessons, clock=SystemClock())
+
+
+def get_get_teacher_lesson(lessons: Annotated[LessonRepository, Depends(get_lesson_repository)]) -> GetTeacherLesson:
+    return GetTeacherLesson(lessons=lessons)

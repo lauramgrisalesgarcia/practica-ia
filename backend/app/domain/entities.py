@@ -1,6 +1,7 @@
 import enum
 from dataclasses import dataclass
 from datetime import datetime
+from decimal import Decimal
 from uuid import UUID
 
 
@@ -62,3 +63,48 @@ class LessonSummary:
     topic: str
     context: str
     material_status: MaterialStatus
+
+
+class ActivityType(enum.StrEnum):
+    """Tipo de actividad del material. En el alcance del proyecto solo existe completar frases."""
+
+    COMPLETE_SENTENCE = "complete_sentence"
+
+
+@dataclass(frozen=True, slots=True)
+class Exercise:
+    """Ejercicio de completar la frase: `sentence` contiene un hueco `___`."""
+
+    id: int
+    sentence: str
+    options: tuple[str, ...]
+    correct_option: str
+
+
+@dataclass(frozen=True, slots=True)
+class Material:
+    generated_at: datetime
+    activity_type: ActivityType
+    exercise_count: int
+    title: str
+    instructions: str
+    exercises: tuple[Exercise, ...]
+
+
+@dataclass(frozen=True, slots=True)
+class SubmissionSummary:
+    submitted_at: datetime
+    correct_count: int
+    incorrect_count: int
+    score: Decimal
+
+
+@dataclass(frozen=True, slots=True)
+class LessonDetail:
+    summary: LessonSummary
+    keywords: tuple[str, ...]
+    notes: str | None
+    pdf_filename: str
+    student: Student
+    material: Material | None
+    submission: SubmissionSummary | None
