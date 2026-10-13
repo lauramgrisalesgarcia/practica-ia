@@ -1,0 +1,11 @@
+# Nunca se copian a la imagen: secretos, entornos locales ni archivos generados.
+.env
+.env.*
+!.env.example
+.venv
+storage
+__pycache__
+*.pyc
+.pytest_cache
+.mypy_cache
+tests

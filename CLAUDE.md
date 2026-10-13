@@ -111,6 +111,8 @@ uvx --python 3.13 pre-commit install   # hook de detección de secretos
 
 # Base de datos (desde la raíz)
 docker compose up -d
+docker compose run --rm migrate   # aplica las migraciones
+docker compose run --rm seed      # migra y carga los datos de prueba
 
 # Frontend (desde frontend/)
 npm run dev

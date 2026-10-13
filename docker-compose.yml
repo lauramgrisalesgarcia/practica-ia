@@ -18,5 +18,34 @@ services:
       timeout: 3s
       retries: 20
 
+  # Utilidades (profile "tools": no arrancan con `docker compose up`).
+  #   docker compose run --rm migrate   -> aplica todas las migraciones
+  #   docker compose run --rm seed      -> migra y carga los datos de prueba
+  # Los secretos salen de .env (raíz) y backend/.env; no se escriben aquí ni en la imagen.
+  migrate:
+    profiles: ["tools"]
+    build: ./backend
+    env_file: ./backend/.env
+    environment: &backend-db
+      # Dentro de Docker la BD se alcanza por la red interna (db:5432), no por el puerto publicado.
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-practica_ia}
+    command: ["alembic", "upgrade", "head"]
+    depends_on:
+      db:
+        condition: service_healthy
+
+  seed:
+    profiles: ["tools"]
+    build: ./backend
+    env_file: ./backend/.env
+    environment: *backend-db
+    command: ["python", "-m", "app.persistence.seed"]
+    volumes:
+      # Los PDF de ejemplo quedan en backend/storage, donde los lee la API local.
+      - ./backend/storage:/app/storage
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
 volumes:
   pgdata:
