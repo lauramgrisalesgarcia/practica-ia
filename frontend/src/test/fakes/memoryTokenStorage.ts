@@ -1,4 +1,4 @@
-import type { TokenStorage } from '../../features/auth/tokenStorage'
+import type { TokenStorage } from '../../features/auth/services/tokenStorage'
 
 export function createMemoryTokenStorage(initialToken: string | null = null): TokenStorage {
   let token = initialToken

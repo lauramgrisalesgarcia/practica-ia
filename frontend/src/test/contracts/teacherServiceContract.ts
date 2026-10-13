@@ -1,5 +1,5 @@
 import { toStudentSummary, type StudentDetail } from '../../domain/student'
-import type { TeacherService } from '../../features/teacher/teacherService'
+import type { TeacherService } from '../../features/teacher/services/teacherService'
 
 export const TEST_STUDENTS: StudentDetail[] = [
   {
