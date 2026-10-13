@@ -1,7 +1,7 @@
 import { render, type RenderResult } from '@testing-library/react'
 import type { ReactElement } from 'react'
-import { ServicesProvider } from '../services/ServicesProvider'
-import type { Services } from '../services/servicesContext'
+import { ServicesProvider } from '../app/services/ServicesProvider'
+import type { Services } from '../app/services/servicesContext'
 
 function createFakeServices(): Services {
   return {

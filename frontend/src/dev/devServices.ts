@@ -1,8 +1,8 @@
 import type { LessonDetail, LessonSummary, StudentMaterial, StudentSubmission } from '../domain/lesson'
-import { createMockAuthService } from '../features/auth/mockAuthService'
-import { createMockTeacherLessonService } from '../features/lessons/mockTeacherLessonService'
-import { createMockStudentService } from '../features/student/mockStudentService'
-import { createMockTeacherService } from '../features/teacher/mockTeacherService'
+import { createMockAuthService } from '../features/auth/services/mockAuthService'
+import { createMockTeacherLessonService } from '../features/teacher/services/mockTeacherLessonService'
+import { createMockStudentService } from '../features/student/services/mockStudentService'
+import { createMockTeacherService } from '../features/teacher/services/mockTeacherService'
 
 // Datos de prueba para desarrollo local (no son credenciales reales)
 export const devAuthService = createMockAuthService({
