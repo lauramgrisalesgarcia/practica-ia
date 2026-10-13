@@ -1,5 +1,6 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
+import { BrowserRouter } from 'react-router'
 import './index.css'
 import App from './App.tsx'
 import { createServices } from './composition'
@@ -11,9 +12,11 @@ const services = createServices({ apiUrl: import.meta.env.VITE_API_URL })
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ServicesProvider services={services}>
-      <SessionProvider>
-        <App />
-      </SessionProvider>
+      <BrowserRouter>
+        <SessionProvider>
+          <App />
+        </SessionProvider>
+      </BrowserRouter>
     </ServicesProvider>
   </StrictMode>,
 )
