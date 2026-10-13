@@ -44,3 +44,15 @@ class InvalidLLMResponseError(DomainError):
 
 class MaterialNotFoundError(NotFoundError):
     """La clase no tiene material de refuerzo."""
+
+
+class SubmissionAlreadyExistsError(ConflictError):
+    """El estudiante ya resolvió este material (solo hay un intento)."""
+
+
+class InvalidAnswersError(DomainError):
+    """Faltan ejercicios, hay ejercicios repetidos o inexistentes, u opciones que no existen."""
+
+
+class InvalidRecommendationsError(DomainError):
+    """El LLM falló o sus recomendaciones no cumplen el esquema. El intento no se guarda."""

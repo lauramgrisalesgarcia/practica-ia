@@ -7,6 +7,7 @@ from uuid import UUID
 
 from app.domain.entities import (
     GenerationContext,
+    LessonContext,
     LessonDetail,
     LessonPdfLocation,
     LessonSummary,
@@ -61,6 +62,10 @@ class LessonRepository(Protocol):
         """Ubicación del PDF de la clase, solo si es de un estudiante asignado a ese docente."""
         ...
 
+    def get_context_for_student(self, student_id: UUID, lesson_id: UUID) -> LessonContext | None:
+        """Contexto de la clase, solo si es de ese estudiante."""
+        ...
+
     def exists_for_student(self, student_id: UUID, lesson_id: UUID) -> bool:
         """True si la clase existe y es de ese estudiante."""
         ...
@@ -79,6 +84,11 @@ class MaterialRepository(Protocol):
         """Guarda el material de la clase (reemplaza el anterior) junto con la petición enviada al LLM."""
         ...
 
+    def save_submission(self, lesson_id: UUID, student_id: UUID, submission: Submission) -> None:
+        """Guarda el único intento del material. Si ya existe (incluso por envíos simultáneos),
+        lanza SubmissionAlreadyExistsError."""
+        ...
+
     def get_for_lesson(self, lesson_id: UUID) -> tuple[Material, Submission | None] | None:
         """Material de la clase y el intento del estudiante (si lo hay), o None si no hay material."""
         ...
@@ -87,6 +97,10 @@ class MaterialRepository(Protocol):
 class LLMClient(Protocol):
     def generate_material(self, request: Mapping[str, Any]) -> object:
         """Envía la petición al LLM y devuelve su respuesta JSON sin validar."""
+        ...
+
+    def generate_recommendations(self, request: Mapping[str, Any]) -> object:
+        """Pide al LLM comentario y recomendaciones para un intento; respuesta JSON sin validar."""
         ...
 
 

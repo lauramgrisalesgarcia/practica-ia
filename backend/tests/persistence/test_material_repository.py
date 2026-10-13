@@ -2,10 +2,12 @@ from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from uuid import uuid4
 
+import pytest
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.domain.entities import ActivityType, Answer, Exercise, Level, Material, Submission
+from app.domain.errors import SubmissionAlreadyExistsError
 from app.persistence.models import ReinforcementMaterialModel
 from app.persistence.repositories.lesson_repository import SqlAlchemyLessonRepository
 from app.persistence.repositories.material_repository import SqlAlchemyMaterialRepository
@@ -172,3 +174,63 @@ def test_comprueba_si_una_clase_es_del_estudiante(db_session: Session) -> None:
     assert repository.exists_for_student(emma.public_id, lesson.public_id) is True
     assert repository.exists_for_student(john.public_id, lesson.public_id) is False
     assert repository.exists_for_student(emma.public_id, uuid4()) is False
+
+
+def make_submission() -> Submission:
+    return Submission(
+        submitted_at=NOW,
+        answers=(Answer(1, "a"), Answer(2, "b")),
+        correct_count=1,
+        incorrect_count=1,
+        score=Decimal("50.00"),
+        feedback="¡Bien!",
+        recommendations=("Repasa el ejercicio 2.",),
+    )
+
+
+def test_guarda_el_intento_del_estudiante(db_session: Session) -> None:
+    teacher = create_user(db_session)
+    emma = create_student(db_session, teacher=teacher)
+    lesson = create_lesson(db_session, student=emma, teacher=teacher, date=NOW - timedelta(days=1))
+    create_material(db_session, lesson=lesson, exercise_count=2)
+    repository = SqlAlchemyMaterialRepository(db_session)
+
+    repository.save_submission(lesson.public_id, emma.public_id, make_submission())
+
+    found = repository.get_for_lesson(lesson.public_id)
+    assert found is not None
+    assert found[1] == make_submission()
+
+
+def test_un_segundo_intento_viola_la_restriccion_unica(db_session: Session) -> None:
+    teacher = create_user(db_session)
+    emma = create_student(db_session, teacher=teacher)
+    lesson = create_lesson(db_session, student=emma, teacher=teacher, date=NOW - timedelta(days=1))
+    create_material(db_session, lesson=lesson, exercise_count=2)
+    repository = SqlAlchemyMaterialRepository(db_session)
+    repository.save_submission(lesson.public_id, emma.public_id, make_submission())
+
+    with pytest.raises(SubmissionAlreadyExistsError):
+        repository.save_submission(lesson.public_id, emma.public_id, make_submission())
+
+    found = repository.get_for_lesson(lesson.public_id)
+    assert found is not None
+    assert found[1] == make_submission()
+
+
+def test_contexto_de_una_clase_del_estudiante(db_session: Session) -> None:
+    teacher = create_user(db_session)
+    emma = create_student(db_session, teacher=teacher, email="emma@correo.com", native_language="de", level=Level.A2)
+    john = create_student(db_session, teacher=teacher, email="john@correo.com")
+    lesson = create_lesson(db_session, student=emma, teacher=teacher, date=NOW, keywords=["la carta", "quisiera"])
+    repository = SqlAlchemyLessonRepository(db_session)
+
+    context = repository.get_context_for_student(emma.public_id, lesson.public_id)
+
+    assert context is not None
+    assert context.lesson_id == lesson.public_id
+    assert context.topic == lesson.topic
+    assert context.keywords == ("la carta", "quisiera")
+    assert context.student_level is Level.A2
+    assert context.native_language == "de"
+    assert repository.get_context_for_student(john.public_id, lesson.public_id) is None

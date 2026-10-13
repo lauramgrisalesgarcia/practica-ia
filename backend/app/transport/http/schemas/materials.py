@@ -108,3 +108,12 @@ class StudentMaterialOut(BaseModel):
             ],
             submission=submission,
         )
+
+
+class AnswerIn(BaseModel):
+    exercise_id: int
+    selected_option: str = Field(min_length=1)
+
+
+class SubmitMaterialIn(BaseModel):
+    answers: list[AnswerIn] = Field(min_length=1, max_length=15, description="Una respuesta por cada ejercicio")

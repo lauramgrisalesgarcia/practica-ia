@@ -5,6 +5,7 @@ import pytest
 
 from app.domain.entities import ActivityType, Level, MaterialGenerationRequest
 from app.domain.material_validation import parse_generated_material
+from app.domain.recommendation_validation import parse_recommendations
 from app.llm.simulated import SimulatedLLMClient
 
 
@@ -42,3 +43,11 @@ def test_cada_llamada_devuelve_una_copia_independiente() -> None:
     second: Any = client.generate_material(make_request(2).to_llm_payload())
 
     assert second["title"] != "modificado"
+
+
+def test_devuelve_recomendaciones_validas() -> None:
+    response = SimulatedLLMClient().generate_recommendations({"task": "generate_recommendations"})
+
+    feedback, recommendations = parse_recommendations(response)
+    assert feedback
+    assert 1 <= len(recommendations) <= 5

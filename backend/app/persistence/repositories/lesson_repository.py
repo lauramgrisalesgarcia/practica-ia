@@ -4,7 +4,14 @@ from uuid import UUID
 from sqlalchemy import ColumnElement, case, func, select
 from sqlalchemy.orm import Session, aliased
 
-from app.domain.entities import GenerationContext, LessonDetail, LessonPdfLocation, LessonSummary, MaterialStatus
+from app.domain.entities import (
+    GenerationContext,
+    LessonContext,
+    LessonDetail,
+    LessonPdfLocation,
+    LessonSummary,
+    MaterialStatus,
+)
 from app.domain.ports import LessonRepository
 from app.persistence.mappers import to_lesson_summary, to_material, to_student, to_submission_summary
 from app.persistence.models import (
@@ -92,6 +99,25 @@ class SqlAlchemyLessonRepository(LessonRepository):
             .where(_of_teacher(teacher_id), LessonModel.public_id == lesson_id)
         ).one_or_none()
         return LessonPdfLocation(filename=row[0], path=row[1]) if row else None
+
+    def get_context_for_student(self, student_id: UUID, lesson_id: UUID) -> LessonContext | None:
+        row = self._session.execute(
+            select(LessonModel, StudentProfileModel)
+            .join(UserModel, UserModel.id == LessonModel.student_id)
+            .join(StudentProfileModel, StudentProfileModel.user_id == UserModel.id)
+            .where(UserModel.public_id == student_id, LessonModel.public_id == lesson_id)
+        ).one_or_none()
+        if row is None:
+            return None
+        lesson, profile = row
+        return LessonContext(
+            lesson_id=lesson.public_id,
+            topic=lesson.topic,
+            context=lesson.context,
+            keywords=tuple(lesson.keywords),
+            student_level=profile.level,
+            native_language=profile.native_language,
+        )
 
     def exists_for_student(self, student_id: UUID, lesson_id: UUID) -> bool:
         found = self._session.scalar(

@@ -22,6 +22,9 @@ class SimulatedLLMClient(LLMClient):
         response["exercises"] = response["exercises"][: int(request["exercise_count"])]
         return response
 
+    def generate_recommendations(self, request: Mapping[str, Any]) -> object:
+        return copy.deepcopy(_load("recommendations.json"))
+
 
 @cache
 def _load(name: str) -> dict[str, Any]:

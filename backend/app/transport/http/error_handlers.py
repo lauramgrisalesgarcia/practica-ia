@@ -6,14 +6,17 @@ from fastapi.responses import JSONResponse
 from app.domain.errors import (
     AccessDeniedError,
     DomainError,
+    InvalidAnswersError,
     InvalidCredentialsError,
     InvalidLLMResponseError,
+    InvalidRecommendationsError,
     LessonNotCompletedError,
     LessonNotFoundError,
     LessonPdfNotFoundError,
     MaterialAlreadySubmittedError,
     MaterialNotFoundError,
     StudentNotFoundError,
+    SubmissionAlreadyExistsError,
 )
 
 _RESPONSES: dict[type[DomainError], tuple[int, str]] = {
@@ -29,6 +32,12 @@ _RESPONSES: dict[type[DomainError], tuple[int, str]] = {
         "El material ya fue resuelto por el estudiante y no se puede regenerar",
     ),
     InvalidLLMResponseError: (status.HTTP_502_BAD_GATEWAY, "No se pudo generar el material de refuerzo"),
+    SubmissionAlreadyExistsError: (status.HTTP_409_CONFLICT, "El material ya fue resuelto"),
+    InvalidAnswersError: (
+        status.HTTP_422_UNPROCESSABLE_CONTENT,
+        "Debes responder todos los ejercicios con una opción válida",
+    ),
+    InvalidRecommendationsError: (status.HTTP_502_BAD_GATEWAY, "No se pudieron generar las recomendaciones"),
 }
 
 
