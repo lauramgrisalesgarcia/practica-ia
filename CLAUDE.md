@@ -55,6 +55,7 @@ app/
 - **Identificadores públicos**: la API, el dominio y los tokens identifican cada recurso con un **UUID v4 aleatorio** (`public_id`). El `id` numérico de la BD solo existe dentro de la persistencia (claves foráneas) y nunca se expone. Todo recurso nuevo debe tener `public_id` (`public_id_column()` en `models.py`).
 - **Archivos**: se leen y escriben solo a través del puerto `FileStorage` (implementación `LocalFileStorage`, limitada a `backend/storage/` y protegida contra path traversal). La BD guarda la ruta; la ruta nunca se expone en la API. Las descargas usan `transport/http/files.py` (nombre de archivo saneado y `X-Content-Type-Options: nosniff`).
 - **LLM (`app/llm`)**: implementa el puerto `LLMClient`. El dominio construye la petición (`MaterialGenerationRequest.to_llm_payload()`) y **valida siempre la respuesta** (`domain/material_validation.py`) antes de guardarla; una respuesta no válida o un fallo del proveedor es `InvalidLLMResponseError` (502) y no se guarda nada. Para usar un LLM real basta con otra implementación de `LLMClient` en `composition.py`.
+- **Migraciones**: toda modificación del esquema es una migración de Alembic (`migrations/versions/`). Tras crearla, se regenera `migrations/001-esquema-base-de-datos.sql` (script SQL completo del esquema) con `migrations/export_schema.py`; un test falla si el archivo no está sincronizado.
 - **Transacciones**: una unidad de trabajo por petición. `get_session` hace `commit` si la petición termina bien y `rollback` si falla. Los repositories solo hacen `flush`, nunca `commit`.
 - **Persistencia (`app/persistence`)**: modelos SQLAlchemy (`*Model`) y un **repository** por agregado en `repositories/` que implementa el puerto del dominio y devuelve **entidades**, nunca modelos.
 - **Transporte (`app/transport/http`)**: valida la entrada con Pydantic, obtiene el use case por `Depends` y llama a `execute`. Los errores de dominio se traducen a códigos HTTP en un único lugar, `error_handlers.py` (los routers no usan `try/except` para ello). No importa SQLAlchemy ni modelos.
@@ -125,6 +126,7 @@ uv run mypy
 uv run alembic upgrade head
 uv run python -m app.persistence.seed   # datos de prueba (contraseña: SEED_USER_PASSWORD en backend/.env)
 uv run alembic revision --autogenerate -m "descripción"
+uv run python -m migrations.export_schema   # regenera migrations/001-esquema-base-de-datos.sql tras cada migración
 
 # E2E
 npx playwright test
