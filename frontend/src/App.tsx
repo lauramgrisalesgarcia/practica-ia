@@ -63,7 +63,7 @@ function App() {
           <RequireRole role="docente">
             {(user) => (
               <AuthenticatedLayout>
-                <TeacherDashboard teacherName={user.name} loadStudents={() => teacherService.getAssignedStudents(user)} />
+                <TeacherDashboard teacherName={user.name} loadStudents={teacherService.getAssignedStudents} />
               </AuthenticatedLayout>
             )}
           </RequireRole>

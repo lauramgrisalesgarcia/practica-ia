@@ -12,6 +12,8 @@ type StudentsState =
   | { status: 'loaded'; students: Student[] }
   | { status: 'error'; message: string }
 
+const languageNames = new Intl.DisplayNames(['es'], { type: 'language' })
+
 export function TeacherDashboard({ teacherName, loadStudents }: TeacherDashboardProps) {
   const [state, setState] = useState<StudentsState>({ status: 'idle' })
 
@@ -63,6 +65,9 @@ export function TeacherDashboard({ teacherName, loadStudents }: TeacherDashboard
               <li key={student.id} className="flex flex-col py-3">
                 <span className="font-medium text-gray-900">{student.name}</span>
                 <span className="text-sm text-gray-500">{student.email}</span>
+                <span className="text-sm text-gray-500">
+                  {student.level} · {languageNames.of(student.nativeLanguage)}
+                </span>
               </li>
             ))}
           </ul>

@@ -4,8 +4,8 @@ import type { Student } from '../../domain/student'
 import { TeacherDashboard } from './TeacherDashboard'
 
 const STUDENTS: Student[] = [
-  { id: 1, name: 'Ana Gómez', email: 'ana@colegio.edu' },
-  { id: 2, name: 'Luis Pérez', email: 'luis@colegio.edu' },
+  { id: 'b71e4a90-2c5d-4f3e-8a1b-6d7c8e9f0a12', name: 'Ana Gómez', email: 'ana@colegio.edu', nativeLanguage: 'en', level: 'B1' },
+  { id: '3f2b8c1e-9a4d-4e7b-b6a2-1c9d0e5f7a83', name: 'Luis Pérez', email: 'luis@colegio.edu', nativeLanguage: 'de', level: 'A2' },
 ]
 
 function setup(loadStudents = vi.fn().mockResolvedValue(STUDENTS)) {
@@ -43,6 +43,16 @@ describe('TeacherDashboard', () => {
     expect(list).toHaveTextContent('ana@colegio.edu')
     expect(list).toHaveTextContent('Luis Pérez')
     expect(screen.getAllByRole('listitem')).toHaveLength(2)
+  })
+
+  it('muestra el nivel y el idioma natal de cada alumno', async () => {
+    const { user, viewStudentsButton } = setup()
+
+    await user.click(viewStudentsButton)
+
+    const [ana, luis] = await screen.findAllByRole('listitem')
+    expect(ana).toHaveTextContent('B1 · inglés')
+    expect(luis).toHaveTextContent('A2 · alemán')
   })
 
   it('indica que está cargando mientras obtiene los alumnos', async () => {

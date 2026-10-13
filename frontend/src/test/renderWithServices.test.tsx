@@ -13,7 +13,7 @@ describe('renderWithServices', () => {
     const { services } = renderWithServices(<AuthProbe />)
 
     expect(screen.getByText('servicios disponibles')).toBeInTheDocument()
-    await expect(services.teacherService.getAssignedStudents({ name: 'X', email: 'x@colegio.edu', role: 'docente' })).resolves.toEqual([])
+    await expect(services.teacherService.getAssignedStudents()).resolves.toEqual([])
     await expect(services.authService.login({ email: 'x@colegio.edu', password: 'x' })).rejects.toThrow(/no configurado/)
   })
 
