@@ -10,7 +10,7 @@ import type { TeacherLessonService } from './features/lessons/teacherLessonServi
 import type { StudentService } from './features/student/studentService'
 import type { TeacherService } from './features/teacher/teacherService'
 import { EMMA_LESSONS, RESTAURANT_LESSON } from './test/contracts/teacherLessonServiceContract'
-import { MY_LESSONS } from './test/contracts/studentServiceContract'
+import { MY_LESSONS, PENDING_MATERIAL } from './test/contracts/studentServiceContract'
 import { renderWithServices } from './test/renderWithServices'
 
 const TEACHER: User = { name: 'María López', email: 'docente@colegio.edu', role: 'docente' }
@@ -45,7 +45,11 @@ function createTeacherLessonService(): TeacherLessonService {
 }
 
 function createStudentService(): StudentService {
-  return { getMyLessons: vi.fn().mockResolvedValue(MY_LESSONS), downloadPdf: vi.fn() }
+  return {
+    getMyLessons: vi.fn().mockResolvedValue(MY_LESSONS),
+    downloadPdf: vi.fn(),
+    getMaterial: vi.fn().mockResolvedValue(PENDING_MATERIAL),
+  }
 }
 
 function CurrentPath() {
@@ -153,6 +157,34 @@ describe('App', () => {
 
       expect(await screen.findByRole('list', { name: /mis clases/i })).toHaveTextContent('Pedir en un restaurante')
       expect(studentService.getMyLessons).toHaveBeenCalled()
+    })
+
+    it('muestra al estudiante el material de una de sus clases', async () => {
+      const studentService = createStudentService()
+      renderApp(
+        `/estudiante/clases/${PENDING_MATERIAL.lessonId}`,
+        createAuthService({ current: STUDENT }),
+        createTeacherService(),
+        createTeacherLessonService(),
+        studentService,
+      )
+
+      expect(await screen.findByRole('heading', { level: 1, name: 'En el restaurante' })).toBeInTheDocument()
+      expect(studentService.getMaterial).toHaveBeenCalledWith(PENDING_MATERIAL.lessonId)
+    })
+
+    it('no deja a un docente entrar al material de un estudiante', async () => {
+      const studentService = createStudentService()
+      renderApp(
+        `/estudiante/clases/${PENDING_MATERIAL.lessonId}`,
+        createAuthService({ current: TEACHER }),
+        createTeacherService(),
+        createTeacherLessonService(),
+        studentService,
+      )
+
+      await expectPath('/docente')
+      expect(studentService.getMaterial).not.toHaveBeenCalled()
     })
 
     it('no deja a un estudiante entrar al panel del docente', async () => {

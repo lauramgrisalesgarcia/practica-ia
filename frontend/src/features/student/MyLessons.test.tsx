@@ -1,4 +1,5 @@
 import { render, screen, within } from '@testing-library/react'
+import { MemoryRouter } from 'react-router'
 import userEvent from '@testing-library/user-event'
 import type { LessonPdf, StudentLessonSummary } from '../../domain/lesson'
 import { MY_LESSONS } from '../../test/contracts/studentServiceContract'
@@ -16,7 +17,11 @@ function setup({
   downloadPdf = vi.fn().mockResolvedValue(PDF),
 }: SetupOptions = {}) {
   const openPdf = vi.fn()
-  render(<MyLessons loadLessons={loadLessons} downloadPdf={downloadPdf} openPdf={openPdf} />)
+  render(
+    <MemoryRouter>
+      <MyLessons loadLessons={loadLessons} downloadPdf={downloadPdf} openPdf={openPdf} />
+    </MemoryRouter>,
+  )
   return { loadLessons, downloadPdf, openPdf, user: userEvent.setup() }
 }
 
@@ -34,6 +39,18 @@ describe('MyLessons', () => {
     expect(restaurante).toHaveTextContent('Material por resolver')
     expect(presentarse).toHaveTextContent('Presentarse')
     expect(presentarse).toHaveTextContent('Sin material')
+  })
+
+  it('enlaza con su material las clases que lo tienen', async () => {
+    setup()
+
+    const [restaurante, presentarse, tiempo] = await findLessons()
+    expect(within(restaurante).getByRole('link', { name: 'Pedir en un restaurante' })).toHaveAttribute(
+      'href',
+      `/estudiante/clases/${MY_LESSONS[0].id}`,
+    )
+    expect(within(tiempo).getByRole('link', { name: 'Hablar del tiempo' })).toBeInTheDocument()
+    expect(within(presentarse).queryByRole('link')).not.toBeInTheDocument()
   })
 
   it('indica las clases cuyo material ya resolvió', async () => {

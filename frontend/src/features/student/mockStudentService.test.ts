@@ -2,5 +2,7 @@ import { describeStudentServiceContract, PDF_CONTENT } from '../../test/contract
 import { createMockStudentService } from './mockStudentService'
 
 describe('mockStudentService', () => {
-  describeStudentServiceContract(({ lessons }) => createMockStudentService({ lessons, pdfContent: PDF_CONTENT, delayMs: 0 }))
+  describeStudentServiceContract(({ lessons, materials }) =>
+    createMockStudentService({ lessons, materials, pdfContent: PDF_CONTENT, delayMs: 0 }),
+  )
 })

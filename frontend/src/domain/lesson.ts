@@ -79,3 +79,34 @@ export interface MaterialRequest {
 export interface StudentLessonSummary extends LessonSummary {
   pdfFilename: string
 }
+
+// Ejercicio tal como lo ve el estudiante: sin la respuesta correcta
+export interface ExerciseForStudent {
+  id: number
+  sentence: string
+  options: string[]
+}
+
+export interface ExerciseResult {
+  exerciseId: number
+  selectedOption: string
+  correctOption: string
+  isCorrect: boolean
+}
+
+// Resultado completo del estudiante: corrección, comentario y recomendaciones del LLM
+export interface StudentSubmission extends SubmissionSummary {
+  results: ExerciseResult[]
+  feedback: string
+  recommendations: string[]
+}
+
+export interface StudentMaterial {
+  lessonId: string
+  activityType: ActivityType
+  title: string
+  instructions: string
+  exercises: ExerciseForStudent[]
+  // null si aún no lo ha resuelto
+  submission: StudentSubmission | null
+}

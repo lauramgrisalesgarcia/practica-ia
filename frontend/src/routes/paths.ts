@@ -22,3 +22,9 @@ export const LESSON_DETAIL_ROUTE = '/docente/clases/:lessonId'
 export function lessonDetailPath(lessonId: string): string {
   return `/docente/clases/${encodeURIComponent(lessonId)}`
 }
+
+export const STUDENT_LESSON_ROUTE = '/estudiante/clases/:lessonId'
+
+export function studentLessonPath(lessonId: string): string {
+  return `/estudiante/clases/${encodeURIComponent(lessonId)}`
+}

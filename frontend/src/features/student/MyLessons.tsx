@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router'
 import type { LessonPdf, MaterialStatus, StudentLessonSummary } from '../../domain/lesson'
 import { formatDate } from '../../i18n/formatDate'
+import { studentLessonPath } from '../../routes/paths'
 import { PdfDownloadButton } from '../lessons/PdfDownloadButton'
 
 interface MyLessonsProps {
@@ -65,7 +67,13 @@ export function MyLessons({ loadLessons, downloadPdf, openPdf }: MyLessonsProps)
             <li key={lesson.id} className="flex flex-col gap-3 py-4">
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <div className="flex flex-col">
-                  <span className="font-medium text-gray-900">{lesson.topic}</span>
+                  {lesson.materialStatus === 'none' ? (
+                    <span className="font-medium text-gray-900">{lesson.topic}</span>
+                  ) : (
+                    <Link to={studentLessonPath(lesson.id)} className="font-medium text-blue-700 hover:underline">
+                      {lesson.topic}
+                    </Link>
+                  )}
                   <span className="text-sm text-gray-500">
                     <time dateTime={lesson.date}>{formatDate(lesson.date)}</time> · {lesson.durationMinutes} min
                   </span>
