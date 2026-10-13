@@ -18,7 +18,7 @@ describe('renderWithServices', () => {
   })
 
   it('permite sustituir solo los servicios que el test necesita', () => {
-    const authService: AuthService = { login: vi.fn() }
+    const authService: AuthService = { login: vi.fn(), getCurrentUser: vi.fn(), logout: vi.fn() }
 
     const { services } = renderWithServices(<AuthProbe />, { services: { authService } })
 

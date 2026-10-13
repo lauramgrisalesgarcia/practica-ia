@@ -7,14 +7,23 @@ interface MockAuthServiceOptions {
   delayMs?: number
 }
 
-// Servicio en memoria hasta conectar el frontend con el backend
+// Servicio en memoria para desarrollar sin backend
 export function createMockAuthService({ users, delayMs = 500 }: MockAuthServiceOptions): AuthService {
+  let currentUser: User | null = null
+
   return {
     async login({ email, password }) {
       await wait(delayMs)
       const account = users.find((u) => u.user.email.toLowerCase() === email.toLowerCase())
       if (!account || account.password !== password) throw new Error('Credenciales incorrectas')
+      currentUser = account.user
       return account.user
+    },
+    async getCurrentUser() {
+      return currentUser
+    },
+    async logout() {
+      currentUser = null
     },
   }
 }
