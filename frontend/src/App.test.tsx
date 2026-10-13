@@ -16,6 +16,8 @@ function createAuthService(user: User | null): AuthService {
       if (!user) throw new Error('Credenciales incorrectas')
       return user
     }),
+    getCurrentUser: vi.fn().mockResolvedValue(null),
+    logout: vi.fn().mockResolvedValue(undefined),
   }
 }
 

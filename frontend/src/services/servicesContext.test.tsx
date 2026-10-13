@@ -4,7 +4,7 @@ import type { TeacherService } from '../features/teacher/teacherService'
 import { ServicesProvider } from './ServicesProvider'
 import { useServices } from './servicesContext'
 
-const authService: AuthService = { login: vi.fn() }
+const authService: AuthService = { login: vi.fn(), getCurrentUser: vi.fn(), logout: vi.fn() }
 const teacherService: TeacherService = { getAssignedStudents: vi.fn() }
 
 function ServicesProbe() {

@@ -5,7 +5,11 @@ import type { Services } from '../services/servicesContext'
 
 function createFakeServices(): Services {
   return {
-    authService: { login: vi.fn().mockRejectedValue(new Error('login no configurado en el test')) },
+    authService: {
+      login: vi.fn().mockRejectedValue(new Error('login no configurado en el test')),
+      getCurrentUser: vi.fn().mockResolvedValue(null),
+      logout: vi.fn().mockResolvedValue(undefined),
+    },
     teacherService: { getAssignedStudents: vi.fn().mockResolvedValue([]) },
   }
 }
