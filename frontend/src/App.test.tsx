@@ -8,7 +8,7 @@ import type { AuthService } from './features/auth/authService'
 import { SessionProvider } from './features/session/SessionProvider'
 import type { TeacherLessonService } from './features/lessons/teacherLessonService'
 import type { TeacherService } from './features/teacher/teacherService'
-import { EMMA_LESSONS } from './test/contracts/teacherLessonServiceContract'
+import { EMMA_LESSONS, RESTAURANT_LESSON } from './test/contracts/teacherLessonServiceContract'
 import { renderWithServices } from './test/renderWithServices'
 
 const TEACHER: User = { name: 'María López', email: 'docente@colegio.edu', role: 'docente' }
@@ -39,7 +39,7 @@ function createTeacherService(): TeacherService {
 }
 
 function createTeacherLessonService(): TeacherLessonService {
-  return { getStudentLessons: vi.fn().mockResolvedValue(EMMA_LESSONS) }
+  return { getStudentLessons: vi.fn().mockResolvedValue(EMMA_LESSONS), getLesson: vi.fn().mockResolvedValue(RESTAURANT_LESSON), downloadPdf: vi.fn() }
 }
 
 function CurrentPath() {
@@ -170,6 +170,32 @@ describe('App', () => {
 
       await expectPath('/estudiante')
       expect(teacherService.getStudent).not.toHaveBeenCalled()
+    })
+
+    it('muestra al docente el detalle de una clase', async () => {
+      const teacherLessonService = createTeacherLessonService()
+      renderApp(
+        `/docente/clases/${RESTAURANT_LESSON.id}`,
+        createAuthService({ current: TEACHER }),
+        createTeacherService(),
+        teacherLessonService,
+      )
+
+      expect(await screen.findByRole('heading', { level: 1, name: 'Pedir en un restaurante' })).toBeInTheDocument()
+      expect(teacherLessonService.getLesson).toHaveBeenCalledWith(RESTAURANT_LESSON.id)
+    })
+
+    it('no deja a un estudiante ver el detalle de una clase del docente', async () => {
+      const teacherLessonService = createTeacherLessonService()
+      renderApp(
+        `/docente/clases/${RESTAURANT_LESSON.id}`,
+        createAuthService({ current: STUDENT }),
+        createTeacherService(),
+        teacherLessonService,
+      )
+
+      await expectPath('/estudiante')
+      expect(teacherLessonService.getLesson).not.toHaveBeenCalled()
     })
 
     it('vuelve al inicio de sesión al cerrar sesión', async () => {

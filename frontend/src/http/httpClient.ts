@@ -1,8 +1,15 @@
 import { ApiError, NetworkError } from './errors'
 
+export interface DownloadedFile {
+  blob: Blob
+  // Nombre indicado por el back en Content-Disposition, o null si no lo indica
+  filename: string | null
+}
+
 export interface HttpClient {
   get: <T>(path: string) => Promise<T>
   post: <T>(path: string, body: unknown) => Promise<T>
+  getBlob: (path: string) => Promise<DownloadedFile>
 }
 
 interface HttpClientOptions {
@@ -26,10 +33,24 @@ async function errorMessage(response: Response): Promise<string> {
   return response.status === 422 ? VALIDATION_MESSAGE : UNEXPECTED_MESSAGE
 }
 
+// RFC 6266: filename*=UTF-8''<codificado> tiene prioridad sobre filename="<ascii>"
+function filenameFrom(contentDisposition: string | null): string | null {
+  if (!contentDisposition) return null
+  const encoded = /filename\*=UTF-8''([^;]+)/i.exec(contentDisposition)
+  if (encoded) {
+    try {
+      return decodeURIComponent(encoded[1].trim())
+    } catch {
+      // Codificación inválida: se usa el nombre ASCII
+    }
+  }
+  return /filename="([^"]*)"/i.exec(contentDisposition)?.[1] ?? null
+}
+
 export function createHttpClient({ baseUrl, getToken, fetchFn = fetch }: HttpClientOptions): HttpClient {
   const root = baseUrl.replace(/\/+$/, '')
 
-  async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
+  async function send(method: string, path: string, body?: unknown): Promise<Response> {
     const headers = new Headers()
     const token = getToken()
     if (token) headers.set('Authorization', `Bearer ${token}`)
@@ -47,11 +68,19 @@ export function createHttpClient({ baseUrl, getToken, fetchFn = fetch }: HttpCli
     }
 
     if (!response.ok) throw new ApiError(response.status, await errorMessage(response))
-    return (await response.json()) as T
+    return response
+  }
+
+  async function requestJson<T>(method: string, path: string, body?: unknown): Promise<T> {
+    return (await (await send(method, path, body)).json()) as T
   }
 
   return {
-    get: (path) => request('GET', path),
-    post: (path, body) => request('POST', path, body),
+    get: (path) => requestJson('GET', path),
+    post: (path, body) => requestJson('POST', path, body),
+    async getBlob(path) {
+      const response = await send('GET', path)
+      return { blob: await response.blob(), filename: filenameFrom(response.headers.get('Content-Disposition')) }
+    },
   }
 }
