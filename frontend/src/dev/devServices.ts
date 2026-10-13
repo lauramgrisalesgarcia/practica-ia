@@ -1,4 +1,4 @@
-import type { LessonDetail, LessonSummary } from '../domain/lesson'
+import type { LessonDetail, LessonSummary, StudentMaterial, StudentSubmission } from '../domain/lesson'
 import { createMockAuthService } from '../features/auth/mockAuthService'
 import { createMockTeacherLessonService } from '../features/lessons/mockTeacherLessonService'
 import { createMockStudentService } from '../features/student/mockStudentService'
@@ -151,10 +151,51 @@ export const devTeacherLessonService = createMockTeacherLessonService({
   pdfContent: DEV_PDF_CONTENT,
 })
 
+// Resultado de prueba coherente con el resumen del docente: acierta los primeros ejercicios
+function toStudentSubmission({ material, submission }: LessonDetail): StudentSubmission | null {
+  if (!material || !submission) return null
+  return {
+    ...submission,
+    results: material.exercises.map((exercise, index) => {
+      const isCorrect = index < submission.correctCount
+      const wrongOption = exercise.options.find((option) => option !== exercise.correctOption) ?? exercise.correctOption
+      return {
+        exerciseId: exercise.id,
+        selectedOption: isCorrect ? exercise.correctOption : wrongOption,
+        correctOption: exercise.correctOption,
+        isCorrect,
+      }
+    }),
+    feedback: 'Buen trabajo. Repasa las frases que fallaste.',
+    recommendations: ['Usa «quisiera» para pedir algo de forma cortés.'],
+  }
+}
+
+// Material tal como lo ve el estudiante: sin las respuestas correctas
+function toStudentMaterial(lesson: LessonDetail): StudentMaterial | null {
+  if (!lesson.material) return null
+  const { activityType, title, instructions, exercises } = lesson.material
+  return {
+    lessonId: lesson.id,
+    activityType,
+    title,
+    instructions,
+    exercises: exercises.map(({ id, sentence, options }) => ({ id, sentence, options })),
+    submission: toStudentSubmission(lesson),
+  }
+}
+
+const anaLessons = devLessons.filter((lesson) => lesson.student.id === ANA.id)
+
 // Clases de Ana Gómez (estudiante@colegio.edu), la estudiante de desarrollo
 export const devStudentService = createMockStudentService({
-  lessons: devLessons
-    .filter((lesson) => lesson.student.id === ANA.id)
+  materials: Object.fromEntries(
+    anaLessons.flatMap((lesson) => {
+      const material = toStudentMaterial(lesson)
+      return material ? [[lesson.id, material]] : []
+    }),
+  ),
+  lessons: anaLessons
     .sort((a, b) => b.date.localeCompare(a.date))
     .map((lesson) => ({ ...toSummary(lesson), pdfFilename: lesson.pdfFilename })),
   pdfContent: DEV_PDF_CONTENT,

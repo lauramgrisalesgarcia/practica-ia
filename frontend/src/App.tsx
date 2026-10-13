@@ -4,11 +4,12 @@ import { LoginForm } from './features/auth/LoginForm'
 import { LessonDetailPage } from './features/lessons/LessonDetailPage'
 import { StudentLessons } from './features/lessons/StudentLessons'
 import { MyLessons } from './features/student/MyLessons'
+import { StudentMaterialPage } from './features/student/StudentMaterialPage'
 import { useSession } from './features/session/sessionContext'
 import { StudentDetailPage } from './features/teacher/StudentDetailPage'
 import { TeacherDashboard } from './features/teacher/TeacherDashboard'
 import { saveFile } from './files/saveFile'
-import { homePathFor, LESSON_DETAIL_ROUTE, LOGIN_PATH, STUDENT_DETAIL_ROUTE } from './routes/paths'
+import { homePathFor, LESSON_DETAIL_ROUTE, LOGIN_PATH, STUDENT_DETAIL_ROUTE, STUDENT_LESSON_ROUTE } from './routes/paths'
 import { RequireRole } from './routes/RequireRole'
 import { useServices } from './services/servicesContext'
 
@@ -88,6 +89,12 @@ function StudentHome({ name }: { name: string }) {
   )
 }
 
+function StudentMaterialRoute() {
+  const { studentService } = useServices()
+  const { lessonId = '' } = useParams()
+  return <StudentMaterialPage key={lessonId} lessonId={lessonId} loadMaterial={studentService.getMaterial} />
+}
+
 function App() {
   const { teacherService } = useServices()
   const session = useSession()
@@ -146,6 +153,18 @@ function App() {
             {(user) => (
               <AuthenticatedLayout>
                 <StudentHome name={user.name} />
+              </AuthenticatedLayout>
+            )}
+          </RequireRole>
+        }
+      />
+      <Route
+        path={STUDENT_LESSON_ROUTE}
+        element={
+          <RequireRole role="estudiante">
+            {() => (
+              <AuthenticatedLayout>
+                <StudentMaterialRoute />
               </AuthenticatedLayout>
             )}
           </RequireRole>
