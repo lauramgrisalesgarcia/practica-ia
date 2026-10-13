@@ -9,3 +9,13 @@ export interface Student {
   nativeLanguage: string
   level: Level
 }
+
+export interface StudentDetail extends Student {
+  // Número de clases ya realizadas
+  lessonsCount: number
+}
+
+// Datos del alumno tal como aparecen en una lista (sin el detalle)
+export function toStudentSummary({ id, name, email, nativeLanguage, level }: StudentDetail): Student {
+  return { id, name, email, nativeLanguage, level }
+}

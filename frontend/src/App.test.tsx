@@ -2,6 +2,7 @@ import { screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, useLocation } from 'react-router'
 import App from './App'
+import type { StudentDetail } from './domain/student'
 import type { User } from './domain/user'
 import type { AuthService } from './features/auth/authService'
 import { SessionProvider } from './features/session/SessionProvider'
@@ -11,6 +12,14 @@ import { renderWithServices } from './test/renderWithServices'
 const TEACHER: User = { name: 'María López', email: 'docente@colegio.edu', role: 'docente' }
 const STUDENT: User = { name: 'Ana Gómez', email: 'estudiante@colegio.edu', role: 'estudiante' }
 const PASSWORD = 'Secreto#123'
+const EMMA: StudentDetail = {
+  id: '3f2b8c1e-9a4d-4e7b-b6a2-1c9d0e5f7a83',
+  name: 'Emma Schmidt',
+  email: 'emma@correo.com',
+  nativeLanguage: 'de',
+  level: 'A2',
+  lessonsCount: 12,
+}
 
 function createAuthService({ account = null, current = null }: { account?: User | null; current?: User | null } = {}): AuthService {
   return {
@@ -24,7 +33,7 @@ function createAuthService({ account = null, current = null }: { account?: User 
 }
 
 function createTeacherService(): TeacherService {
-  return { getAssignedStudents: vi.fn().mockResolvedValue([]) }
+  return { getAssignedStudents: vi.fn().mockResolvedValue([]), getStudent: vi.fn().mockResolvedValue(EMMA) }
 }
 
 function CurrentPath() {
@@ -126,6 +135,22 @@ describe('App', () => {
       renderApp('/estudiante', createAuthService({ current: TEACHER }))
 
       await expectPath('/docente')
+    })
+
+    it('muestra al docente el detalle de un alumno', async () => {
+      const teacherService = createTeacherService()
+      renderApp(`/docente/alumnos/${EMMA.id}`, createAuthService({ current: TEACHER }), teacherService)
+
+      expect(await screen.findByRole('heading', { level: 1, name: 'Emma Schmidt' })).toBeInTheDocument()
+      expect(teacherService.getStudent).toHaveBeenCalledWith(EMMA.id)
+    })
+
+    it('no deja a un estudiante ver el detalle de un alumno', async () => {
+      const teacherService = createTeacherService()
+      renderApp(`/docente/alumnos/${EMMA.id}`, createAuthService({ current: STUDENT }), teacherService)
+
+      await expectPath('/estudiante')
+      expect(teacherService.getStudent).not.toHaveBeenCalled()
     })
 
     it('vuelve al inicio de sesión al cerrar sesión', async () => {

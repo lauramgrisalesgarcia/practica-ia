@@ -23,6 +23,7 @@ export const devTeacherService = createMockTeacherService({
       email: 'estudiante@colegio.edu',
       nativeLanguage: 'en',
       level: 'B1',
+      lessonsCount: 8,
     },
     {
       id: '3f2b8c1e-9a4d-4e7b-b6a2-1c9d0e5f7a83',
@@ -30,6 +31,7 @@ export const devTeacherService = createMockTeacherService({
       email: 'luis@colegio.edu',
       nativeLanguage: 'de',
       level: 'A2',
+      lessonsCount: 12,
     },
     {
       id: '5c8d2e7f-1a3b-4c9d-8e6f-2b4a7c9d1e3f',
@@ -37,6 +39,7 @@ export const devTeacherService = createMockTeacherService({
       email: 'sofia@colegio.edu',
       nativeLanguage: 'fr',
       level: 'C1',
+      lessonsCount: 3,
     },
   ],
 })
