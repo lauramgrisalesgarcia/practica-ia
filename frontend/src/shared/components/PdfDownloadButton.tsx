@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import type { LessonPdf } from '../../domain/lesson'
+import type { LessonPdf } from '@/domain/lesson'
 
 interface PdfDownloadButtonProps {
   lessonId: string

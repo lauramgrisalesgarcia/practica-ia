@@ -1,8 +1,8 @@
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
-import type { LessonDetail, LessonPdf, MaterialRequest, TeacherMaterial } from '../../domain/lesson'
-import { INTRODUCTIONS_LESSON, RESTAURANT_LESSON } from '../../test/contracts/teacherLessonServiceContract'
+import type { LessonDetail, LessonPdf, MaterialRequest, TeacherMaterial } from '@/domain/lesson'
+import { INTRODUCTIONS_LESSON, RESTAURANT_LESSON } from '@/test/contracts/teacherLessonServiceContract'
 import { LessonDetailPage } from './LessonDetailPage'
 
 const PDF: LessonPdf = { blob: new Blob(['%PDF']), filename: 'restaurante-a2.pdf' }

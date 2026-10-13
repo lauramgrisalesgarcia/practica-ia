@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import type { LoginCredentials } from '../../../domain/auth'
+import type { LoginCredentials } from '@/domain/auth'
 
 interface LoginFormProps {
   onSubmit: (credentials: LoginCredentials) => Promise<void>

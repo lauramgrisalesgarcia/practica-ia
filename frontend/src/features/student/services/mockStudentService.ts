@@ -1,6 +1,6 @@
-import type { StudentLessonSummary, StudentMaterial } from '../../../domain/lesson'
-import { answersAreValid, gradeFakeSubmission, INVALID_ANSWERS_MESSAGE } from '../../../dev/fakeGrading'
-import { wait } from '../../../dev/wait'
+import type { StudentLessonSummary, StudentMaterial } from '@/domain/lesson'
+import { answersAreValid, gradeFakeSubmission, INVALID_ANSWERS_MESSAGE } from '@/dev/fakeGrading'
+import { wait } from '@/dev/wait'
 import type { StudentService } from './studentService'
 
 interface MockStudentServiceOptions {

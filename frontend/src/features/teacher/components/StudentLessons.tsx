@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router'
-import { formatDate } from '../../../shared/i18n/formatDate'
-import type { LessonSummary, MaterialStatus } from '../../../domain/lesson'
-import { lessonDetailPath } from '../../../shared/routes/paths'
+import { formatDate } from '@/shared/i18n/formatDate'
+import type { LessonSummary, MaterialStatus } from '@/domain/lesson'
+import { lessonDetailPath } from '@/shared/routes/paths'
 
 interface StudentLessonsProps {
   studentId: string

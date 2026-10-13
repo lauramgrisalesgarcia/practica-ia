@@ -1,4 +1,4 @@
-import type { Role } from '../../domain/user'
+import type { Role } from '@/domain/user'
 
 export const LOGIN_PATH = '/login'
 

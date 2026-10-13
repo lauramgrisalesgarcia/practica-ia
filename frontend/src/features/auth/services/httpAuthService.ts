@@ -1,6 +1,6 @@
-import type { Role, User } from '../../../domain/user'
-import { ApiError } from '../../../shared/http/errors'
-import type { HttpClient } from '../../../shared/http/httpClient'
+import type { Role, User } from '@/domain/user'
+import { ApiError } from '@/shared/http/errors'
+import type { HttpClient } from '@/shared/http/httpClient'
 import type { AuthService } from './authService'
 import type { TokenStorage } from './tokenStorage'
 

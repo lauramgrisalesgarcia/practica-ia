@@ -1,6 +1,6 @@
 import { screen } from '@testing-library/react'
-import type { AuthService } from '../features/auth/services/authService'
-import { useServices } from '../app/services/servicesContext'
+import type { AuthService } from '@/features/auth/services/authService'
+import { useServices } from '@/app/services/servicesContext'
 import { renderWithServices } from './renderWithServices'
 
 function AuthProbe() {

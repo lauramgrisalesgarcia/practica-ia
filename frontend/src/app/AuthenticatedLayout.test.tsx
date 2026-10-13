@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import type { AuthService } from '../features/auth/services/authService'
-import { SessionProvider } from '../features/auth/session/SessionProvider'
+import type { AuthService } from '@/features/auth/services/authService'
+import { SessionProvider } from '@/features/auth/session/SessionProvider'
 import { AuthenticatedLayout } from './AuthenticatedLayout'
 
 describe('AuthenticatedLayout', () => {

@@ -1,4 +1,4 @@
-import { saveFile } from '../../shared/files/saveFile'
+import { saveFile } from '@/shared/files/saveFile'
 import { MyLessons } from './components/MyLessons'
 import type { StudentService } from './services/studentService'
 

@@ -1,5 +1,5 @@
-import type { User } from '../../domain/user'
-import type { AuthService } from '../../features/auth/services/authService'
+import type { User } from '@/domain/user'
+import type { AuthService } from '@/features/auth/services/authService'
 
 export interface TestAccount {
   user: User

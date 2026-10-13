@@ -1,8 +1,8 @@
 import type { ReactNode } from 'react'
 import { Navigate } from 'react-router'
-import type { Role, User } from '../../domain/user'
-import { useSession } from '../../features/auth/session/sessionContext'
-import { homePathFor, LOGIN_PATH } from '../../shared/routes/paths'
+import type { Role, User } from '@/domain/user'
+import { useSession } from '@/features/auth/session/sessionContext'
+import { homePathFor, LOGIN_PATH } from '@/shared/routes/paths'
 
 interface RequireRoleProps {
   role: Role

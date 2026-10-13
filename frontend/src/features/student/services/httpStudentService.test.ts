@@ -1,7 +1,7 @@
-import type { Answer, StudentMaterial, StudentSubmission } from '../../../domain/lesson'
-import { answersAreValid, gradeFakeSubmission, INVALID_ANSWERS_MESSAGE } from '../../../dev/fakeGrading'
-import { ApiError } from '../../../shared/http/errors'
-import { createHttpClient } from '../../../shared/http/httpClient'
+import type { Answer, StudentMaterial, StudentSubmission } from '@/domain/lesson'
+import { answersAreValid, gradeFakeSubmission, INVALID_ANSWERS_MESSAGE } from '@/dev/fakeGrading'
+import { ApiError } from '@/shared/http/errors'
+import { createHttpClient } from '@/shared/http/httpClient'
 import {
   DEFAULT_STUDENT_FIXTURES,
   HALF_RIGHT_ANSWERS,
@@ -9,7 +9,7 @@ import {
   describeStudentServiceContract,
   PDF_CONTENT,
   type StudentFixtures,
-} from '../../../test/contracts/studentServiceContract'
+} from '@/test/contracts/studentServiceContract'
 import { createHttpStudentService } from './httpStudentService'
 
 function json(status: number, body: unknown): Response {

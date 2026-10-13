@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { Link } from 'react-router'
-import { languageName } from '../../shared/i18n/languageName'
-import type { Student } from '../../domain/student'
-import { studentDetailPath } from '../../shared/routes/paths'
+import { languageName } from '@/shared/i18n/languageName'
+import type { Student } from '@/domain/student'
+import { studentDetailPath } from '@/shared/routes/paths'
 
 interface TeacherDashboardProps {
   teacherName: string

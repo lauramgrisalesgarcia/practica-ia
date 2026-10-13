@@ -1,4 +1,4 @@
-import { describeTeacherLessonServiceContract, PDF_CONTENT } from '../../../test/contracts/teacherLessonServiceContract'
+import { describeTeacherLessonServiceContract, PDF_CONTENT } from '@/test/contracts/teacherLessonServiceContract'
 import { createMockTeacherLessonService } from './mockTeacherLessonService'
 
 describe('mockTeacherLessonService', () => {

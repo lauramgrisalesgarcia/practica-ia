@@ -1,4 +1,4 @@
-import type { ActivityType, StudentMaterial, StudentSubmission } from '../../domain/lesson'
+import type { ActivityType, StudentMaterial, StudentSubmission } from '@/domain/lesson'
 
 // Formas de la API del material del estudiante (docs/openapi.yaml)
 

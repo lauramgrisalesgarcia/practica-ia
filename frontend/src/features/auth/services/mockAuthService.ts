@@ -1,5 +1,5 @@
-import type { User } from '../../../domain/user'
-import { wait } from '../../../dev/wait'
+import type { User } from '@/domain/user'
+import { wait } from '@/dev/wait'
 import type { AuthService } from './authService'
 
 interface MockAuthServiceOptions {

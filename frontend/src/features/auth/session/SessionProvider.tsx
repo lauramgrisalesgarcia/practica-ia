@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react'
-import type { LoginCredentials } from '../../../domain/auth'
-import type { AuthService } from '../services/authService'
+import type { LoginCredentials } from '@/domain/auth'
+import type { AuthService } from '@/features/auth/services/authService'
 import { SessionContext, type SessionState } from './sessionContext'
 
 interface SessionProviderProps {

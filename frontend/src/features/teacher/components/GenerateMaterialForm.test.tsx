@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import type { MaterialRequest, TeacherMaterial } from '../../../domain/lesson'
-import { INTRODUCTIONS_LESSON, RESTAURANT_LESSON } from '../../../test/contracts/teacherLessonServiceContract'
+import type { MaterialRequest, TeacherMaterial } from '@/domain/lesson'
+import { INTRODUCTIONS_LESSON, RESTAURANT_LESSON } from '@/test/contracts/teacherLessonServiceContract'
 import { GenerateMaterialForm } from './GenerateMaterialForm'
 
 const MATERIAL = RESTAURANT_LESSON.material as TeacherMaterial

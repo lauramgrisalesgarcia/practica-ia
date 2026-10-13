@@ -1,5 +1,5 @@
-import type { LessonDetail, LessonSummary } from '../../domain/lesson'
-import type { TeacherLessonService } from '../../features/teacher/services/teacherLessonService'
+import type { LessonDetail, LessonSummary } from '@/domain/lesson'
+import type { TeacherLessonService } from '@/features/teacher/services/teacherLessonService'
 
 export const EMMA_ID = '3f2b8c1e-9a4d-4e7b-b6a2-1c9d0e5f7a83'
 export const UNKNOWN_STUDENT_ID = '00000000-0000-4000-8000-000000000000'

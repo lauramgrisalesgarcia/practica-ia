@@ -1,7 +1,7 @@
-import type { ActivityType, LessonDetail, MaterialRequest, SubmissionSummary, TeacherMaterial } from '../../../domain/lesson'
-import type { Level } from '../../../domain/student'
-import { DEFAULT_PDF_FILENAME, toLessonSummary, type ApiLessonSummary, type ApiPdfRef } from '../../../shared/http/apiLessons'
-import type { HttpClient } from '../../../shared/http/httpClient'
+import type { ActivityType, LessonDetail, MaterialRequest, SubmissionSummary, TeacherMaterial } from '@/domain/lesson'
+import type { Level } from '@/domain/student'
+import { DEFAULT_PDF_FILENAME, toLessonSummary, type ApiLessonSummary, type ApiPdfRef } from '@/shared/http/apiLessons'
+import type { HttpClient } from '@/shared/http/httpClient'
 import type { TeacherLessonService } from './teacherLessonService'
 
 // Formas de la API (docs/openapi.yaml)

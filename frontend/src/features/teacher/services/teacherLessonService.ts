@@ -1,4 +1,4 @@
-import type { LessonDetail, LessonPdf, LessonSummary, MaterialRequest, TeacherMaterial } from '../../../domain/lesson'
+import type { LessonDetail, LessonPdf, LessonSummary, MaterialRequest, TeacherMaterial } from '@/domain/lesson'
 
 // Clases de los alumnos del docente con sesión iniciada
 export interface TeacherLessonService {

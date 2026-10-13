@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
 import userEvent from '@testing-library/user-event'
-import type { Student } from '../../domain/student'
+import type { Student } from '@/domain/student'
 import { TeacherDashboardPage } from './TeacherDashboardPage'
 
 const STUDENTS: Student[] = [

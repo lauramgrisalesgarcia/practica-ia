@@ -1,6 +1,6 @@
 import { createContext, useContext } from 'react'
-import type { LoginCredentials } from '../../../domain/auth'
-import type { User } from '../../../domain/user'
+import type { LoginCredentials } from '@/domain/auth'
+import type { User } from '@/domain/user'
 
 export type SessionState =
   | { status: 'loading' }

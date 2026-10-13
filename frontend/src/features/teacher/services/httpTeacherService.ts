@@ -1,5 +1,5 @@
-import type { Level, Student, StudentDetail } from '../../../domain/student'
-import type { HttpClient } from '../../../shared/http/httpClient'
+import type { Level, Student, StudentDetail } from '@/domain/student'
+import type { HttpClient } from '@/shared/http/httpClient'
 import type { TeacherService } from './teacherService'
 
 // Forma del estudiante en la API (docs/openapi.yaml, schema Student)

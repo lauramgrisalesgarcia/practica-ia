@@ -1,5 +1,5 @@
 import { Navigate } from 'react-router'
-import { homePathFor } from '../../shared/routes/paths'
+import { homePathFor } from '@/shared/routes/paths'
 import { LoginForm } from './components/LoginForm'
 import { useSession } from './session/sessionContext'
 

@@ -1,7 +1,7 @@
-import type { StudentDetail } from '../../../domain/student'
-import { ApiError } from '../../../shared/http/errors'
-import { createHttpClient } from '../../../shared/http/httpClient'
-import { describeTeacherServiceContract, TEST_STUDENTS } from '../../../test/contracts/teacherServiceContract'
+import type { StudentDetail } from '@/domain/student'
+import { ApiError } from '@/shared/http/errors'
+import { createHttpClient } from '@/shared/http/httpClient'
+import { describeTeacherServiceContract, TEST_STUDENTS } from '@/test/contracts/teacherServiceContract'
 import { createHttpTeacherService } from './httpTeacherService'
 
 function json(status: number, body: unknown): Response {
