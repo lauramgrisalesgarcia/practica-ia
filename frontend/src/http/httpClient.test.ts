@@ -125,4 +125,63 @@ describe('httpClient', () => {
       expect(fetchFn.mock.calls[0][0]).toBe('http://api.test/health')
     })
   })
+
+  describe('respuestas binarias', () => {
+    it('devuelve el contenido y el nombre del archivo de Content-Disposition', async () => {
+      const response = new Response('%PDF-1.4', {
+        status: 200,
+        headers: { 'Content-Type': 'application/pdf', 'Content-Disposition': 'inline; filename="restaurante-a2.pdf"' },
+      })
+      const { client, fetchFn } = setup({ token: 'token-de-prueba', response })
+
+      const file = await client.getBlob('/teachers/me/lessons/abc/pdf')
+
+      expect(file.filename).toBe('restaurante-a2.pdf')
+      expect(file.blob.type).toBe('application/pdf')
+      expect(await file.blob.text()).toBe('%PDF-1.4')
+      const { url, init, headers } = sentRequest(fetchFn)
+      expect(url).toBe('http://api.test/teachers/me/lessons/abc/pdf')
+      expect(init.method).toBe('GET')
+      expect(headers.get('Authorization')).toBe('Bearer token-de-prueba')
+    })
+
+    it('prefiere el nombre UTF-8 (filename*) cuando el back lo envía', async () => {
+      const response = new Response('x', {
+        status: 200,
+        headers: { 'Content-Disposition': `inline; filename="cumplea_os.pdf"; filename*=UTF-8''cumplea%C3%B1os.pdf` },
+      })
+      const { client } = setup({ response })
+
+      await expect(client.getBlob('/archivo')).resolves.toMatchObject({ filename: 'cumpleaños.pdf' })
+    })
+
+    it('usa el nombre ASCII si el nombre UTF-8 está mal codificado', async () => {
+      const response = new Response('x', {
+        status: 200,
+        headers: { 'Content-Disposition': `inline; filename="clase.pdf"; filename*=UTF-8''%E0%A4%A.pdf` },
+      })
+      const { client } = setup({ response })
+
+      await expect(client.getBlob('/archivo')).resolves.toMatchObject({ filename: 'clase.pdf' })
+    })
+
+    it('no devuelve nombre si la respuesta no trae Content-Disposition', async () => {
+      const { client } = setup({ response: new Response('x', { status: 200 }) })
+
+      await expect(client.getBlob('/archivo')).resolves.toMatchObject({ filename: null })
+    })
+
+    it('no devuelve nombre si Content-Disposition no lo incluye', async () => {
+      const response = new Response('x', { status: 200, headers: { 'Content-Disposition': 'inline' } })
+      const { client } = setup({ response })
+
+      await expect(client.getBlob('/archivo')).resolves.toMatchObject({ filename: null })
+    })
+
+    it('traduce los errores igual que las peticiones JSON', async () => {
+      const { client } = setup({ response: jsonResponse(404, { detail: 'El PDF de la clase no está disponible' }) })
+
+      await expect(client.getBlob('/archivo')).rejects.toEqual(new ApiError(404, 'El PDF de la clase no está disponible'))
+    })
+  })
 })

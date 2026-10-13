@@ -1,11 +1,13 @@
 import type { ReactNode } from 'react'
 import { Navigate, Route, Routes, useParams } from 'react-router'
 import { LoginForm } from './features/auth/LoginForm'
+import { LessonDetailPage } from './features/lessons/LessonDetailPage'
 import { StudentLessons } from './features/lessons/StudentLessons'
 import { useSession } from './features/session/sessionContext'
 import { StudentDetailPage } from './features/teacher/StudentDetailPage'
 import { TeacherDashboard } from './features/teacher/TeacherDashboard'
-import { homePathFor, LOGIN_PATH, STUDENT_DETAIL_ROUTE } from './routes/paths'
+import { saveFile } from './files/saveFile'
+import { homePathFor, LESSON_DETAIL_ROUTE, LOGIN_PATH, STUDENT_DETAIL_ROUTE } from './routes/paths'
 import { RequireRole } from './routes/RequireRole'
 import { useServices } from './services/servicesContext'
 
@@ -57,6 +59,20 @@ function StudentDetailRoute() {
   )
 }
 
+function LessonDetailRoute() {
+  const { teacherLessonService } = useServices()
+  const { lessonId = '' } = useParams()
+  return (
+    <LessonDetailPage
+      key={lessonId}
+      lessonId={lessonId}
+      loadLesson={teacherLessonService.getLesson}
+      downloadPdf={teacherLessonService.downloadPdf}
+      openPdf={saveFile}
+    />
+  )
+}
+
 function App() {
   const { teacherService } = useServices()
   const session = useSession()
@@ -91,6 +107,18 @@ function App() {
             {() => (
               <AuthenticatedLayout>
                 <StudentDetailRoute />
+              </AuthenticatedLayout>
+            )}
+          </RequireRole>
+        }
+      />
+      <Route
+        path={LESSON_DETAIL_ROUTE}
+        element={
+          <RequireRole role="docente">
+            {() => (
+              <AuthenticatedLayout>
+                <LessonDetailRoute />
               </AuthenticatedLayout>
             )}
           </RequireRole>

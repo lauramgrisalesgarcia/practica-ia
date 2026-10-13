@@ -16,3 +16,9 @@ export const STUDENT_DETAIL_ROUTE = '/docente/alumnos/:studentId'
 export function studentDetailPath(studentId: string): string {
   return `/docente/alumnos/${encodeURIComponent(studentId)}`
 }
+
+export const LESSON_DETAIL_ROUTE = '/docente/clases/:lessonId'
+
+export function lessonDetailPath(lessonId: string): string {
+  return `/docente/clases/${encodeURIComponent(lessonId)}`
+}

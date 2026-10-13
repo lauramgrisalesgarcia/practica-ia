@@ -1,10 +1,15 @@
 import { render, screen, within } from '@testing-library/react'
+import { MemoryRouter } from 'react-router'
 import type { LessonSummary } from '../../domain/lesson'
 import { EMMA_ID, EMMA_LESSONS } from '../../test/contracts/teacherLessonServiceContract'
 import { StudentLessons } from './StudentLessons'
 
 function setup(loadLessons: (studentId: string) => Promise<LessonSummary[]> = vi.fn().mockResolvedValue(EMMA_LESSONS)) {
-  render(<StudentLessons studentId={EMMA_ID} loadLessons={loadLessons} />)
+  render(
+    <MemoryRouter>
+      <StudentLessons studentId={EMMA_ID} loadLessons={loadLessons} />
+    </MemoryRouter>,
+  )
   return { loadLessons }
 }
 
@@ -28,6 +33,15 @@ describe('StudentLessons', () => {
     expect(restaurante).toHaveTextContent('Material resuelto')
     expect(presentarse).toHaveTextContent('Presentarse')
     expect(presentarse).toHaveTextContent('Sin material')
+  })
+
+  it('enlaza cada clase con su detalle', async () => {
+    setup()
+
+    expect(await screen.findByRole('link', { name: 'Pedir en un restaurante' })).toHaveAttribute(
+      'href',
+      `/docente/clases/${EMMA_LESSONS[0].id}`,
+    )
   })
 
   it('distingue el material pendiente de resolver', async () => {

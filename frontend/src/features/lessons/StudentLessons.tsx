@@ -1,5 +1,8 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router'
+import { formatDate } from '../../i18n/formatDate'
 import type { LessonSummary, MaterialStatus } from '../../domain/lesson'
+import { lessonDetailPath } from '../../routes/paths'
 
 interface StudentLessonsProps {
   studentId: string
@@ -23,8 +26,6 @@ const MATERIAL_STATUS_STYLES: Record<MaterialStatus, string> = {
   pending: 'bg-amber-100 text-amber-800',
   completed: 'bg-green-100 text-green-800',
 }
-
-const dateFormat = new Intl.DateTimeFormat('es', { dateStyle: 'long' })
 
 export function StudentLessons({ studentId, loadLessons }: StudentLessonsProps) {
   const [state, setState] = useState<LessonsState>({ status: 'loading' })
@@ -63,9 +64,11 @@ export function StudentLessons({ studentId, loadLessons }: StudentLessonsProps) 
           {state.lessons.map((lesson) => (
             <li key={lesson.id} className="flex flex-wrap items-center justify-between gap-2 py-3">
               <div className="flex flex-col">
-                <span className="font-medium text-gray-900">{lesson.topic}</span>
+                <Link to={lessonDetailPath(lesson.id)} className="font-medium text-blue-700 hover:underline">
+                  {lesson.topic}
+                </Link>
                 <span className="text-sm text-gray-500">
-                  <time dateTime={lesson.date}>{dateFormat.format(new Date(lesson.date))}</time> ·{' '}
+                  <time dateTime={lesson.date}>{formatDate(lesson.date)}</time> ·{' '}
                   {lesson.durationMinutes} min
                 </span>
               </div>
