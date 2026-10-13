@@ -1,4 +1,4 @@
-import type { StudentLessonSummary, StudentMaterial } from '../../domain/lesson'
+import type { Answer, StudentLessonSummary, StudentMaterial } from '../../domain/lesson'
 import type { StudentService } from '../../features/student/studentService'
 
 export const UNKNOWN_LESSON_ID = '00000000-0000-4000-8000-000000000001'
@@ -76,12 +76,26 @@ export interface StudentFixtures {
   lessons: StudentLessonSummary[]
   // Material por id de clase; una clase que no aparece no tiene material
   materials: Record<string, StudentMaterial>
+  // Respuesta correcta de cada ejercicio por id de clase (solo la conoce el back)
+  answerKeys: Record<string, Record<number, string>>
 }
+
+export type AnswerKeys = StudentFixtures['answerKeys']
 
 export const DEFAULT_STUDENT_FIXTURES: StudentFixtures = {
   lessons: MY_LESSONS,
   materials: { [PENDING_MATERIAL.lessonId]: PENDING_MATERIAL, [COMPLETED_MATERIAL.lessonId]: COMPLETED_MATERIAL },
+  answerKeys: {
+    [PENDING_MATERIAL.lessonId]: { 1: 'la carta', 2: 'Quisiera' },
+    [COMPLETED_MATERIAL.lessonId]: { 1: 'hace', 2: 'llover' },
+  },
 }
+
+// Una respuesta correcta y una incorrecta para el material pendiente
+export const HALF_RIGHT_ANSWERS: Answer[] = [
+  { exerciseId: 1, selectedOption: 'la carta' },
+  { exerciseId: 2, selectedOption: 'Quiero que' },
+]
 
 // Comportamiento que toda implementación de StudentService debe cumplir
 export function describeStudentServiceContract(createService: (fixtures: StudentFixtures) => StudentService) {
@@ -91,7 +105,7 @@ export function describeStudentServiceContract(createService: (fixtures: Student
     })
 
     it('devuelve una lista vacía si el estudiante aún no tiene clases', async () => {
-      await expect(createService({ lessons: [], materials: {} }).getMyLessons()).resolves.toEqual([])
+      await expect(createService({ lessons: [], materials: {}, answerKeys: {} }).getMyLessons()).resolves.toEqual([])
     })
 
     it('descarga el PDF de una de sus clases con su nombre de archivo', async () => {
@@ -130,6 +144,87 @@ export function describeStudentServiceContract(createService: (fixtures: Student
       await expect(createService(DEFAULT_STUDENT_FIXTURES).getMaterial(UNKNOWN_LESSON_ID)).rejects.toThrow(
         'Clase no encontrada',
       )
+    })
+
+    describe('resolver el material', () => {
+      const LESSON_ID = PENDING_MATERIAL.lessonId
+      const INVALID_ANSWERS = 'Debes responder todos los ejercicios con una opción válida'
+
+      it('corrige cada respuesta y calcula aciertos, fallos y porcentaje', async () => {
+        const submission = await createService(DEFAULT_STUDENT_FIXTURES).submitMaterial(LESSON_ID, HALF_RIGHT_ANSWERS)
+
+        expect(submission.results).toEqual([
+          { exerciseId: 1, selectedOption: 'la carta', correctOption: 'la carta', isCorrect: true },
+          { exerciseId: 2, selectedOption: 'Quiero que', correctOption: 'Quisiera', isCorrect: false },
+        ])
+        expect(submission).toMatchObject({ correctCount: 1, incorrectCount: 1, score: 50 })
+      })
+
+      it('incluye un comentario y recomendaciones', async () => {
+        const submission = await createService(DEFAULT_STUDENT_FIXTURES).submitMaterial(LESSON_ID, HALF_RIGHT_ANSWERS)
+
+        expect(submission.feedback).not.toBe('')
+        expect(submission.recommendations.length).toBeGreaterThan(0)
+      })
+
+      it('deja el material resuelto con su resultado', async () => {
+        const service = createService(DEFAULT_STUDENT_FIXTURES)
+
+        const submission = await service.submitMaterial(LESSON_ID, HALF_RIGHT_ANSWERS)
+
+        await expect(service.getMaterial(LESSON_ID)).resolves.toMatchObject({ submission })
+        const lessons = await service.getMyLessons()
+        expect(lessons.find((lesson) => lesson.id === LESSON_ID)?.materialStatus).toBe('completed')
+      })
+
+      it('no permite resolverlo dos veces', async () => {
+        const service = createService(DEFAULT_STUDENT_FIXTURES)
+        await service.submitMaterial(LESSON_ID, HALF_RIGHT_ANSWERS)
+
+        await expect(service.submitMaterial(LESSON_ID, HALF_RIGHT_ANSWERS)).rejects.toThrow('El material ya fue resuelto')
+      })
+
+      it.each([
+        ['falta un ejercicio', [{ exerciseId: 1, selectedOption: 'la carta' }]],
+        [
+          'un ejercicio está repetido',
+          [
+            { exerciseId: 1, selectedOption: 'la carta' },
+            { exerciseId: 1, selectedOption: 'la cuenta' },
+          ],
+        ],
+        [
+          'una opción no existe',
+          [
+            { exerciseId: 1, selectedOption: 'la carta' },
+            { exerciseId: 2, selectedOption: 'Quisiéramos' },
+          ],
+        ],
+        [
+          'un ejercicio no existe',
+          [
+            { exerciseId: 1, selectedOption: 'la carta' },
+            { exerciseId: 9, selectedOption: 'Quisiera' },
+          ],
+        ],
+      ])('rechaza las respuestas si %s y no guarda nada', async (_, answers) => {
+        const service = createService(DEFAULT_STUDENT_FIXTURES)
+
+        await expect(service.submitMaterial(LESSON_ID, answers)).rejects.toThrow(INVALID_ANSWERS)
+        await expect(service.getMaterial(LESSON_ID)).resolves.toMatchObject({ submission: null })
+      })
+
+      it('rechaza resolver una clase sin material', async () => {
+        await expect(
+          createService(DEFAULT_STUDENT_FIXTURES).submitMaterial(MY_LESSONS[1].id, HALF_RIGHT_ANSWERS),
+        ).rejects.toThrow('La clase no tiene material de refuerzo')
+      })
+
+      it('rechaza resolver una clase inexistente o de otro estudiante', async () => {
+        await expect(
+          createService(DEFAULT_STUDENT_FIXTURES).submitMaterial(UNKNOWN_LESSON_ID, HALF_RIGHT_ANSWERS),
+        ).rejects.toThrow('Clase no encontrada')
+      })
     })
   })
 }

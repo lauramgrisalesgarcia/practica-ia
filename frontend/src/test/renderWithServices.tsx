@@ -24,6 +24,7 @@ function createFakeServices(): Services {
       getMyLessons: vi.fn().mockResolvedValue([]),
       downloadPdf: vi.fn().mockRejectedValue(new Error('downloadPdf no configurado en el test')),
       getMaterial: vi.fn().mockRejectedValue(new Error('getMaterial no configurado en el test')),
+      submitMaterial: vi.fn().mockRejectedValue(new Error('submitMaterial no configurado en el test')),
     },
   }
 }

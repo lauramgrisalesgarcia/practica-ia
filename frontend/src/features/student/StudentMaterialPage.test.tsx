@@ -1,16 +1,33 @@
 import { render, screen, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
-import type { StudentMaterial } from '../../domain/lesson'
+import type { Answer, StudentMaterial, StudentSubmission } from '../../domain/lesson'
 import { COMPLETED_MATERIAL, PENDING_MATERIAL } from '../../test/contracts/studentServiceContract'
 import { StudentMaterialPage } from './StudentMaterialPage'
 
-function setup(loadMaterial: (lessonId: string) => Promise<StudentMaterial> = vi.fn().mockResolvedValue(PENDING_MATERIAL)) {
+const SUBMISSION: StudentSubmission = {
+  submittedAt: '2026-10-13T10:00:00Z',
+  correctCount: 1,
+  incorrectCount: 1,
+  score: 50,
+  results: [
+    { exerciseId: 1, selectedOption: 'la carta', correctOption: 'la carta', isCorrect: true },
+    { exerciseId: 2, selectedOption: 'Quiero que', correctOption: 'Quisiera', isCorrect: false },
+  ],
+  feedback: 'Muy bien con «la carta».',
+  recommendations: ['Usa «quisiera» para pedir algo de forma cortés.'],
+}
+
+function setup(
+  loadMaterial: (lessonId: string) => Promise<StudentMaterial> = vi.fn().mockResolvedValue(PENDING_MATERIAL),
+  submitMaterial: (lessonId: string, answers: Answer[]) => Promise<StudentSubmission> = vi.fn().mockResolvedValue(SUBMISSION),
+) {
   render(
     <MemoryRouter>
-      <StudentMaterialPage lessonId={PENDING_MATERIAL.lessonId} loadMaterial={loadMaterial} />
+      <StudentMaterialPage lessonId={PENDING_MATERIAL.lessonId} loadMaterial={loadMaterial} submitMaterial={submitMaterial} />
     </MemoryRouter>,
   )
-  return { loadMaterial }
+  return { loadMaterial, submitMaterial, user: userEvent.setup() }
 }
 
 describe('StudentMaterialPage', () => {
@@ -21,17 +38,40 @@ describe('StudentMaterialPage', () => {
     expect(loadMaterial).toHaveBeenCalledWith(PENDING_MATERIAL.lessonId)
   })
 
-  it('muestra la actividad con sus ejercicios y opciones', async () => {
+  it('muestra la actividad pendiente para resolverla', async () => {
     setup()
 
     await screen.findByRole('heading', { level: 1, name: 'En el restaurante' })
     expect(screen.getByText('Completa cada frase con la opción correcta.')).toBeInTheDocument()
-    const exercises = within(screen.getByRole('list', { name: 'Ejercicios' })).getAllByRole('listitem')
-    expect(exercises).toHaveLength(2)
-    expect(exercises[0]).toHaveTextContent('Camarero, ¿nos trae ___, por favor?')
-    expect(exercises[0]).toHaveTextContent('la carta')
-    expect(exercises[0]).toHaveTextContent('la cuenta')
-    expect(exercises[0]).toHaveTextContent('la mesa')
+    expect(screen.getAllByRole('radiogroup')).toHaveLength(2)
+    expect(screen.getByRole('button', { name: 'Enviar respuestas' })).toBeInTheDocument()
+  })
+
+  it('muestra el resultado al enviar las respuestas, sin recargar', async () => {
+    const { user, submitMaterial, loadMaterial } = setup()
+    await screen.findByRole('heading', { level: 1, name: 'En el restaurante' })
+
+    const [first, second] = screen.getAllByRole('radiogroup')
+    await user.click(within(first).getByRole('radio', { name: 'la carta' }))
+    await user.click(within(second).getByRole('radio', { name: 'Quiero que' }))
+    await user.click(screen.getByRole('button', { name: 'Enviar respuestas' }))
+
+    const result = await screen.findByRole('region', { name: 'Tu resultado' })
+    expect(result).toHaveTextContent('50 %')
+    expect(within(result).getByRole('list', { name: 'Recomendaciones' })).toHaveTextContent('Usa «quisiera»')
+    const [secondResult] = within(screen.getByRole('list', { name: 'Ejercicios' })).getAllByRole('listitem').slice(1)
+    expect(secondResult).toHaveTextContent('Respuesta correcta: Quisiera')
+    expect(screen.queryByRole('button', { name: 'Enviar respuestas' })).not.toBeInTheDocument()
+    expect(submitMaterial).toHaveBeenCalledOnce()
+    expect(loadMaterial).toHaveBeenCalledOnce()
+  })
+
+  it('no permite volver a resolver un material ya resuelto', async () => {
+    setup(vi.fn().mockResolvedValue(COMPLETED_MATERIAL))
+
+    await screen.findByRole('region', { name: 'Tu resultado' })
+    expect(screen.queryByRole('radiogroup')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Enviar respuestas' })).not.toBeInTheDocument()
   })
 
   it('no muestra resultado mientras el material está pendiente', async () => {

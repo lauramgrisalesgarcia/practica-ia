@@ -189,6 +189,12 @@ const anaLessons = devLessons.filter((lesson) => lesson.student.id === ANA.id)
 
 // Clases de Ana Gómez (estudiante@colegio.edu), la estudiante de desarrollo
 export const devStudentService = createMockStudentService({
+  answerKeys: Object.fromEntries(
+    anaLessons.map((lesson) => [
+      lesson.id,
+      Object.fromEntries((lesson.material?.exercises ?? []).map((exercise) => [exercise.id, exercise.correctOption])),
+    ]),
+  ),
   materials: Object.fromEntries(
     anaLessons.flatMap((lesson) => {
       const material = toStudentMaterial(lesson)
