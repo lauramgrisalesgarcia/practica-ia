@@ -1,6 +1,7 @@
-import { devAuthService, devTeacherService } from './dev/devServices'
+import { devAuthService, devTeacherLessonService, devTeacherService } from './dev/devServices'
 import { createHttpAuthService } from './features/auth/httpAuthService'
 import { createBrowserTokenStorage } from './features/auth/tokenStorage'
+import { createHttpTeacherLessonService } from './features/lessons/httpTeacherLessonService'
 import { createHttpTeacherService } from './features/teacher/httpTeacherService'
 import { createHttpClient } from './http/httpClient'
 import type { Services } from './services/servicesContext'
@@ -12,12 +13,15 @@ interface CompositionOptions {
 
 // Único lugar que elige las implementaciones de los servicios
 export function createServices({ apiUrl, fetchFn }: CompositionOptions): Services {
-  if (!apiUrl) return { authService: devAuthService, teacherService: devTeacherService }
+  if (!apiUrl) {
+    return { authService: devAuthService, teacherService: devTeacherService, teacherLessonService: devTeacherLessonService }
+  }
 
   const tokenStorage = createBrowserTokenStorage()
   const http = createHttpClient({ baseUrl: apiUrl, getToken: tokenStorage.get, fetchFn })
   return {
     authService: createHttpAuthService({ http, tokenStorage }),
     teacherService: createHttpTeacherService(http),
+    teacherLessonService: createHttpTeacherLessonService(http),
   }
 }

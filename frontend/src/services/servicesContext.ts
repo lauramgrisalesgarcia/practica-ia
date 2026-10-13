@@ -1,10 +1,12 @@
 import { createContext, useContext } from 'react'
 import type { AuthService } from '../features/auth/authService'
+import type { TeacherLessonService } from '../features/lessons/teacherLessonService'
 import type { TeacherService } from '../features/teacher/teacherService'
 
 export interface Services {
   authService: AuthService
   teacherService: TeacherService
+  teacherLessonService: TeacherLessonService
 }
 
 export const ServicesContext = createContext<Services | null>(null)

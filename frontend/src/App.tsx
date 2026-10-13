@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { Navigate, Route, Routes, useParams } from 'react-router'
 import { LoginForm } from './features/auth/LoginForm'
+import { StudentLessons } from './features/lessons/StudentLessons'
 import { useSession } from './features/session/sessionContext'
 import { StudentDetailPage } from './features/teacher/StudentDetailPage'
 import { TeacherDashboard } from './features/teacher/TeacherDashboard'
@@ -44,9 +45,16 @@ function AuthenticatedLayout({ children }: { children: ReactNode }) {
 }
 
 function StudentDetailRoute() {
-  const { teacherService } = useServices()
+  const { teacherService, teacherLessonService } = useServices()
   const { studentId = '' } = useParams()
-  return <StudentDetailPage key={studentId} studentId={studentId} loadStudent={teacherService.getStudent} />
+  return (
+    <div className="flex flex-col gap-6">
+      <StudentDetailPage key={studentId} studentId={studentId} loadStudent={teacherService.getStudent} />
+      <div className="mx-auto w-full max-w-2xl">
+        <StudentLessons key={studentId} studentId={studentId} loadLessons={teacherLessonService.getStudentLessons} />
+      </div>
+    </div>
+  )
 }
 
 function App() {

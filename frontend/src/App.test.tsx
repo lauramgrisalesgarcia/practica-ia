@@ -6,7 +6,9 @@ import type { StudentDetail } from './domain/student'
 import type { User } from './domain/user'
 import type { AuthService } from './features/auth/authService'
 import { SessionProvider } from './features/session/SessionProvider'
+import type { TeacherLessonService } from './features/lessons/teacherLessonService'
 import type { TeacherService } from './features/teacher/teacherService'
+import { EMMA_LESSONS } from './test/contracts/teacherLessonServiceContract'
 import { renderWithServices } from './test/renderWithServices'
 
 const TEACHER: User = { name: 'María López', email: 'docente@colegio.edu', role: 'docente' }
@@ -36,11 +38,20 @@ function createTeacherService(): TeacherService {
   return { getAssignedStudents: vi.fn().mockResolvedValue([]), getStudent: vi.fn().mockResolvedValue(EMMA) }
 }
 
+function createTeacherLessonService(): TeacherLessonService {
+  return { getStudentLessons: vi.fn().mockResolvedValue(EMMA_LESSONS) }
+}
+
 function CurrentPath() {
   return <output aria-label="ruta actual">{useLocation().pathname}</output>
 }
 
-function renderApp(path: string, authService: AuthService, teacherService = createTeacherService()) {
+function renderApp(
+  path: string,
+  authService: AuthService,
+  teacherService = createTeacherService(),
+  teacherLessonService = createTeacherLessonService(),
+) {
   return renderWithServices(
     <MemoryRouter initialEntries={[path]}>
       <SessionProvider>
@@ -48,7 +59,7 @@ function renderApp(path: string, authService: AuthService, teacherService = crea
         <CurrentPath />
       </SessionProvider>
     </MemoryRouter>,
-    { services: { authService, teacherService } },
+    { services: { authService, teacherService, teacherLessonService } },
   )
 }
 
@@ -143,6 +154,14 @@ describe('App', () => {
 
       expect(await screen.findByRole('heading', { level: 1, name: 'Emma Schmidt' })).toBeInTheDocument()
       expect(teacherService.getStudent).toHaveBeenCalledWith(EMMA.id)
+    })
+
+    it('muestra al docente el historial de clases del alumno', async () => {
+      const teacherLessonService = createTeacherLessonService()
+      renderApp(`/docente/alumnos/${EMMA.id}`, createAuthService({ current: TEACHER }), createTeacherService(), teacherLessonService)
+
+      expect(await screen.findByRole('list', { name: /historial de clases/i })).toHaveTextContent('Pedir en un restaurante')
+      expect(teacherLessonService.getStudentLessons).toHaveBeenCalledWith(EMMA.id)
     })
 
     it('no deja a un estudiante ver el detalle de un alumno', async () => {

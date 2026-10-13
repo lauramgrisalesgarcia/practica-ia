@@ -21,6 +21,15 @@ describe('createServices', () => {
     expect(fetchFn).toHaveBeenCalledWith('/api/teachers/me/students', expect.objectContaining({ method: 'GET' }))
   })
 
+  it('pide el historial de clases a la API real cuando hay URL configurada', async () => {
+    const fetchFn = vi.fn<typeof fetch>().mockResolvedValue(new Response('[]', { status: 200 }))
+    const { teacherLessonService } = createServices({ apiUrl: '/api', fetchFn })
+
+    await teacherLessonService.getStudentLessons('abc')
+
+    expect(fetchFn).toHaveBeenCalledWith('/api/teachers/me/students/abc/lessons', expect.objectContaining({ method: 'GET' }))
+  })
+
   it('usa los servicios de desarrollo en memoria si no hay URL configurada', async () => {
     const fetchFn = vi.fn<typeof fetch>()
     const { authService } = createServices({ apiUrl: undefined, fetchFn })
