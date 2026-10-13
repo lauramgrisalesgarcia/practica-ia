@@ -110,3 +110,8 @@ export interface StudentMaterial {
   // null si aún no lo ha resuelto
   submission: StudentSubmission | null
 }
+
+export interface Answer {
+  exerciseId: number
+  selectedOption: string
+}

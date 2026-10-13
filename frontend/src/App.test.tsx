@@ -49,6 +49,7 @@ function createStudentService(): StudentService {
     getMyLessons: vi.fn().mockResolvedValue(MY_LESSONS),
     downloadPdf: vi.fn(),
     getMaterial: vi.fn().mockResolvedValue(PENDING_MATERIAL),
+    submitMaterial: vi.fn(),
   }
 }
 

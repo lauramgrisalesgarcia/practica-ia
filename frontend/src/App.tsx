@@ -92,7 +92,14 @@ function StudentHome({ name }: { name: string }) {
 function StudentMaterialRoute() {
   const { studentService } = useServices()
   const { lessonId = '' } = useParams()
-  return <StudentMaterialPage key={lessonId} lessonId={lessonId} loadMaterial={studentService.getMaterial} />
+  return (
+    <StudentMaterialPage
+      key={lessonId}
+      lessonId={lessonId}
+      loadMaterial={studentService.getMaterial}
+      submitMaterial={studentService.submitMaterial}
+    />
+  )
 }
 
 function App() {

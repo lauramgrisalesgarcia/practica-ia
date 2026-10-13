@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router'
-import type { ExerciseResult, StudentMaterial, StudentSubmission } from '../../domain/lesson'
+import type { Answer, ExerciseResult, StudentMaterial, StudentSubmission } from '../../domain/lesson'
 import { homePathFor } from '../../routes/paths'
+import { AnswerForm } from './AnswerForm'
 
 interface StudentMaterialPageProps {
   lessonId: string
   // Debe ser una referencia estable: cada cambio vuelve a cargar el material
   loadMaterial: (lessonId: string) => Promise<StudentMaterial>
+  submitMaterial: (lessonId: string, answers: Answer[]) => Promise<StudentSubmission>
 }
 
 type MaterialState =
@@ -16,7 +18,7 @@ type MaterialState =
 
 const scoreFormat = new Intl.NumberFormat('es', { maximumFractionDigits: 2 })
 
-export function StudentMaterialPage({ lessonId, loadMaterial }: StudentMaterialPageProps) {
+export function StudentMaterialPage({ lessonId, loadMaterial, submitMaterial }: StudentMaterialPageProps) {
   const [state, setState] = useState<MaterialState>({ status: 'loading' })
 
   useEffect(() => {
@@ -46,14 +48,25 @@ export function StudentMaterialPage({ lessonId, loadMaterial }: StudentMaterialP
         </p>
       )}
 
-      {state.status === 'loaded' && <MaterialView material={state.material} />}
+      {state.status === 'loaded' && (
+        <MaterialView
+          material={state.material}
+          submitMaterial={submitMaterial}
+          onSubmitted={(submission) => setState({ status: 'loaded', material: { ...state.material, submission } })}
+        />
+      )}
     </div>
   )
 }
 
-function MaterialView({ material }: { material: StudentMaterial }) {
+interface MaterialViewProps {
+  material: StudentMaterial
+  submitMaterial: (lessonId: string, answers: Answer[]) => Promise<StudentSubmission>
+  onSubmitted: (submission: StudentSubmission) => void
+}
+
+function MaterialView({ material, submitMaterial, onSubmitted }: MaterialViewProps) {
   const { submission } = material
-  const resultsById = new Map(submission?.results.map((result) => [result.exerciseId, result]))
 
   return (
     <>
@@ -63,28 +76,45 @@ function MaterialView({ material }: { material: StudentMaterial }) {
           <h1 className="text-2xl font-semibold text-gray-900">{material.title}</h1>
         </header>
         <p className="text-gray-700">{material.instructions}</p>
-        <ol aria-label="Ejercicios" className="flex list-decimal flex-col gap-4 pl-5">
-          {material.exercises.map((exercise) => {
-            const result = resultsById.get(exercise.id)
-            return (
-              <li key={exercise.id} className="flex flex-col gap-1">
-                <span className="text-gray-900">{exercise.sentence}</span>
-                <span className="flex flex-wrap gap-2 text-sm">
-                  {exercise.options.map((option) => (
-                    <span key={option} className="rounded-md bg-gray-100 px-2 py-0.5 text-gray-700">
-                      {option}
-                    </span>
-                  ))}
-                </span>
-                {result && <ExerciseOutcome result={result} />}
-              </li>
-            )
-          })}
-        </ol>
+        {submission ? (
+          <CorrectedExercises material={material} submission={submission} />
+        ) : (
+          <AnswerForm
+            lessonId={material.lessonId}
+            exercises={material.exercises}
+            submitMaterial={submitMaterial}
+            onSubmitted={onSubmitted}
+          />
+        )}
       </section>
 
       {submission && <SubmissionResult submission={submission} />}
     </>
+  )
+}
+
+function CorrectedExercises({ material, submission }: { material: StudentMaterial; submission: StudentSubmission }) {
+  const resultsById = new Map(submission.results.map((result) => [result.exerciseId, result]))
+
+  return (
+    <ol aria-label="Ejercicios" className="flex list-decimal flex-col gap-4 pl-5">
+      {material.exercises.map((exercise) => {
+        const result = resultsById.get(exercise.id)
+        return (
+          <li key={exercise.id} className="flex flex-col gap-1">
+            <span className="text-gray-900">{exercise.sentence}</span>
+            <span className="flex flex-wrap gap-2 text-sm">
+              {exercise.options.map((option) => (
+                <span key={option} className="rounded-md bg-gray-100 px-2 py-0.5 text-gray-700">
+                  {option}
+                </span>
+              ))}
+            </span>
+            {result && <ExerciseOutcome result={result} />}
+          </li>
+        )
+      })}
+    </ol>
   )
 }
 

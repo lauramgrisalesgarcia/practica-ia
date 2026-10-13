@@ -9,7 +9,12 @@ import { useServices } from './servicesContext'
 const authService: AuthService = { login: vi.fn(), getCurrentUser: vi.fn(), logout: vi.fn() }
 const teacherService: TeacherService = { getAssignedStudents: vi.fn(), getStudent: vi.fn() }
 const teacherLessonService: TeacherLessonService = { getStudentLessons: vi.fn(), getLesson: vi.fn(), downloadPdf: vi.fn(), generateMaterial: vi.fn() }
-const studentService: StudentService = { getMyLessons: vi.fn(), downloadPdf: vi.fn(), getMaterial: vi.fn() }
+const studentService: StudentService = {
+  getMyLessons: vi.fn(),
+  downloadPdf: vi.fn(),
+  getMaterial: vi.fn(),
+  submitMaterial: vi.fn(),
+}
 
 function ServicesProbe() {
   const services = useServices()

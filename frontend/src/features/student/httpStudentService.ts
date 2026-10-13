@@ -1,7 +1,12 @@
 import type { StudentLessonSummary } from '../../domain/lesson'
 import { DEFAULT_PDF_FILENAME, toLessonSummary, type ApiLessonSummary, type ApiPdfRef } from '../../http/apiLessons'
 import type { HttpClient } from '../../http/httpClient'
-import { toStudentMaterial, type ApiStudentMaterial } from '../../http/apiStudentMaterial'
+import {
+  toStudentMaterial,
+  toStudentSubmission,
+  type ApiStudentMaterial,
+  type ApiSubmission,
+} from '../../http/apiStudentMaterial'
 import type { StudentService } from './studentService'
 
 // docs/openapi.yaml, schema StudentLessonSummary
@@ -29,6 +34,15 @@ export function createHttpStudentService(http: HttpClient): StudentService {
     },
     async getMaterial(lessonId) {
       return toStudentMaterial(await http.get<ApiStudentMaterial>(`${lessonPath(lessonId)}/material`))
+    },
+    async submitMaterial(lessonId, answers) {
+      const submission = await http.post<ApiSubmission>(`${lessonPath(lessonId)}/material/submission`, {
+        answers: answers.map(({ exerciseId, selectedOption }) => ({
+          exercise_id: exerciseId,
+          selected_option: selectedOption,
+        })),
+      })
+      return toStudentSubmission(submission)
     },
   }
 }
