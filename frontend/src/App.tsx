@@ -69,6 +69,7 @@ function LessonDetailRoute() {
       loadLesson={teacherLessonService.getLesson}
       downloadPdf={teacherLessonService.downloadPdf}
       openPdf={saveFile}
+      generateMaterial={teacherLessonService.generateMaterial}
     />
   )
 }

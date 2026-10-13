@@ -39,7 +39,7 @@ function createTeacherService(): TeacherService {
 }
 
 function createTeacherLessonService(): TeacherLessonService {
-  return { getStudentLessons: vi.fn().mockResolvedValue(EMMA_LESSONS), getLesson: vi.fn().mockResolvedValue(RESTAURANT_LESSON), downloadPdf: vi.fn() }
+  return { getStudentLessons: vi.fn().mockResolvedValue(EMMA_LESSONS), getLesson: vi.fn().mockResolvedValue(RESTAURANT_LESSON), downloadPdf: vi.fn(), generateMaterial: vi.fn() }
 }
 
 function CurrentPath() {

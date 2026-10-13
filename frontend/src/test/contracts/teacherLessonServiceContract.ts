@@ -61,6 +61,15 @@ export const INTRODUCTIONS_LESSON: LessonDetail = {
   submission: null,
 }
 
+// Clase programada que aún no se ha realizado
+export const FUTURE_LESSON: LessonDetail = {
+  ...INTRODUCTIONS_LESSON,
+  id: '9b2d4f6a-8c0e-4a2b-9d4f-6a8c0e2b4d6f',
+  date: '2999-01-01T16:00:00Z',
+  topic: 'Ir de compras',
+  pdfFilename: 'compras-a2.pdf',
+}
+
 export const PDF_CONTENT = '%PDF-1.4 contenido de prueba'
 
 // Clases por alumno; un alumno que no aparece no está asignado al docente
@@ -74,7 +83,7 @@ export interface TeacherLessonFixtures {
 
 export const DEFAULT_FIXTURES: TeacherLessonFixtures = {
   lessonsByStudent: { [EMMA_ID]: EMMA_LESSONS },
-  lessons: [RESTAURANT_LESSON, INTRODUCTIONS_LESSON],
+  lessons: [RESTAURANT_LESSON, INTRODUCTIONS_LESSON, FUTURE_LESSON],
 }
 
 // Comportamiento que toda implementación de TeacherLessonService debe cumplir
@@ -116,6 +125,80 @@ export function describeTeacherLessonServiceContract(createService: (fixtures: T
 
     it('rechaza el PDF de una clase inexistente o de otro docente', async () => {
       await expect(createService(DEFAULT_FIXTURES).downloadPdf(UNKNOWN_LESSON_ID)).rejects.toThrow('Clase no encontrada')
+    })
+
+    describe('generar material', () => {
+      const REQUEST = { activityType: 'complete_sentence', exerciseCount: 3 } as const
+
+      it('genera material del tipo y con el número de ejercicios pedidos', async () => {
+        const material = await createService(DEFAULT_FIXTURES).generateMaterial(INTRODUCTIONS_LESSON.id, REQUEST)
+
+        expect(material.activityType).toBe('complete_sentence')
+        expect(material.exercises).toHaveLength(3)
+        for (const exercise of material.exercises) expect(exercise.options).toContain(exercise.correctOption)
+      })
+
+      it('deja la clase con el material pendiente de resolver', async () => {
+        const service = createService(DEFAULT_FIXTURES)
+
+        const material = await service.generateMaterial(INTRODUCTIONS_LESSON.id, REQUEST)
+
+        await expect(service.getLesson(INTRODUCTIONS_LESSON.id)).resolves.toMatchObject({
+          material,
+          materialStatus: 'pending',
+          submission: null,
+        })
+      })
+
+      it('el historial del alumno muestra el material pendiente', async () => {
+        const service = createService(DEFAULT_FIXTURES)
+
+        await service.generateMaterial(INTRODUCTIONS_LESSON.id, REQUEST)
+
+        const history = await service.getStudentLessons(EMMA_ID)
+        expect(history.find((lesson) => lesson.id === INTRODUCTIONS_LESSON.id)?.materialStatus).toBe('pending')
+      })
+
+      it('regenerar reemplaza el material que el alumno aún no ha resuelto', async () => {
+        const service = createService(DEFAULT_FIXTURES)
+        await service.generateMaterial(INTRODUCTIONS_LESSON.id, REQUEST)
+
+        const regenerated = await service.generateMaterial(INTRODUCTIONS_LESSON.id, { ...REQUEST, exerciseCount: 5 })
+
+        expect(regenerated.exercises).toHaveLength(5)
+        await expect(service.getLesson(INTRODUCTIONS_LESSON.id)).resolves.toMatchObject({ material: regenerated })
+      })
+
+      it('no modifica las palabras clave de la clase', async () => {
+        const service = createService(DEFAULT_FIXTURES)
+
+        await service.generateMaterial(INTRODUCTIONS_LESSON.id, { ...REQUEST, keywords: ['mi hermano'] })
+
+        await expect(service.getLesson(INTRODUCTIONS_LESSON.id)).resolves.toMatchObject({
+          keywords: INTRODUCTIONS_LESSON.keywords,
+        })
+      })
+
+      it('rechaza una clase inexistente o de otro docente', async () => {
+        await expect(createService(DEFAULT_FIXTURES).generateMaterial(UNKNOWN_LESSON_ID, REQUEST)).rejects.toThrow(
+          'Clase no encontrada',
+        )
+      })
+
+      it('rechaza una clase que aún no se ha realizado', async () => {
+        await expect(createService(DEFAULT_FIXTURES).generateMaterial(FUTURE_LESSON.id, REQUEST)).rejects.toThrow(
+          'Solo se puede generar material para clases ya realizadas',
+        )
+      })
+
+      it('rechaza regenerar el material que el alumno ya resolvió', async () => {
+        const service = createService(DEFAULT_FIXTURES)
+
+        await expect(service.generateMaterial(RESTAURANT_LESSON.id, REQUEST)).rejects.toThrow(
+          'El material ya fue resuelto por el estudiante y no se puede regenerar',
+        )
+        await expect(service.getLesson(RESTAURANT_LESSON.id)).resolves.toEqual(RESTAURANT_LESSON)
+      })
     })
   })
 }
