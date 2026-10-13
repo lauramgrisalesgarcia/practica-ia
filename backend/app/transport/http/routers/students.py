@@ -3,10 +3,17 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, Response, status
 
-from app.composition import get_get_my_lesson_pdf, get_get_my_material, get_list_my_lessons, get_submit_material
+from app.composition import (
+    get_get_my_lesson_pdf,
+    get_get_my_material,
+    get_get_my_submission,
+    get_list_my_lessons,
+    get_submit_material,
+)
 from app.domain.entities import Answer
 from app.domain.use_cases.get_my_lesson_pdf import GetMyLessonPdf
 from app.domain.use_cases.get_my_material import GetMyMaterial
+from app.domain.use_cases.get_my_submission import GetMySubmission
 from app.domain.use_cases.list_my_lessons import ListMyLessons
 from app.domain.use_cases.submit_material import SubmitMaterial
 from app.transport.http.dependencies import CurrentUser
@@ -59,4 +66,14 @@ def submit_material(
 ) -> SubmissionOut:
     answers = [Answer(answer.exercise_id, answer.selected_option) for answer in body.answers]
     result = submit.execute(user, lesson_id, answers)
+    return SubmissionOut.from_entity(result.lesson_id, result.submission, result.grade)
+
+
+@router.get("/lessons/{lesson_id}/material/submission", response_model=SubmissionOut)
+def get_my_submission(
+    user: CurrentUser,
+    get_submission: Annotated[GetMySubmission, Depends(get_get_my_submission)],
+    lesson_id: UUID,
+) -> SubmissionOut:
+    result = get_submission.execute(user, lesson_id)
     return SubmissionOut.from_entity(result.lesson_id, result.submission, result.grade)
