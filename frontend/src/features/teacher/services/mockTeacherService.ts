@@ -1,5 +1,5 @@
-import { toStudentSummary, type StudentDetail } from '../../../domain/student'
-import { wait } from '../../../dev/wait'
+import { toStudentSummary, type StudentDetail } from '@/domain/student'
+import { wait } from '@/dev/wait'
 import type { TeacherService } from './teacherService'
 
 interface MockTeacherServiceOptions {

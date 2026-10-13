@@ -1,7 +1,7 @@
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import type { Answer, StudentSubmission } from '../../../domain/lesson'
-import { COMPLETED_MATERIAL, PENDING_MATERIAL } from '../../../test/contracts/studentServiceContract'
+import type { Answer, StudentSubmission } from '@/domain/lesson'
+import { COMPLETED_MATERIAL, PENDING_MATERIAL } from '@/test/contracts/studentServiceContract'
 import { AnswerForm } from './AnswerForm'
 
 const SUBMISSION = COMPLETED_MATERIAL.submission as StudentSubmission

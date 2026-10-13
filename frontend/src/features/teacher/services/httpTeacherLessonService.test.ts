@@ -1,7 +1,7 @@
-import type { LessonDetail, LessonSummary, MaterialRequest, TeacherMaterial } from '../../../domain/lesson'
-import { buildFakeMaterial, materialGenerationError } from '../../../dev/fakeMaterial'
-import { ApiError } from '../../../shared/http/errors'
-import { createHttpClient } from '../../../shared/http/httpClient'
+import type { LessonDetail, LessonSummary, MaterialRequest, TeacherMaterial } from '@/domain/lesson'
+import { buildFakeMaterial, materialGenerationError } from '@/dev/fakeMaterial'
+import { ApiError } from '@/shared/http/errors'
+import { createHttpClient } from '@/shared/http/httpClient'
 import {
   DEFAULT_FIXTURES,
   INTRODUCTIONS_LESSON,
@@ -9,7 +9,7 @@ import {
   PDF_CONTENT,
   RESTAURANT_LESSON,
   type TeacherLessonFixtures,
-} from '../../../test/contracts/teacherLessonServiceContract'
+} from '@/test/contracts/teacherLessonServiceContract'
 import { createHttpTeacherLessonService } from './httpTeacherLessonService'
 
 function json(status: number, body: unknown): Response {

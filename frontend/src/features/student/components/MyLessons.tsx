@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router'
-import type { LessonPdf, MaterialStatus, StudentLessonSummary } from '../../../domain/lesson'
-import { formatDate } from '../../../shared/i18n/formatDate'
-import { studentLessonPath } from '../../../shared/routes/paths'
-import { PdfDownloadButton } from '../../../shared/components/PdfDownloadButton'
+import type { LessonPdf, MaterialStatus, StudentLessonSummary } from '@/domain/lesson'
+import { formatDate } from '@/shared/i18n/formatDate'
+import { studentLessonPath } from '@/shared/routes/paths'
+import { PdfDownloadButton } from '@/shared/components/PdfDownloadButton'
 
 interface MyLessonsProps {
   // Deben ser referencias estables: cada cambio de loadLessons vuelve a cargar las clases

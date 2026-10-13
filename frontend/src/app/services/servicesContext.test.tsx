@@ -1,8 +1,8 @@
 import { render, screen } from '@testing-library/react'
-import type { AuthService } from '../../features/auth/services/authService'
-import type { TeacherLessonService } from '../../features/teacher/services/teacherLessonService'
-import type { StudentService } from '../../features/student/services/studentService'
-import type { TeacherService } from '../../features/teacher/services/teacherService'
+import type { AuthService } from '@/features/auth/services/authService'
+import type { TeacherLessonService } from '@/features/teacher/services/teacherLessonService'
+import type { StudentService } from '@/features/student/services/studentService'
+import type { TeacherService } from '@/features/teacher/services/teacherService'
 import { ServicesProvider } from './ServicesProvider'
 import { useServices } from './servicesContext'
 

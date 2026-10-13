@@ -1,10 +1,10 @@
-import { devAuthService, devStudentService, devTeacherLessonService, devTeacherService } from '../dev/devServices'
-import { createHttpAuthService } from '../features/auth/services/httpAuthService'
-import { createBrowserTokenStorage } from '../features/auth/services/tokenStorage'
-import { createHttpTeacherLessonService } from '../features/teacher/services/httpTeacherLessonService'
-import { createHttpStudentService } from '../features/student/services/httpStudentService'
-import { createHttpTeacherService } from '../features/teacher/services/httpTeacherService'
-import { createHttpClient } from '../shared/http/httpClient'
+import { devAuthService, devStudentService, devTeacherLessonService, devTeacherService } from '@/dev/devServices'
+import { createHttpAuthService } from '@/features/auth/services/httpAuthService'
+import { createBrowserTokenStorage } from '@/features/auth/services/tokenStorage'
+import { createHttpTeacherLessonService } from '@/features/teacher/services/httpTeacherLessonService'
+import { createHttpStudentService } from '@/features/student/services/httpStudentService'
+import { createHttpTeacherService } from '@/features/teacher/services/httpTeacherService'
+import { createHttpClient } from '@/shared/http/httpClient'
 import type { Services } from './services/servicesContext'
 
 interface CompositionOptions {

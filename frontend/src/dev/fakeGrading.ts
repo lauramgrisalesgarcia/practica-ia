@@ -1,4 +1,4 @@
-import type { Answer, StudentMaterial, StudentSubmission } from '../domain/lesson'
+import type { Answer, StudentMaterial, StudentSubmission } from '@/domain/lesson'
 
 export const INVALID_ANSWERS_MESSAGE = 'Debes responder todos los ejercicios con una opción válida'
 

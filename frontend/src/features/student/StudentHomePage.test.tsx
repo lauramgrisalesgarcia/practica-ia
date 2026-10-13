@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
-import { MY_LESSONS } from '../../test/contracts/studentServiceContract'
+import { MY_LESSONS } from '@/test/contracts/studentServiceContract'
 import type { StudentService } from './services/studentService'
 import { StudentHomePage } from './StudentHomePage'
 

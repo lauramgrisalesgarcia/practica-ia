@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router'
-import { languageName } from '../../shared/i18n/languageName'
-import type { StudentDetail } from '../../domain/student'
-import { homePathFor } from '../../shared/routes/paths'
+import { languageName } from '@/shared/i18n/languageName'
+import type { StudentDetail } from '@/domain/student'
+import { homePathFor } from '@/shared/routes/paths'
 
 interface StudentDetailPageProps {
   studentId: string

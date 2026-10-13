@@ -1,4 +1,4 @@
-import { MAX_EXERCISES, MIN_EXERCISES, type MaterialRequest } from '../../../domain/lesson'
+import { MAX_EXERCISES, MIN_EXERCISES, type MaterialRequest } from '@/domain/lesson'
 
 // Límites de GenerateMaterialRequest en docs/openapi.yaml
 const MAX_KEYWORDS = 20

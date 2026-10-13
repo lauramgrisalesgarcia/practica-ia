@@ -1,4 +1,4 @@
-import type { LessonDetail, MaterialRequest, TeacherMaterial } from '../domain/lesson'
+import type { LessonDetail, MaterialRequest, TeacherMaterial } from '@/domain/lesson'
 
 const DISTRACTORS = ['opción B', 'opción C']
 

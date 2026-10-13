@@ -1,5 +1,5 @@
 import { useId, useState, type FormEvent } from 'react'
-import type { Answer, ExerciseForStudent, StudentSubmission } from '../../../domain/lesson'
+import type { Answer, ExerciseForStudent, StudentSubmission } from '@/domain/lesson'
 
 interface AnswerFormProps {
   lessonId: string

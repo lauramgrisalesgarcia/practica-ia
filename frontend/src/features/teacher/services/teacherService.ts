@@ -1,4 +1,4 @@
-import type { Student, StudentDetail } from '../../../domain/student'
+import type { Student, StudentDetail } from '@/domain/student'
 
 export interface TeacherService {
   // Alumnos asignados al docente con sesión iniciada

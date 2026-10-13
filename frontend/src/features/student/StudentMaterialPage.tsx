@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router'
-import type { Answer, ExerciseResult, StudentMaterial, StudentSubmission } from '../../domain/lesson'
-import { homePathFor } from '../../shared/routes/paths'
+import type { Answer, ExerciseResult, StudentMaterial, StudentSubmission } from '@/domain/lesson'
+import { homePathFor } from '@/shared/routes/paths'
 import { AnswerForm } from './components/AnswerForm'
 
 interface StudentMaterialPageProps {

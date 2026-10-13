@@ -1,12 +1,12 @@
-import type { StudentLessonSummary } from '../../../domain/lesson'
-import { DEFAULT_PDF_FILENAME, toLessonSummary, type ApiLessonSummary, type ApiPdfRef } from '../../../shared/http/apiLessons'
-import type { HttpClient } from '../../../shared/http/httpClient'
+import type { StudentLessonSummary } from '@/domain/lesson'
+import { DEFAULT_PDF_FILENAME, toLessonSummary, type ApiLessonSummary, type ApiPdfRef } from '@/shared/http/apiLessons'
+import type { HttpClient } from '@/shared/http/httpClient'
 import {
   toStudentMaterial,
   toStudentSubmission,
   type ApiStudentMaterial,
   type ApiSubmission,
-} from '../../../shared/http/apiStudentMaterial'
+} from '@/shared/http/apiStudentMaterial'
 import type { StudentService } from './studentService'
 
 // docs/openapi.yaml, schema StudentLessonSummary

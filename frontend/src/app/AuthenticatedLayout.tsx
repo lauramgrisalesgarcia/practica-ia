@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { useSession } from '../features/auth/session/sessionContext'
+import { useSession } from '@/features/auth/session/sessionContext'
 
 // Marco común de las páginas con sesión iniciada
 export function AuthenticatedLayout({ children }: { children: ReactNode }) {

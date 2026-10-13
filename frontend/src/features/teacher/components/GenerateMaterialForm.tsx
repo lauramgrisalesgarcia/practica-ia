@@ -1,5 +1,5 @@
 import { useId, useState, type FormEvent } from 'react'
-import { MAX_EXERCISES, MIN_EXERCISES, type MaterialRequest, type TeacherMaterial } from '../../../domain/lesson'
+import { MAX_EXERCISES, MIN_EXERCISES, type MaterialRequest, type TeacherMaterial } from '@/domain/lesson'
 import { validateMaterialForm, type MaterialFormErrors } from './materialForm'
 
 interface GenerateMaterialFormProps {

@@ -1,5 +1,5 @@
-import type { Answer, StudentLessonSummary, StudentMaterial } from '../../domain/lesson'
-import type { StudentService } from '../../features/student/services/studentService'
+import type { Answer, StudentLessonSummary, StudentMaterial } from '@/domain/lesson'
+import type { StudentService } from '@/features/student/services/studentService'
 
 export const UNKNOWN_LESSON_ID = '00000000-0000-4000-8000-000000000001'
 export const PDF_CONTENT = '%PDF-1.4 contenido de prueba'

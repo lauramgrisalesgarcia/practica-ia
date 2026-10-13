@@ -1,8 +1,8 @@
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
-import type { Answer, StudentMaterial, StudentSubmission } from '../../domain/lesson'
-import { COMPLETED_MATERIAL, PENDING_MATERIAL } from '../../test/contracts/studentServiceContract'
+import type { Answer, StudentMaterial, StudentSubmission } from '@/domain/lesson'
+import { COMPLETED_MATERIAL, PENDING_MATERIAL } from '@/test/contracts/studentServiceContract'
 import { StudentMaterialPage } from './StudentMaterialPage'
 
 const SUBMISSION: StudentSubmission = {

@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import type { User } from '../../../domain/user'
-import type { AuthService } from '../services/authService'
+import type { User } from '@/domain/user'
+import type { AuthService } from '@/features/auth/services/authService'
 import { SessionProvider } from './SessionProvider'
 import { useSession } from './sessionContext'
 

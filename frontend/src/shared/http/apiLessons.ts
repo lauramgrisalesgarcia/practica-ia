@@ -1,4 +1,4 @@
-import type { LessonSummary, MaterialStatus } from '../../domain/lesson'
+import type { LessonSummary, MaterialStatus } from '@/domain/lesson'
 
 // Formas de la API compartidas por las vistas del docente y del estudiante (docs/openapi.yaml)
 

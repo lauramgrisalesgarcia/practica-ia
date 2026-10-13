@@ -1,4 +1,4 @@
-import type { Answer, LessonPdf, StudentLessonSummary, StudentMaterial, StudentSubmission } from '../../../domain/lesson'
+import type { Answer, LessonPdf, StudentLessonSummary, StudentMaterial, StudentSubmission } from '@/domain/lesson'
 
 // Clases del estudiante con sesión iniciada
 export interface StudentService {

@@ -1,10 +1,10 @@
 import { useEffect, useId, useState } from 'react'
 import { Link } from 'react-router'
-import { formatDate } from '../../shared/i18n/formatDate'
-import type { LessonDetail, LessonPdf, MaterialRequest, SubmissionSummary, TeacherMaterial } from '../../domain/lesson'
-import { studentDetailPath } from '../../shared/routes/paths'
+import { formatDate } from '@/shared/i18n/formatDate'
+import type { LessonDetail, LessonPdf, MaterialRequest, SubmissionSummary, TeacherMaterial } from '@/domain/lesson'
+import { studentDetailPath } from '@/shared/routes/paths'
 import { GenerateMaterialForm } from './components/GenerateMaterialForm'
-import { PdfDownloadButton } from '../../shared/components/PdfDownloadButton'
+import { PdfDownloadButton } from '@/shared/components/PdfDownloadButton'
 
 interface LessonDetailPageProps {
   lessonId: string

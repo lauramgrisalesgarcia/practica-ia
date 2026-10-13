@@ -1,4 +1,4 @@
-import type { LessonPdf } from '../../domain/lesson'
+import type { LessonPdf } from '@/domain/lesson'
 
 // Guarda en el equipo del usuario un archivo descargado de la API
 export function saveFile({ blob, filename }: LessonPdf): void {

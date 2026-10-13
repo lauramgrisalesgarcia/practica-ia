@@ -1,6 +1,6 @@
-import type { LessonDetail, LessonSummary } from '../../../domain/lesson'
-import { buildFakeMaterial, materialGenerationError } from '../../../dev/fakeMaterial'
-import { wait } from '../../../dev/wait'
+import type { LessonDetail, LessonSummary } from '@/domain/lesson'
+import { buildFakeMaterial, materialGenerationError } from '@/dev/fakeMaterial'
+import { wait } from '@/dev/wait'
 import type { TeacherLessonService } from './teacherLessonService'
 
 interface MockTeacherLessonServiceOptions {

@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
-import type { StudentDetail } from '../../domain/student'
+import type { StudentDetail } from '@/domain/student'
 import { StudentDetailPage } from './StudentDetailPage'
 
 const EMMA: StudentDetail = {

@@ -1,7 +1,7 @@
 import { render, screen, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
-import type { LessonSummary } from '../../../domain/lesson'
-import { EMMA_ID, EMMA_LESSONS } from '../../../test/contracts/teacherLessonServiceContract'
+import type { LessonSummary } from '@/domain/lesson'
+import { EMMA_ID, EMMA_LESSONS } from '@/test/contracts/teacherLessonServiceContract'
 import { StudentLessons } from './StudentLessons'
 
 function setup(loadLessons: (studentId: string) => Promise<LessonSummary[]> = vi.fn().mockResolvedValue(EMMA_LESSONS)) {

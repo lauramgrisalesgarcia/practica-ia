@@ -1,7 +1,7 @@
-import { createHttpClient } from '../../../shared/http/httpClient'
-import { NetworkError } from '../../../shared/http/errors'
-import { describeAuthServiceContract, TEST_ACCOUNT, type TestAccount } from '../../../test/contracts/authServiceContract'
-import { createMemoryTokenStorage } from '../../../test/fakes/memoryTokenStorage'
+import { createHttpClient } from '@/shared/http/httpClient'
+import { NetworkError } from '@/shared/http/errors'
+import { describeAuthServiceContract, TEST_ACCOUNT, type TestAccount } from '@/test/contracts/authServiceContract'
+import { createMemoryTokenStorage } from '@/test/fakes/memoryTokenStorage'
 import { createHttpAuthService } from './httpAuthService'
 import type { TokenStorage } from './tokenStorage'
 
