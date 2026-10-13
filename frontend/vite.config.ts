@@ -5,6 +5,15 @@ import { defineConfig } from 'vitest/config'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+  server: {
+    proxy: {
+      // En desarrollo, /api se reenvía al backend: mismo origen, sin CORS
+      '/api': {
+        target: 'http://localhost:8001',
+        rewrite: (path) => path.replace(/^\/api/, ''),
+      },
+    },
+  },
   test: {
     environment: 'jsdom',
     globals: true,
