@@ -56,3 +56,7 @@ class InvalidAnswersError(DomainError):
 
 class InvalidRecommendationsError(DomainError):
     """El LLM falló o sus recomendaciones no cumplen el esquema. El intento no se guarda."""
+
+
+class SubmissionNotFoundError(NotFoundError):
+    """El estudiante aún no ha resuelto el material."""

@@ -140,3 +140,7 @@ def test_la_peticion_cumple_el_contrato(endpoint: tuple[str, str]) -> None:
 @pytest.mark.parametrize("endpoint", ENDPOINTS, ids=[f"{m.upper()} {p}" for p, m in ENDPOINTS])
 def test_la_respuesta_cumple_el_contrato(endpoint: tuple[str, str]) -> None:
     assert success_body(IMPLEMENTED[endpoint]) == success_body(DOCUMENTED[endpoint])
+
+
+def test_todos_los_endpoints_documentados_estan_implementados() -> None:
+    assert sorted(set(DOCUMENTED) - set(IMPLEMENTED)) == []
