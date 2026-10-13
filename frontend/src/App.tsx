@@ -3,6 +3,7 @@ import { Navigate, Route, Routes, useParams } from 'react-router'
 import { LoginForm } from './features/auth/LoginForm'
 import { LessonDetailPage } from './features/lessons/LessonDetailPage'
 import { StudentLessons } from './features/lessons/StudentLessons'
+import { MyLessons } from './features/student/MyLessons'
 import { useSession } from './features/session/sessionContext'
 import { StudentDetailPage } from './features/teacher/StudentDetailPage'
 import { TeacherDashboard } from './features/teacher/TeacherDashboard'
@@ -74,6 +75,19 @@ function LessonDetailRoute() {
   )
 }
 
+function StudentHome({ name }: { name: string }) {
+  const { studentService } = useServices()
+  return (
+    <div className="mx-auto flex w-full max-w-2xl flex-col gap-6">
+      <header className="flex flex-col gap-1">
+        <p className="text-sm text-gray-500">Panel del estudiante</p>
+        <h1 className="text-2xl font-semibold text-gray-900">Hola, {name}</h1>
+      </header>
+      <MyLessons loadLessons={studentService.getMyLessons} downloadPdf={studentService.downloadPdf} openPdf={saveFile} />
+    </div>
+  )
+}
+
 function App() {
   const { teacherService } = useServices()
   const session = useSession()
@@ -131,7 +145,7 @@ function App() {
           <RequireRole role="estudiante">
             {(user) => (
               <AuthenticatedLayout>
-                <h1 className="mx-auto max-w-2xl text-2xl font-semibold text-gray-900">Hola, {user.name}</h1>
+                <StudentHome name={user.name} />
               </AuthenticatedLayout>
             )}
           </RequireRole>

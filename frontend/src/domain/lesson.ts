@@ -74,3 +74,8 @@ export interface MaterialRequest {
   // Solo valen para esta generación: no modifican las de la clase.
   keywords?: string[]
 }
+
+// Clase en el historial del estudiante: incluye el nombre de su PDF
+export interface StudentLessonSummary extends LessonSummary {
+  pdfFilename: string
+}

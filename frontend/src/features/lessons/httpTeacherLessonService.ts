@@ -1,27 +1,10 @@
-import type {
-  ActivityType,
-  LessonDetail,
-  LessonSummary,
-  MaterialRequest,
-  MaterialStatus,
-  SubmissionSummary,
-  TeacherMaterial,
-} from '../../domain/lesson'
+import type { ActivityType, LessonDetail, MaterialRequest, SubmissionSummary, TeacherMaterial } from '../../domain/lesson'
 import type { Level } from '../../domain/student'
+import { DEFAULT_PDF_FILENAME, toLessonSummary, type ApiLessonSummary, type ApiPdfRef } from '../../http/apiLessons'
 import type { HttpClient } from '../../http/httpClient'
 import type { TeacherLessonService } from './teacherLessonService'
 
 // Formas de la API (docs/openapi.yaml)
-
-// schema LessonBase
-interface ApiLessonSummary {
-  id: string
-  date: string
-  duration_minutes: number
-  topic: string
-  context: string
-  material_status: MaterialStatus
-}
 
 // schema TeacherMaterial
 interface ApiTeacherMaterial {
@@ -52,16 +35,10 @@ interface ApiSubmissionSummary {
 interface ApiLessonDetail extends ApiLessonSummary {
   keywords: string[]
   notes: string | null
-  pdf: { filename: string; url: string }
+  pdf: ApiPdfRef
   student: { id: string; first_name: string; last_name: string; native_language: string; level: Level }
   material: ApiTeacherMaterial | null
   submission: ApiSubmissionSummary | null
-}
-
-const DEFAULT_PDF_FILENAME = 'clase.pdf'
-
-function toLessonSummary({ id, date, duration_minutes, topic, context, material_status }: ApiLessonSummary): LessonSummary {
-  return { id, date, durationMinutes: duration_minutes, topic, context, materialStatus: material_status }
 }
 
 function toMaterial({ generated_at, activity_type, title, instructions, exercises }: ApiTeacherMaterial): TeacherMaterial {

@@ -1,6 +1,7 @@
 import type { LessonDetail, LessonSummary } from '../domain/lesson'
 import { createMockAuthService } from '../features/auth/mockAuthService'
 import { createMockTeacherLessonService } from '../features/lessons/mockTeacherLessonService'
+import { createMockStudentService } from '../features/student/mockStudentService'
 import { createMockTeacherService } from '../features/teacher/mockTeacherService'
 
 // Datos de prueba para desarrollo local (no son credenciales reales)
@@ -45,6 +46,9 @@ export const devTeacherService = createMockTeacherService({
     },
   ],
 })
+
+// No es un PDF real: solo sirve para probar la descarga sin backend
+const DEV_PDF_CONTENT = '%PDF-1.4 PDF de prueba'
 
 const ANA = { id: 'b71e4a90-2c5d-4f3e-8a1b-6d7c8e9f0a12', name: 'Ana Gómez', nativeLanguage: 'en', level: 'B1' } as const
 const SOFIA = { id: '5c8d2e7f-1a3b-4c9d-8e6f-2b4a7c9d1e3f', name: 'Sofía Ramírez', nativeLanguage: 'fr', level: 'C1' } as const
@@ -144,6 +148,14 @@ export const devTeacherLessonService = createMockTeacherLessonService({
     [SOFIA.id]: lessonsOf(SOFIA.id),
   },
   lessons: devLessons,
-  // No es un PDF real: solo sirve para probar la descarga sin backend
-  pdfContent: '%PDF-1.4 PDF de prueba',
+  pdfContent: DEV_PDF_CONTENT,
+})
+
+// Clases de Ana Gómez (estudiante@colegio.edu), la estudiante de desarrollo
+export const devStudentService = createMockStudentService({
+  lessons: devLessons
+    .filter((lesson) => lesson.student.id === ANA.id)
+    .sort((a, b) => b.date.localeCompare(a.date))
+    .map((lesson) => ({ ...toSummary(lesson), pdfFilename: lesson.pdfFilename })),
+  pdfContent: DEV_PDF_CONTENT,
 })

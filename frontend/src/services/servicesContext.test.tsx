@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import type { AuthService } from '../features/auth/authService'
 import type { TeacherLessonService } from '../features/lessons/teacherLessonService'
+import type { StudentService } from '../features/student/studentService'
 import type { TeacherService } from '../features/teacher/teacherService'
 import { ServicesProvider } from './ServicesProvider'
 import { useServices } from './servicesContext'
@@ -8,6 +9,7 @@ import { useServices } from './servicesContext'
 const authService: AuthService = { login: vi.fn(), getCurrentUser: vi.fn(), logout: vi.fn() }
 const teacherService: TeacherService = { getAssignedStudents: vi.fn(), getStudent: vi.fn() }
 const teacherLessonService: TeacherLessonService = { getStudentLessons: vi.fn(), getLesson: vi.fn(), downloadPdf: vi.fn(), generateMaterial: vi.fn() }
+const studentService: StudentService = { getMyLessons: vi.fn(), downloadPdf: vi.fn() }
 
 function ServicesProbe() {
   const services = useServices()
@@ -22,7 +24,7 @@ function ServicesProbe() {
 describe('ServicesContext', () => {
   it('entrega a los componentes los servicios inyectados en el provider', () => {
     render(
-      <ServicesProvider services={{ authService, teacherService, teacherLessonService }}>
+      <ServicesProvider services={{ authService, teacherService, teacherLessonService, studentService }}>
         <ServicesProbe />
       </ServicesProvider>,
     )
