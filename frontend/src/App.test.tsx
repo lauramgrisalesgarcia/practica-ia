@@ -84,7 +84,7 @@ describe('App', () => {
       expect(authService.login).toHaveBeenCalledWith({ email: TEACHER.email, password: PASSWORD })
 
       await userEvent.setup().click(screen.getByRole('button', { name: /ver alumnos asignados/i }))
-      expect(teacherService.getAssignedStudents).toHaveBeenCalledWith(TEACHER)
+      expect(teacherService.getAssignedStudents).toHaveBeenCalled()
     })
 
     it('lleva al estudiante a su panel tras iniciar sesión', async () => {

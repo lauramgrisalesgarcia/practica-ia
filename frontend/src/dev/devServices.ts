@@ -16,11 +16,27 @@ export const devAuthService = createMockAuthService({
 })
 
 export const devTeacherService = createMockTeacherService({
-  students: {
-    'docente@colegio.edu': [
-      { id: 1, name: 'Ana Gómez', email: 'estudiante@colegio.edu' },
-      { id: 2, name: 'Luis Pérez', email: 'luis@colegio.edu' },
-      { id: 3, name: 'Sofía Ramírez', email: 'sofia@colegio.edu' },
-    ],
-  },
+  students: [
+    {
+      id: 'b71e4a90-2c5d-4f3e-8a1b-6d7c8e9f0a12',
+      name: 'Ana Gómez',
+      email: 'estudiante@colegio.edu',
+      nativeLanguage: 'en',
+      level: 'B1',
+    },
+    {
+      id: '3f2b8c1e-9a4d-4e7b-b6a2-1c9d0e5f7a83',
+      name: 'Luis Pérez',
+      email: 'luis@colegio.edu',
+      nativeLanguage: 'de',
+      level: 'A2',
+    },
+    {
+      id: '5c8d2e7f-1a3b-4c9d-8e6f-2b4a7c9d1e3f',
+      name: 'Sofía Ramírez',
+      email: 'sofia@colegio.edu',
+      nativeLanguage: 'fr',
+      level: 'C1',
+    },
+  ],
 })
