@@ -1,17 +1,12 @@
 import { useState } from 'react'
 import type { LoginCredentials } from './domain/auth'
 import type { User } from './domain/user'
-import type { AuthService } from './features/auth/authService'
 import { LoginForm } from './features/auth/LoginForm'
 import { TeacherDashboard } from './features/teacher/TeacherDashboard'
-import type { TeacherService } from './features/teacher/teacherService'
+import { useServices } from './services/servicesContext'
 
-interface AppProps {
-  authService: AuthService
-  teacherService: TeacherService
-}
-
-function App({ authService, teacherService }: AppProps) {
+function App() {
+  const { authService, teacherService } = useServices()
   const [user, setUser] = useState<User | null>(null)
 
   async function handleLogin(credentials: LoginCredentials) {

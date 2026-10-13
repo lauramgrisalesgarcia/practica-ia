@@ -1,9 +1,10 @@
-import { render, screen } from '@testing-library/react'
+import { screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import App from './App'
 import type { User } from './domain/user'
 import type { AuthService } from './features/auth/authService'
 import type { TeacherService } from './features/teacher/teacherService'
+import { renderWithServices } from './test/renderWithServices'
 
 const TEACHER: User = { name: 'María López', email: 'docente@colegio.edu', role: 'docente' }
 const STUDENT: User = { name: 'Ana Gómez', email: 'estudiante@colegio.edu', role: 'estudiante' }
@@ -31,7 +32,7 @@ async function login(email: string) {
 
 describe('App', () => {
   it('muestra la pantalla de inicio de sesión', () => {
-    render(<App authService={createAuthService(TEACHER)} teacherService={createTeacherService()} />)
+    renderWithServices(<App />, { services: { authService: createAuthService(TEACHER), teacherService: createTeacherService() } })
 
     expect(screen.getByRole('heading', { level: 1, name: /iniciar sesión/i })).toBeInTheDocument()
   })
@@ -39,7 +40,7 @@ describe('App', () => {
   it('lleva al docente a su dashboard tras iniciar sesión', async () => {
     const authService = createAuthService(TEACHER)
     const teacherService = createTeacherService()
-    render(<App authService={authService} teacherService={teacherService} />)
+    renderWithServices(<App />, { services: { authService, teacherService } })
 
     await login(TEACHER.email)
 
@@ -53,7 +54,7 @@ describe('App', () => {
   })
 
   it('no muestra el dashboard del docente a un estudiante', async () => {
-    render(<App authService={createAuthService(STUDENT)} teacherService={createTeacherService()} />)
+    renderWithServices(<App />, { services: { authService: createAuthService(STUDENT), teacherService: createTeacherService() } })
 
     await login(STUDENT.email)
 
@@ -62,7 +63,7 @@ describe('App', () => {
   })
 
   it('se queda en el login si las credenciales son incorrectas', async () => {
-    render(<App authService={createAuthService(null)} teacherService={createTeacherService()} />)
+    renderWithServices(<App />, { services: { authService: createAuthService(null), teacherService: createTeacherService() } })
 
     await login('nadie@colegio.edu')
 
