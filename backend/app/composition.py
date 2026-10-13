@@ -24,6 +24,7 @@ from app.domain.use_cases.generate_material import GenerateMaterial
 from app.domain.use_cases.authenticate_user import AuthenticateUser
 from app.domain.use_cases.get_my_lesson_pdf import GetMyLessonPdf
 from app.domain.use_cases.get_my_material import GetMyMaterial
+from app.domain.use_cases.get_my_submission import GetMySubmission
 from app.domain.use_cases.get_teacher_lesson import GetTeacherLesson
 from app.domain.use_cases.get_teacher_lesson_pdf import GetTeacherLessonPdf
 from app.domain.use_cases.get_teacher_student import GetTeacherStudent
@@ -137,3 +138,10 @@ def get_submit_material(
     llm: Annotated[LLMClient, Depends(get_llm_client)],
 ) -> SubmitMaterial:
     return SubmitMaterial(lessons=lessons, materials=materials, llm=llm, clock=SystemClock())
+
+
+def get_get_my_submission(
+    lessons: Annotated[LessonRepository, Depends(get_lesson_repository)],
+    materials: Annotated[MaterialRepository, Depends(get_material_repository)],
+) -> GetMySubmission:
+    return GetMySubmission(lessons=lessons, materials=materials)
