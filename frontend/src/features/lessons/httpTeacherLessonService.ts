@@ -2,6 +2,7 @@ import type {
   ActivityType,
   LessonDetail,
   LessonSummary,
+  MaterialRequest,
   MaterialStatus,
   SubmissionSummary,
   TeacherMaterial,
@@ -30,6 +31,13 @@ interface ApiTeacherMaterial {
   title: string
   instructions: string
   exercises: { id: number; sentence: string; options: string[]; correct_option: string }[]
+}
+
+// schema GenerateMaterialRequest
+interface ApiMaterialRequest {
+  activity_type: ActivityType
+  exercise_count: number
+  keywords?: string[]
 }
 
 // schema SubmissionSummary
@@ -93,6 +101,14 @@ function toLessonDetail(lesson: ApiLessonDetail): LessonDetail {
   }
 }
 
+function toApiMaterialRequest({ activityType, exerciseCount, keywords }: MaterialRequest): ApiMaterialRequest {
+  return {
+    activity_type: activityType,
+    exercise_count: exerciseCount,
+    ...(keywords && { keywords }),
+  }
+}
+
 function lessonPath(lessonId: string): string {
   return `/teachers/me/lessons/${encodeURIComponent(lessonId)}`
 }
@@ -109,6 +125,11 @@ export function createHttpTeacherLessonService(http: HttpClient): TeacherLessonS
     async downloadPdf(lessonId) {
       const { blob, filename } = await http.getBlob(`${lessonPath(lessonId)}/pdf`)
       return { blob, filename: filename ?? DEFAULT_PDF_FILENAME }
+    },
+    async generateMaterial(lessonId, request) {
+      // La respuesta (GeneratedMaterial) es el material más el lesson_id, que aquí no hace falta
+      const material = await http.post<ApiTeacherMaterial>(`${lessonPath(lessonId)}/material`, toApiMaterialRequest(request))
+      return toMaterial(material)
     },
   }
 }

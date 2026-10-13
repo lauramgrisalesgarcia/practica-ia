@@ -62,3 +62,15 @@ export interface LessonPdf {
   blob: Blob
   filename: string
 }
+
+export const MIN_EXERCISES = 1
+export const MAX_EXERCISES = 15
+
+export interface MaterialRequest {
+  activityType: ActivityType
+  // Entre MIN_EXERCISES y MAX_EXERCISES
+  exerciseCount: number
+  // Palabras clave revisadas por el docente; si se omiten se usan las de la clase.
+  // Solo valen para esta generación: no modifican las de la clase.
+  keywords?: string[]
+}

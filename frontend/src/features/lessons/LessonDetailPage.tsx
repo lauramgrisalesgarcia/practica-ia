@@ -1,8 +1,9 @@
 import { useEffect, useId, useState } from 'react'
 import { Link } from 'react-router'
 import { formatDate } from '../../i18n/formatDate'
-import type { LessonDetail, LessonPdf, SubmissionSummary, TeacherMaterial } from '../../domain/lesson'
+import type { LessonDetail, LessonPdf, MaterialRequest, SubmissionSummary, TeacherMaterial } from '../../domain/lesson'
 import { studentDetailPath } from '../../routes/paths'
+import { GenerateMaterialForm } from './GenerateMaterialForm'
 
 interface LessonDetailPageProps {
   lessonId: string
@@ -11,6 +12,7 @@ interface LessonDetailPageProps {
   downloadPdf: (lessonId: string) => Promise<LessonPdf>
   // Muestra al usuario el PDF descargado
   openPdf: (pdf: LessonPdf) => void
+  generateMaterial: (lessonId: string, request: MaterialRequest) => Promise<TeacherMaterial>
 }
 
 type LessonState =
@@ -22,7 +24,7 @@ function errorMessage(error: unknown, fallback: string): string {
   return error instanceof Error ? error.message : fallback
 }
 
-export function LessonDetailPage({ lessonId, loadLesson, downloadPdf, openPdf }: LessonDetailPageProps) {
+export function LessonDetailPage({ lessonId, loadLesson, downloadPdf, openPdf, generateMaterial }: LessonDetailPageProps) {
   const [state, setState] = useState<LessonState>({ status: 'loading' })
 
   useEffect(() => {
@@ -49,6 +51,10 @@ export function LessonDetailPage({ lessonId, loadLesson, downloadPdf, openPdf }:
   }
 
   const { lesson } = state
+
+  function handleGenerated(material: TeacherMaterial) {
+    setState({ status: 'loaded', lesson: { ...lesson, material, materialStatus: 'pending' } })
+  }
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-6">
@@ -103,6 +109,16 @@ export function LessonDetailPage({ lessonId, loadLesson, downloadPdf, openPdf }:
             El alumno aún no ha resuelto el material.
           </p>
         ))}
+
+      {!lesson.submission && (
+        <GenerateMaterialForm
+          lessonId={lesson.id}
+          initialKeywords={lesson.keywords}
+          hasMaterial={lesson.material !== null}
+          generateMaterial={generateMaterial}
+          onGenerated={handleGenerated}
+        />
+      )}
     </div>
   )
 }
