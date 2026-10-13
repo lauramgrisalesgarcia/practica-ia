@@ -1,9 +1,10 @@
 import type { ReactNode } from 'react'
-import { Navigate, Route, Routes } from 'react-router'
+import { Navigate, Route, Routes, useParams } from 'react-router'
 import { LoginForm } from './features/auth/LoginForm'
 import { useSession } from './features/session/sessionContext'
+import { StudentDetailPage } from './features/teacher/StudentDetailPage'
 import { TeacherDashboard } from './features/teacher/TeacherDashboard'
-import { homePathFor, LOGIN_PATH } from './routes/paths'
+import { homePathFor, LOGIN_PATH, STUDENT_DETAIL_ROUTE } from './routes/paths'
 import { RequireRole } from './routes/RequireRole'
 import { useServices } from './services/servicesContext'
 
@@ -42,6 +43,12 @@ function AuthenticatedLayout({ children }: { children: ReactNode }) {
   )
 }
 
+function StudentDetailRoute() {
+  const { teacherService } = useServices()
+  const { studentId = '' } = useParams()
+  return <StudentDetailPage key={studentId} studentId={studentId} loadStudent={teacherService.getStudent} />
+}
+
 function App() {
   const { teacherService } = useServices()
   const session = useSession()
@@ -64,6 +71,18 @@ function App() {
             {(user) => (
               <AuthenticatedLayout>
                 <TeacherDashboard teacherName={user.name} loadStudents={teacherService.getAssignedStudents} />
+              </AuthenticatedLayout>
+            )}
+          </RequireRole>
+        }
+      />
+      <Route
+        path={STUDENT_DETAIL_ROUTE}
+        element={
+          <RequireRole role="docente">
+            {() => (
+              <AuthenticatedLayout>
+                <StudentDetailRoute />
               </AuthenticatedLayout>
             )}
           </RequireRole>

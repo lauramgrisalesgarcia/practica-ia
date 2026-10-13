@@ -1,9 +1,9 @@
-import type { Student } from '../../domain/student'
+import { toStudentSummary, type StudentDetail } from '../../domain/student'
 import { wait } from '../../dev/wait'
 import type { TeacherService } from './teacherService'
 
 interface MockTeacherServiceOptions {
-  students: Student[]
+  students: StudentDetail[]
   delayMs?: number
 }
 
@@ -12,7 +12,13 @@ export function createMockTeacherService({ students, delayMs = 500 }: MockTeache
   return {
     async getAssignedStudents() {
       await wait(delayMs)
-      return students
+      return students.map(toStudentSummary)
+    },
+    async getStudent(studentId) {
+      await wait(delayMs)
+      const student = students.find((s) => s.id === studentId)
+      if (!student) throw new Error('Estudiante no encontrado')
+      return student
     },
   }
 }

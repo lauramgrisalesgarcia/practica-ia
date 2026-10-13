@@ -1,4 +1,4 @@
-import type { Level, Student } from '../../domain/student'
+import type { Level, Student, StudentDetail } from '../../domain/student'
 import type { HttpClient } from '../../http/httpClient'
 import type { TeacherService } from './teacherService'
 
@@ -12,6 +12,11 @@ interface ApiStudent {
   level: Level
 }
 
+// docs/openapi.yaml, schema StudentDetail
+interface ApiStudentDetail extends ApiStudent {
+  lessons_count: number
+}
+
 function toStudent({ id, first_name, last_name, email, native_language, level }: ApiStudent): Student {
   return { id, name: `${first_name} ${last_name}`, email, nativeLanguage: native_language, level }
 }
@@ -21,6 +26,10 @@ export function createHttpTeacherService(http: HttpClient): TeacherService {
     async getAssignedStudents() {
       const students = await http.get<ApiStudent[]>('/teachers/me/students')
       return students.map(toStudent)
+    },
+    async getStudent(studentId) {
+      const detail = await http.get<ApiStudentDetail>(`/teachers/me/students/${encodeURIComponent(studentId)}`)
+      return { ...toStudent(detail), lessonsCount: detail.lessons_count } satisfies StudentDetail
     },
   }
 }

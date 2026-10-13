@@ -5,7 +5,7 @@ import { ServicesProvider } from './ServicesProvider'
 import { useServices } from './servicesContext'
 
 const authService: AuthService = { login: vi.fn(), getCurrentUser: vi.fn(), logout: vi.fn() }
-const teacherService: TeacherService = { getAssignedStudents: vi.fn() }
+const teacherService: TeacherService = { getAssignedStudents: vi.fn(), getStudent: vi.fn() }
 
 function ServicesProbe() {
   const services = useServices()

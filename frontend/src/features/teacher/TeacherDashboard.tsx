@@ -1,5 +1,8 @@
 import { useState } from 'react'
+import { Link } from 'react-router'
+import { languageName } from '../../i18n/languageName'
 import type { Student } from '../../domain/student'
+import { studentDetailPath } from '../../routes/paths'
 
 interface TeacherDashboardProps {
   teacherName: string
@@ -11,8 +14,6 @@ type StudentsState =
   | { status: 'loading' }
   | { status: 'loaded'; students: Student[] }
   | { status: 'error'; message: string }
-
-const languageNames = new Intl.DisplayNames(['es'], { type: 'language' })
 
 export function TeacherDashboard({ teacherName, loadStudents }: TeacherDashboardProps) {
   const [state, setState] = useState<StudentsState>({ status: 'idle' })
@@ -63,10 +64,12 @@ export function TeacherDashboard({ teacherName, loadStudents }: TeacherDashboard
           <ul aria-label="Alumnos asignados" className="divide-y divide-gray-200">
             {state.students.map((student) => (
               <li key={student.id} className="flex flex-col py-3">
-                <span className="font-medium text-gray-900">{student.name}</span>
+                <Link to={studentDetailPath(student.id)} className="font-medium text-blue-700 hover:underline">
+                  {student.name}
+                </Link>
                 <span className="text-sm text-gray-500">{student.email}</span>
                 <span className="text-sm text-gray-500">
-                  {student.level} · {languageNames.of(student.nativeLanguage)}
+                  {student.level} · {languageName(student.nativeLanguage)}
                 </span>
               </li>
             ))}

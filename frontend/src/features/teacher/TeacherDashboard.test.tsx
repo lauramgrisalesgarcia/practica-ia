@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react'
+import { MemoryRouter } from 'react-router'
 import userEvent from '@testing-library/user-event'
 import type { Student } from '../../domain/student'
 import { TeacherDashboard } from './TeacherDashboard'
@@ -10,7 +11,11 @@ const STUDENTS: Student[] = [
 
 function setup(loadStudents = vi.fn().mockResolvedValue(STUDENTS)) {
   const user = userEvent.setup()
-  render(<TeacherDashboard teacherName="María López" loadStudents={loadStudents} />)
+  render(
+    <MemoryRouter>
+      <TeacherDashboard teacherName="María López" loadStudents={loadStudents} />
+    </MemoryRouter>,
+  )
   return {
     user,
     loadStudents,
@@ -53,6 +58,17 @@ describe('TeacherDashboard', () => {
     const [ana, luis] = await screen.findAllByRole('listitem')
     expect(ana).toHaveTextContent('B1 · inglés')
     expect(luis).toHaveTextContent('A2 · alemán')
+  })
+
+  it('enlaza cada alumno con su detalle', async () => {
+    const { user, viewStudentsButton } = setup()
+
+    await user.click(viewStudentsButton)
+
+    expect(await screen.findByRole('link', { name: /ana gómez/i })).toHaveAttribute(
+      'href',
+      `/docente/alumnos/${STUDENTS[0].id}`,
+    )
   })
 
   it('indica que está cargando mientras obtiene los alumnos', async () => {
