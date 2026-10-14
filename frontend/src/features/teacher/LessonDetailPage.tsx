@@ -1,4 +1,4 @@
-import { useEffect, useId, useState } from 'react'
+import { Fragment, useEffect, useId, useState } from 'react'
 import { Link, useLocation } from 'react-router'
 import { formatDate } from '@/shared/i18n/formatDate'
 import type { LessonDetail, LessonPdf, MaterialRequest, SubmissionSummary, TeacherMaterial } from '@/domain/lesson'
@@ -29,6 +29,9 @@ function errorMessage(error: unknown, fallback: string): string {
 
 export function LessonDetailPage({ lessonId, loadLesson, downloadPdf, openPdf, generateMaterial }: LessonDetailPageProps) {
   const [state, setState] = useState<LessonState>({ status: 'loading' })
+  // El enlace «Generar material» del historial llega con el ancla del formulario: se abre ya desplegado
+  const { hash } = useLocation()
+  const [isConfiguring, setIsConfiguring] = useState(hash === `#${GENERATE_MATERIAL_ANCHOR}`)
 
   useEffect(() => {
     let active = true
@@ -41,9 +44,7 @@ export function LessonDetailPage({ lessonId, loadLesson, downloadPdf, openPdf, g
     }
   }, [lessonId, loadLesson])
 
-  // El enlace «Generar material» del historial llega con el ancla del formulario,
-  // que solo existe cuando la clase ya está cargada
-  const { hash } = useLocation()
+  // El formulario solo existe cuando la clase ya está cargada
   const isLoaded = state.status === 'loaded'
   useEffect(() => {
     if (isLoaded && hash === `#${GENERATE_MATERIAL_ANCHOR}`) {
@@ -66,6 +67,7 @@ export function LessonDetailPage({ lessonId, loadLesson, downloadPdf, openPdf, g
   const { lesson } = state
 
   function handleGenerated(material: TeacherMaterial) {
+    setIsConfiguring(false)
     setState({ status: 'loaded', lesson: { ...lesson, material, materialStatus: 'pending' } })
   }
 
@@ -116,24 +118,36 @@ export function LessonDetailPage({ lessonId, loadLesson, downloadPdf, openPdf, g
       </div>
 
       {lesson.material ? (
-        <MaterialSection material={lesson.material} />
+        <>
+          {!lesson.submission && (
+            <p className="rounded-xl bg-white p-6 text-sm text-ink/70 shadow-md">El alumno aún no ha resuelto el material.</p>
+          )}
+          <MaterialSection material={lesson.material} />
+        </>
       ) : (
-        <p className="rounded-xl bg-white p-6 text-sm text-ink/70 shadow-md">
-          Aún no se ha generado material de refuerzo para esta clase.
-        </p>
-      )}
-
-      {lesson.material && !lesson.submission && (
-        <p className="rounded-xl bg-white p-6 text-sm text-ink/70 shadow-md">El alumno aún no ha resuelto el material.</p>
-      )}
-
-      {!lesson.material && (
-        <GenerateMaterialForm
-          lessonId={lesson.id}
-          initialKeywords={lesson.keywords}
-          generateMaterial={generateMaterial}
-          onGenerated={handleGenerated}
-        />
+        <>
+          <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl bg-white p-6 shadow-md">
+            <p className="text-sm text-ink/70">Aún no se ha generado material de refuerzo para esta clase.</p>
+            <button
+              type="button"
+              aria-expanded={isConfiguring}
+              aria-controls={GENERATE_MATERIAL_ANCHOR}
+              onClick={() => setIsConfiguring((open) => !open)}
+              className="rounded-md bg-ocean px-4 py-2 text-sm font-medium text-white hover:bg-ink"
+            >
+              Generar material de refuerzo
+            </button>
+          </div>
+          {isConfiguring && (
+            <GenerateMaterialForm
+              lessonId={lesson.id}
+              initialKeywords={lesson.keywords}
+              generateMaterial={generateMaterial}
+              onGenerated={handleGenerated}
+              onCancel={() => setIsConfiguring(false)}
+            />
+          )}
+        </>
       )}
     </div>
   )
@@ -143,39 +157,62 @@ function MaterialSection({ material }: { material: TeacherMaterial }) {
   const correctAnswerId = useId()
 
   return (
-    <section aria-label="Material de refuerzo" className="flex flex-col gap-4 rounded-xl bg-white p-6 shadow-md">
-      <p className="text-sm font-semibold uppercase tracking-wide text-ink/70">Material de refuerzo</p>
-      <h2 className="text-lg font-semibold text-ink">{material.title}</h2>
-      <p className="text-ink/80">{material.instructions}</p>
+    <section aria-label="Material de refuerzo" className="flex flex-col gap-5 rounded-xl bg-white p-6 shadow-md">
+      <header className="flex flex-col gap-1">
+        <p className="text-xs font-semibold uppercase tracking-wide text-ink/70">
+          Material de refuerzo · {material.exercises.length} {material.exercises.length === 1 ? 'pregunta' : 'preguntas'}
+        </p>
+        <h2 className="text-lg font-semibold text-ink">{material.title}</h2>
+        <p className="text-sm text-ink/80">{material.instructions}</p>
+      </header>
       <span id={correctAnswerId} hidden>
         Respuesta correcta
       </span>
-      <ol className="flex list-decimal flex-col gap-3 pl-5">
-        {material.exercises.map((exercise) => (
-          <li key={exercise.id} className="flex flex-col gap-1">
-            <span className="text-ink">{exercise.sentence}</span>
-            <span className="flex flex-wrap gap-2 text-sm">
+      <ol className="flex flex-col gap-3">
+        {material.exercises.map((exercise, index) => (
+          <li key={exercise.id} className="flex flex-col gap-3 rounded-lg border border-ink/10 bg-mist/40 p-4">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-ocean">Pregunta {index + 1}</h3>
+            <p className="text-ink">
+              <Sentence text={exercise.sentence} />
+            </p>
+            <ul aria-label="Opciones" className="flex flex-wrap gap-2 text-sm">
               {exercise.options.map((option) =>
                 option === exercise.correctOption ? (
-                  <span
+                  <li
                     key={option}
-                    aria-describedby={correctAnswerId}
-                    className="rounded-md bg-mint px-2 py-0.5 font-medium text-ink"
+                    className="flex items-center gap-1.5 rounded-full border border-ocean bg-mint px-3 py-1 text-ink"
                   >
-                    {option}
-                  </span>
+                    <svg aria-hidden="true" viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round">
+                      <path d="m5 12 5 5 9-10" />
+                    </svg>
+                    <span aria-describedby={correctAnswerId} className="font-medium">
+                      {option}
+                    </span>
+                    <span className="text-xs text-ink/80">Correcta</span>
+                  </li>
                 ) : (
-                  <span key={option} className="rounded-md bg-mist px-2 py-0.5 text-ink/80">
+                  <li key={option} className="rounded-full border border-ink/15 bg-white px-3 py-1 text-ink/80">
                     {option}
-                  </span>
+                  </li>
                 ),
               )}
-            </span>
+            </ul>
           </li>
         ))}
       </ol>
     </section>
   )
+}
+
+// Frase con el hueco («___») resaltado
+function Sentence({ text }: { text: string }) {
+  const parts = text.split('___')
+  return parts.map((part, index) => (
+    <Fragment key={index}>
+      {part}
+      {index < parts.length - 1 && <span className="font-semibold tracking-widest text-ocean">___</span>}
+    </Fragment>
+  ))
 }
 
 function SubmissionSection({ submission }: { submission: SubmissionSummary }) {

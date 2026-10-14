@@ -97,6 +97,24 @@ describe('LessonDetailPage', () => {
     expect(within(exercise).getByText('la carta')).toHaveAccessibleDescription('Respuesta correcta')
   })
 
+  it('presenta cada pregunta en su propia tarjeta numerada', async () => {
+    setup()
+
+    const material = await screen.findByRole('region', { name: 'Material de refuerzo' })
+    const questions = within(material).getAllByRole('heading', { level: 3 })
+    expect(questions.map((heading) => heading.textContent)).toEqual(
+      (RESTAURANT_LESSON.material as TeacherMaterial).exercises.map((_, index) => `Pregunta ${index + 1}`),
+    )
+  })
+
+  it('marca la opción correcta con un texto, no solo con el color', async () => {
+    setup()
+
+    const material = await screen.findByRole('region', { name: 'Material de refuerzo' })
+    const [exercise] = within(material).getAllByRole('listitem')
+    expect(within(exercise).getAllByText('Correcta')).toHaveLength(1)
+  })
+
   it('muestra el resultado del alumno si ya resolvió el material', async () => {
     setup()
 
@@ -193,14 +211,34 @@ describe('LessonDetailPage', () => {
 
       setup({ lesson: INTRODUCTIONS_LESSON })
 
-      await screen.findByRole('form', { name: 'Generar material' })
+      await screen.findByRole('button', { name: 'Generar material de refuerzo' })
       expect(scrollIntoView).not.toHaveBeenCalled()
     })
 
-    it('ofrece generar material si la clase aún no lo tiene', async () => {
-      setup({ lesson: INTRODUCTIONS_LESSON })
+    it('muestra la configuración del material solo al pulsar «Generar material de refuerzo»', async () => {
+      const { user } = setup({ lesson: INTRODUCTIONS_LESSON })
 
-      expect(await screen.findByRole('button', { name: 'Generar material' })).toBeInTheDocument()
+      const open = await screen.findByRole('button', { name: 'Generar material de refuerzo' })
+      expect(open).toHaveAttribute('aria-expanded', 'false')
+      expect(screen.getByText(/aún no se ha generado material/i)).toBeInTheDocument()
+      expect(screen.queryByRole('form', { name: 'Generar material' })).not.toBeInTheDocument()
+
+      await user.click(open)
+
+      const form = screen.getByRole('form', { name: 'Generar material' })
+      expect(open).toHaveAttribute('aria-expanded', 'true')
+      const heading = screen.getByRole('heading', { level: 1 })
+      expect(heading.compareDocumentPosition(form) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    })
+
+    it('oculta la configuración al cancelar', async () => {
+      const { user } = setup({ lesson: INTRODUCTIONS_LESSON })
+      await user.click(await screen.findByRole('button', { name: 'Generar material de refuerzo' }))
+
+      await user.click(screen.getByRole('button', { name: 'Cancelar' }))
+
+      expect(screen.queryByRole('form', { name: 'Generar material' })).not.toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'Generar material de refuerzo' })).toHaveAttribute('aria-expanded', 'false')
     })
 
     it('no permite volver a generar el material aunque el alumno aún no lo haya resuelto', async () => {
@@ -221,12 +259,14 @@ describe('LessonDetailPage', () => {
     it('muestra el material recién generado pendiente de resolver', async () => {
       const { user, generateMaterial } = setup({ lesson: INTRODUCTIONS_LESSON })
 
-      await user.click(await screen.findByRole('button', { name: 'Generar material' }))
+      await user.click(await screen.findByRole('button', { name: 'Generar material de refuerzo' }))
+      await user.click(screen.getByRole('button', { name: 'Generar material' }))
 
       const material = await screen.findByRole('region', { name: 'Material de refuerzo' })
       expect(within(material).getByRole('heading', { name: 'Presentaciones' })).toBeInTheDocument()
       expect(screen.getByText(/aún no ha resuelto el material/i)).toBeInTheDocument()
       expect(screen.queryByRole('form', { name: /generar material/i })).not.toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: /generar material/i })).not.toBeInTheDocument()
       expect(generateMaterial).toHaveBeenCalledWith(INTRODUCTIONS_LESSON.id, expect.objectContaining({ exerciseCount: 5 }))
     })
   })
