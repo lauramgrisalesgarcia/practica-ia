@@ -1,12 +1,17 @@
 from datetime import UTC, datetime, timedelta
+from decimal import Decimal
+from typing import Any
 from uuid import UUID, uuid4
 
+import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
+from app.composition import get_clock
 from app.core.tokens import create_access_token
 from app.domain.entities import Level
 from app.persistence.file_storage import LocalFileStorage
+from tests.domain.fakes import FixedClock
 from tests.factories import create_lesson, create_material, create_student, create_submission, create_user
 
 
@@ -356,3 +361,53 @@ class TestPdfDeUnaClase:
         response = client.get(f"/teachers/me/lessons/{uuid4()}/pdf")
 
         assert response.status_code == 401
+
+
+class TestIndicadoresDelDocente:
+    # Martes 13 de octubre de 2026 (UTC)
+    NOW = datetime(2026, 10, 13, 12, 0, tzinfo=UTC)
+
+    @pytest.fixture
+    def fixed_clock(self, client: TestClient) -> None:
+        app: Any = client.app
+        app.dependency_overrides[get_clock] = lambda: FixedClock(self.NOW)
+
+    @pytest.mark.usefixtures("fixed_clock")
+    def test_devuelve_los_indicadores_de_las_clases_realizadas(self, client: TestClient, db_session: Session) -> None:
+        teacher = create_user(db_session)
+        emma = create_student(db_session, teacher=teacher)
+        lesson = create_lesson(db_session, student=emma, teacher=teacher, date=self.NOW - timedelta(hours=2))
+        create_lesson(db_session, student=emma, teacher=teacher, date=self.NOW + timedelta(days=1))
+        create_submission(
+            db_session, material=create_material(db_session, lesson=lesson), student=emma, score=Decimal("66.67")
+        )
+
+        response = client.get("/teachers/me/insights", headers=auth_header(teacher.public_id))
+
+        assert response.status_code == 200
+        body = response.json()
+        assert body["lessons_this_month"] == 1
+        assert body["pending_materials"] == 0
+        assert body["material_status"] == {"completed": 1, "pending": 0, "none": 0}
+        assert body["weekly_lessons"][-1] == {"week_start": "2026-10-12", "count": 1}
+        assert len(body["weekly_lessons"]) == 8
+        assert {item["type"] for item in body["recent_activity"]} == {"lesson", "material", "submission"}
+        submission = next(item for item in body["recent_activity"] if item["type"] == "submission")
+        assert submission["lesson_id"] == str(lesson.public_id)
+        assert submission["student_name"] == "Emma Schmidt"
+        assert submission["topic"] == lesson.topic
+        assert submission["score"] == 66.67
+        [calendar_lesson] = body["calendar"]
+        assert datetime.fromisoformat(calendar_lesson.pop("start")) == lesson.date
+        assert calendar_lesson == {"lesson_id": str(lesson.public_id), "student_name": "Emma Schmidt", "topic": lesson.topic}
+
+    def test_un_estudiante_no_puede_ver_los_indicadores(self, client: TestClient, db_session: Session) -> None:
+        teacher = create_user(db_session)
+        emma = create_student(db_session, teacher=teacher)
+
+        response = client.get("/teachers/me/insights", headers=auth_header(emma.public_id))
+
+        assert response.status_code == 403
+
+    def test_sin_token_responde_401(self, client: TestClient) -> None:
+        assert client.get("/teachers/me/insights").status_code == 401

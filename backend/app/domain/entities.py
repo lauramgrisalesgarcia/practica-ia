@@ -1,6 +1,6 @@
 import enum
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import date, datetime
 from decimal import Decimal
 from typing import Any, NamedTuple
 from uuid import UUID
@@ -242,3 +242,65 @@ class GradedSubmission:
     lesson_id: UUID
     submission: Submission
     grade: Grade
+
+
+@dataclass(frozen=True, slots=True)
+class InsightLesson:
+    """Clase realizada de un docente, con lo necesario para calcular sus indicadores."""
+
+    id: UUID
+    date: datetime
+    student_name: str
+    topic: str
+    material_generated_at: datetime | None
+    submitted_at: datetime | None
+    score: Decimal | None
+
+
+class InsightActivityType(enum.StrEnum):
+    """Tipo de actividad reciente del panel del docente."""
+
+    LESSON = "lesson"
+    MATERIAL = "material"
+    SUBMISSION = "submission"
+
+
+@dataclass(frozen=True, slots=True)
+class WeeklyCount:
+    week_start: date  # lunes de la semana (UTC)
+    count: int
+
+
+@dataclass(frozen=True, slots=True)
+class MaterialStatusCounts:
+    completed: int
+    pending: int
+    none: int
+
+
+@dataclass(frozen=True, slots=True)
+class RecentActivity:
+    type: InsightActivityType
+    date: datetime
+    lesson_id: UUID
+    student_name: str
+    topic: str
+    score: Decimal | None  # solo en las entregas
+
+
+@dataclass(frozen=True, slots=True)
+class CalendarLesson:
+    lesson_id: UUID
+    start: datetime
+    student_name: str
+    topic: str
+
+
+@dataclass(frozen=True, slots=True)
+class TeacherInsights:
+    lessons_this_month: int
+    pending_materials: int
+    material_status: MaterialStatusCounts
+    weekly_lessons: tuple[WeeklyCount, ...]
+    recent_activity: tuple[RecentActivity, ...]
+    calendar: tuple[CalendarLesson, ...]
