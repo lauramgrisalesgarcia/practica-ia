@@ -213,7 +213,8 @@ describe('App', () => {
       const teacherLessonService = createTeacherLessonService()
       renderApp(`/docente/alumnos/${EMMA.id}`, createAuthService({ current: TEACHER }), createTeacherService(), teacherLessonService)
 
-      expect(await screen.findByRole('list', { name: /historial de clases/i })).toHaveTextContent('Pedir en un restaurante')
+      expect(await screen.findByRole('heading', { level: 4, name: 'Pedir en un restaurante' })).toBeInTheDocument()
+      expect(screen.getByRole('region', { name: 'Historial de clases' })).toBeInTheDocument()
       expect(teacherLessonService.getStudentLessons).toHaveBeenCalledWith(EMMA.id)
     })
 

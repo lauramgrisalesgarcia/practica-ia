@@ -1,5 +1,6 @@
 import { useId, useState, type FormEvent } from 'react'
 import { MAX_EXERCISES, MIN_EXERCISES, type MaterialRequest, type TeacherMaterial } from '@/domain/lesson'
+import { GENERATE_MATERIAL_ANCHOR } from '@/shared/routes/paths'
 import { validateMaterialForm, type MaterialFormErrors } from './materialForm'
 
 interface GenerateMaterialFormProps {
@@ -50,6 +51,7 @@ export function GenerateMaterialForm({
 
   return (
     <form
+      id={GENERATE_MATERIAL_ANCHOR}
       noValidate
       onSubmit={handleSubmit}
       aria-label={actionLabel}

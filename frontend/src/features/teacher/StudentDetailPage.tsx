@@ -3,6 +3,7 @@ import { Link } from 'react-router'
 import { languageName } from '@/shared/i18n/languageName'
 import type { StudentDetail } from '@/domain/student'
 import { homePathFor } from '@/shared/routes/paths'
+import { initials } from './components/studentStats'
 
 interface StudentDetailPageProps {
   studentId: string
@@ -33,7 +34,7 @@ export function StudentDetailPage({ studentId, loadStudent }: StudentDetailPageP
   }, [studentId, loadStudent])
 
   return (
-    <div className="mx-auto flex w-full max-w-2xl flex-col gap-6">
+    <div className="mx-auto flex w-full max-w-4xl flex-col gap-6">
       <Link to={homePathFor('docente')} className="self-start text-sm font-medium text-ocean hover:text-ink">
         ← Volver a mis alumnos
       </Link>
@@ -48,11 +49,19 @@ export function StudentDetailPage({ studentId, loadStudent }: StudentDetailPageP
 
       {state.status === 'loaded' && (
         <section className="flex flex-col gap-4 rounded-xl bg-white p-6 shadow-md">
-          <header className="flex flex-col gap-1">
-            <h1 className="text-2xl font-semibold text-ink">{state.student.name}</h1>
-            <p className="text-sm text-ink/70">{state.student.email}</p>
+          <header className="flex items-center gap-4">
+            <span
+              aria-hidden="true"
+              className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-teal text-lg font-semibold text-white"
+            >
+              {initials(state.student.name)}
+            </span>
+            <div className="flex min-w-0 flex-col gap-0.5">
+              <h1 className="text-2xl font-semibold text-ink">{state.student.name}</h1>
+              <p className="truncate text-sm text-ink/70">{state.student.email}</p>
+            </div>
           </header>
-          <dl className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <dl className="grid grid-cols-2 gap-4">
             <div>
               <dt className="text-xs uppercase tracking-wide text-ink/70">Nivel</dt>
               <dd className="text-lg font-medium text-ink">{state.student.level}</dd>
@@ -60,10 +69,6 @@ export function StudentDetailPage({ studentId, loadStudent }: StudentDetailPageP
             <div>
               <dt className="text-xs uppercase tracking-wide text-ink/70">Idioma natal</dt>
               <dd className="text-lg font-medium text-ink">{languageName(state.student.nativeLanguage)}</dd>
-            </div>
-            <div>
-              <dt className="text-xs uppercase tracking-wide text-ink/70">Clases realizadas</dt>
-              <dd className="text-lg font-medium text-ink">{state.student.lessonsCount}</dd>
             </div>
           </dl>
         </section>
