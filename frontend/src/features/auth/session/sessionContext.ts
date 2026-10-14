@@ -4,7 +4,8 @@ import type { User } from '@/domain/user'
 
 export type SessionState =
   | { status: 'loading' }
-  | { status: 'anonymous' }
+  // expired: la sesión se cerró porque caducó (no por un cierre voluntario)
+  | { status: 'anonymous'; expired?: boolean }
   | { status: 'authenticated'; user: User }
 
 export type Session = SessionState & {

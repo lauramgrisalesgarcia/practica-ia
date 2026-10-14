@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { act, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { User } from '@/domain/user'
 import type { AuthService } from '@/features/auth/services/authService'
@@ -12,6 +12,7 @@ function createAuthService(overrides: Partial<AuthService> = {}): AuthService {
     login: vi.fn().mockResolvedValue(TEACHER),
     getCurrentUser: vi.fn().mockResolvedValue(null),
     logout: vi.fn().mockResolvedValue(undefined),
+    onSessionExpired: vi.fn(() => () => {}),
     ...overrides,
   }
 }
@@ -21,6 +22,7 @@ function SessionProbe() {
   return (
     <>
       <p>estado: {session.status}</p>
+      {session.status === 'anonymous' && session.expired && <p>sesión caducada</p>}
       {session.status === 'authenticated' && <p>usuario: {session.user.name}</p>}
       <button onClick={() => session.login({ email: TEACHER.email, password: 'x' })}>entrar</button>
       <button onClick={() => session.logout()}>salir</button>
@@ -82,5 +84,52 @@ describe('SessionProvider', () => {
 
     await waitFor(() => expect(screen.getByText('estado: anonymous')).toBeInTheDocument())
     expect(authService.logout).toHaveBeenCalled()
+  })
+
+  describe('sesión caducada', () => {
+    function createExpiringAuthService() {
+      let expire = () => {}
+      const unsubscribe = vi.fn()
+      const authService = createAuthService({
+        getCurrentUser: vi.fn().mockResolvedValue(TEACHER),
+        onSessionExpired: vi.fn((listener: () => void) => {
+          expire = listener
+          return unsubscribe
+        }),
+      })
+      return { authService, unsubscribe, expire: () => act(() => expire()) }
+    }
+
+    it('cierra la sesión e indica que ha caducado cuando el servicio avisa', async () => {
+      const { authService, expire } = createExpiringAuthService()
+      renderSession(authService)
+      await screen.findByText('usuario: María López')
+
+      await expire()
+
+      expect(screen.getByText('estado: anonymous')).toBeInTheDocument()
+      expect(screen.getByText('sesión caducada')).toBeInTheDocument()
+    })
+
+    it('un cierre de sesión voluntario no se marca como caducado', async () => {
+      const authService = createAuthService({ getCurrentUser: vi.fn().mockResolvedValue(TEACHER) })
+      renderSession(authService)
+      await screen.findByText('usuario: María López')
+
+      await userEvent.setup().click(screen.getByRole('button', { name: 'salir' }))
+
+      await waitFor(() => expect(screen.getByText('estado: anonymous')).toBeInTheDocument())
+      expect(screen.queryByText('sesión caducada')).not.toBeInTheDocument()
+    })
+
+    it('deja de escuchar al desmontarse', async () => {
+      const { authService, unsubscribe } = createExpiringAuthService()
+      const { unmount } = renderSession(authService)
+      await screen.findByText('usuario: María López')
+
+      unmount()
+
+      expect(unsubscribe).toHaveBeenCalled()
+    })
   })
 })

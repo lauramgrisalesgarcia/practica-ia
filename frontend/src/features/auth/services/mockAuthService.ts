@@ -25,5 +25,9 @@ export function createMockAuthService({ users, delayMs = 500 }: MockAuthServiceO
     async logout() {
       currentUser = null
     },
+    // En memoria la sesión no caduca
+    onSessionExpired() {
+      return () => {}
+    },
   }
 }

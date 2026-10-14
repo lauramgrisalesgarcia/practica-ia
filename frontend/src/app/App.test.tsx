@@ -33,6 +33,7 @@ function createAuthService({ account = null, current = null }: { account?: User 
     }),
     getCurrentUser: vi.fn().mockResolvedValue(current),
     logout: vi.fn().mockResolvedValue(undefined),
+    onSessionExpired: vi.fn(() => () => {}),
   }
 }
 

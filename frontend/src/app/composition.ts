@@ -1,5 +1,6 @@
 import { devAuthService, devStudentService, devTeacherLessonService, devTeacherService } from '@/dev/devServices'
 import { createHttpAuthService } from '@/features/auth/services/httpAuthService'
+import { createSessionExpiry } from '@/features/auth/services/sessionExpiry'
 import { createBrowserTokenStorage } from '@/features/auth/services/tokenStorage'
 import { createHttpTeacherLessonService } from '@/features/teacher/services/httpTeacherLessonService'
 import { createHttpStudentService } from '@/features/student/services/httpStudentService'
@@ -29,9 +30,10 @@ export function createServices({ apiUrl, fetchFn }: CompositionOptions): Service
   }
 
   const tokenStorage = createBrowserTokenStorage()
-  const http = createHttpClient({ baseUrl: apiUrl, getToken: tokenStorage.get, fetchFn })
+  const sessionExpiry = createSessionExpiry()
+  const http = createHttpClient({ baseUrl: apiUrl, getToken: tokenStorage.get, fetchFn, onUnauthorized: sessionExpiry.notify })
   return {
-    authService: createHttpAuthService({ http, tokenStorage }),
+    authService: createHttpAuthService({ http, tokenStorage, sessionExpiry }),
     teacherService: createHttpTeacherService(http),
     teacherLessonService: createHttpTeacherLessonService(http),
     studentService: createHttpStudentService(http),

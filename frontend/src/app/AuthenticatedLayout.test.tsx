@@ -10,6 +10,7 @@ describe('AuthenticatedLayout', () => {
       login: vi.fn(),
       getCurrentUser: vi.fn().mockResolvedValue({ name: 'Ana Gómez', email: 'ana@colegio.edu', role: 'estudiante' }),
       logout: vi.fn().mockResolvedValue(undefined),
+      onSessionExpired: vi.fn(() => () => {}),
     }
     render(
       <SessionProvider authService={authService}>
@@ -30,6 +31,7 @@ describe('AuthenticatedLayout', () => {
       login: vi.fn(),
       getCurrentUser: vi.fn().mockResolvedValue({ name: 'Ana Gómez', email: 'ana@colegio.edu', role: 'estudiante' }),
       logout: vi.fn(),
+      onSessionExpired: vi.fn(() => () => {}),
     }
     render(
       <SessionProvider authService={authService}>
