@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { Answer, ExerciseResult, StudentMaterial, StudentSubmission } from '@/domain/lesson'
-import { AnswerForm } from './AnswerForm'
+import { ExerciseStepper } from './ExerciseStepper'
 
 interface StudentMaterialPanelProps {
   lessonId: string
@@ -67,6 +67,8 @@ interface MaterialViewProps {
 
 function MaterialView({ material, submitMaterial, onSubmitted }: MaterialViewProps) {
   const { submission } = material
+  const [isSolving, setIsSolving] = useState(false)
+  const count = material.exercises.length
 
   return (
     <>
@@ -78,13 +80,27 @@ function MaterialView({ material, submitMaterial, onSubmitted }: MaterialViewPro
         <p className="text-ink/80">{material.instructions}</p>
         {submission ? (
           <CorrectedExercises material={material} submission={submission} />
-        ) : (
-          <AnswerForm
+        ) : isSolving ? (
+          <ExerciseStepper
             lessonId={material.lessonId}
             exercises={material.exercises}
             submitMaterial={submitMaterial}
             onSubmitted={onSubmitted}
           />
+        ) : (
+          <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl bg-mist px-4 py-3">
+            <p className="text-sm font-medium text-ink">
+              {count} {count === 1 ? 'pregunta' : 'preguntas'}
+            </p>
+            <button
+              type="button"
+              aria-expanded={false}
+              onClick={() => setIsSolving(true)}
+              className="rounded-xl bg-ocean px-5 py-2.5 font-semibold text-white shadow-[0_4px_0_0] shadow-ink hover:bg-ink"
+            >
+              Resolver refuerzo
+            </button>
+          </div>
         )}
       </section>
 

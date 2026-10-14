@@ -130,6 +130,30 @@ const devLessons: LessonDetail[] = [
     },
     submission: null,
   },
+  {
+    id: '3c5e7a9b-1d2f-4e6a-8b0c-4d6f8a0c2e35',
+    date: '2026-10-10T16:00:00Z',
+    durationMinutes: 60,
+    topic: 'Ir de compras',
+    context: 'Comprar ropa en una tienda y preguntar por tallas y precios',
+    materialStatus: 'pending',
+    keywords: ['¿cuánto cuesta?', 'la talla', 'probarme'],
+    notes: null,
+    pdfFilename: 'compras-b1.pdf',
+    student: ANA,
+    material: {
+      generatedAt: '2026-10-11T09:00:00Z',
+      activityType: 'complete_sentence',
+      title: 'En la tienda',
+      instructions: 'Completa cada frase con la opción correcta.',
+      exercises: [
+        { id: 1, sentence: 'Perdone, ¿___ cuesta esta camisa?', options: ['cuánto', 'cuánta', 'cuántos'], correctOption: 'cuánto' },
+        { id: 2, sentence: '¿Puedo ___ estos pantalones?', options: ['probarme', 'probar me', 'pruebo'], correctOption: 'probarme' },
+        { id: 3, sentence: 'Necesito una ___ más grande.', options: ['talla', 'tamaño', 'medida'], correctOption: 'talla' },
+      ],
+    },
+    submission: null,
+  },
 ]
 
 function toSummary({ id, date, durationMinutes, topic, context, materialStatus, keywords, submission }: LessonDetail): TeacherLessonSummary {
