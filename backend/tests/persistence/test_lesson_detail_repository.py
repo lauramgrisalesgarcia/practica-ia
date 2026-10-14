@@ -73,3 +73,29 @@ def test_no_devuelve_clases_de_estudiantes_de_otro_docente(db_session: Session) 
 
     assert repository.get_detail_for_teacher(teacher.public_id, lesson.public_id) is None
     assert repository.get_detail_for_teacher(teacher.public_id, uuid4()) is None
+
+
+def test_resumen_de_una_clase_del_estudiante_con_su_nota(db_session: Session) -> None:
+    teacher = create_user(db_session)
+    emma = create_student(db_session, teacher=teacher)
+    lesson = create_lesson(db_session, student=emma, teacher=teacher, date=NOW - timedelta(days=1), keywords=["la carta"])
+    create_submission(db_session, material=create_material(db_session, lesson=lesson), student=emma, score=Decimal("50"))
+
+    summary = SqlAlchemyLessonRepository(db_session).get_summary_for_student(emma.public_id, lesson.public_id)
+
+    assert summary is not None
+    assert summary.id == lesson.public_id
+    assert summary.material_status is MaterialStatus.COMPLETED
+    assert summary.keywords == ("la carta",)
+    assert summary.score == Decimal("50")
+    assert summary.pdf_filename == lesson.pdf_filename
+
+
+def test_no_hay_resumen_de_clases_de_otro_estudiante(db_session: Session) -> None:
+    teacher = create_user(db_session)
+    emma = create_student(db_session, teacher=teacher, email="emma@correo.com")
+    john = create_student(db_session, teacher=teacher, email="john@correo.com")
+    lesson = create_lesson(db_session, student=john, teacher=teacher, date=NOW - timedelta(days=1))
+
+    assert SqlAlchemyLessonRepository(db_session).get_summary_for_student(emma.public_id, lesson.public_id) is None
+

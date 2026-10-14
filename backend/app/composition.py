@@ -25,6 +25,7 @@ from app.domain.ports import (
 )
 from app.domain.use_cases.generate_material import GenerateMaterial
 from app.domain.use_cases.authenticate_user import AuthenticateUser
+from app.domain.use_cases.get_my_lesson import GetMyLesson
 from app.domain.use_cases.get_my_lesson_pdf import GetMyLessonPdf
 from app.domain.use_cases.get_my_material import GetMyMaterial
 from app.domain.use_cases.get_my_submission import GetMySubmission
@@ -178,3 +179,7 @@ def get_get_student_insights(
     clock: Annotated[Clock, Depends(get_clock)],
 ) -> GetStudentInsights:
     return GetStudentInsights(insights=insights, clock=clock)
+
+
+def get_get_my_lesson(lessons: Annotated[LessonRepository, Depends(get_lesson_repository)]) -> GetMyLesson:
+    return GetMyLesson(lessons=lessons)
