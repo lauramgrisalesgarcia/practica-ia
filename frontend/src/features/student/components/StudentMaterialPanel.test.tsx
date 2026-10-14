@@ -82,6 +82,23 @@ describe('StudentMaterialPanel', () => {
     expect(loadMaterial).toHaveBeenCalledOnce()
   })
 
+  it('avisa del resultado al cargar un material ya resuelto', async () => {
+    const onResult = vi.fn()
+    render(
+      <MemoryRouter>
+        <StudentMaterialPanel
+          lessonId={COMPLETED_MATERIAL.lessonId}
+          loadMaterial={vi.fn().mockResolvedValue(COMPLETED_MATERIAL)}
+          submitMaterial={vi.fn()}
+          onResult={onResult}
+        />
+      </MemoryRouter>,
+    )
+
+    await screen.findByRole('region', { name: 'Resumen del resultado' })
+    expect(onResult).toHaveBeenCalledWith(COMPLETED_MATERIAL.submission)
+  })
+
   it('no permite volver a resolver un material ya resuelto', async () => {
     setup(vi.fn().mockResolvedValue(COMPLETED_MATERIAL))
 

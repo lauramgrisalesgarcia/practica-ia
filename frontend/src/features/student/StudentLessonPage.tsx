@@ -32,6 +32,7 @@ export function StudentLessonPage({
   submitMaterial,
 }: StudentLessonPageProps) {
   const [state, setState] = useState<LessonState>({ status: 'loading' })
+  const [submittedAt, setSubmittedAt] = useState<string | null>(null)
 
   useEffect(() => {
     let active = true
@@ -67,12 +68,14 @@ export function StudentLessonPage({
           openPdf={openPdf}
           loadMaterial={loadMaterial}
           submitMaterial={submitMaterial}
-          onSubmitted={(submission) =>
+          submittedAt={submittedAt}
+          onResult={(submission) => {
+            setSubmittedAt(submission.submittedAt)
             setState({
               status: 'loaded',
               lesson: { ...state.lesson, materialStatus: 'completed', score: submission.score },
             })
-          }
+          }}
         />
       )}
     </div>
@@ -81,10 +84,12 @@ export function StudentLessonPage({
 
 interface LessonViewProps extends Omit<StudentLessonPageProps, 'lessonId' | 'loadLesson'> {
   lesson: StudentLessonSummary
-  onSubmitted: (submission: StudentSubmission) => void
+  // Fecha en que resolvió el refuerzo: llega con el material, no con la clase
+  submittedAt: string | null
+  onResult: (submission: StudentSubmission) => void
 }
 
-function LessonView({ lesson, downloadPdf, openPdf, loadMaterial, submitMaterial, onSubmitted }: LessonViewProps) {
+function LessonView({ lesson, downloadPdf, openPdf, loadMaterial, submitMaterial, submittedAt, onResult }: LessonViewProps) {
   return (
     <>
       <div className={lesson.score !== null ? 'grid gap-6 md:grid-cols-[minmax(0,1fr)_10rem]' : 'flex flex-col'}>
@@ -96,6 +101,9 @@ function LessonView({ lesson, downloadPdf, openPdf, loadMaterial, submitMaterial
             <h2 className="text-xs font-semibold uppercase tracking-wide text-ink/70">Tu nota</h2>
             <p className="text-5xl font-semibold text-ocean">{formatScore(lesson.score)}</p>
             <p className="text-xs text-ink/70">del refuerzo</p>
+            {submittedAt && (
+              <p className="mt-3 w-full border-t border-mist pt-3 text-xs text-ink/70">Resuelto el {formatDate(submittedAt)}</p>
+            )}
           </section>
         )}
 
@@ -134,7 +142,7 @@ function LessonView({ lesson, downloadPdf, openPdf, loadMaterial, submitMaterial
           lessonId={lesson.id}
           loadMaterial={loadMaterial}
           submitMaterial={submitMaterial}
-          onSubmitted={onSubmitted}
+          onResult={onResult}
         />
       )}
     </>

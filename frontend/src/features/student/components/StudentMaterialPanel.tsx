@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useId, useState } from 'react'
+import { Fragment, useEffect, useId, useRef, useState } from 'react'
 import type { Answer, StudentMaterial, StudentSubmission } from '@/domain/lesson'
 import { ExerciseStepper } from './ExerciseStepper'
 
@@ -7,8 +7,8 @@ interface StudentMaterialPanelProps {
   // Debe ser una referencia estable: cada cambio vuelve a cargar el material
   loadMaterial: (lessonId: string) => Promise<StudentMaterial>
   submitMaterial: (lessonId: string, answers: Answer[]) => Promise<StudentSubmission>
-  // Avisa a la página cuando el estudiante resuelve el material
-  onSubmitted?: (submission: StudentSubmission) => void
+  // Avisa a la página del resultado: al cargar un material ya resuelto y al resolverlo
+  onResult?: (submission: StudentSubmission) => void
 }
 
 type MaterialState =
@@ -17,13 +17,22 @@ type MaterialState =
   | { status: 'error'; message: string }
 
 // Refuerzo de una clase: el formulario para resolverlo o, si ya está resuelto, la corrección y el resultado
-export function StudentMaterialPanel({ lessonId, loadMaterial, submitMaterial, onSubmitted }: StudentMaterialPanelProps) {
+export function StudentMaterialPanel({ lessonId, loadMaterial, submitMaterial, onResult }: StudentMaterialPanelProps) {
   const [state, setState] = useState<MaterialState>({ status: 'loading' })
+  // Referencia al último aviso: cambiarlo no debe volver a cargar el material
+  const onResultRef = useRef(onResult)
+  useEffect(() => {
+    onResultRef.current = onResult
+  })
 
   useEffect(() => {
     let active = true
     loadMaterial(lessonId).then(
-      (material) => active && setState({ status: 'loaded', material }),
+      (material) => {
+        if (!active) return
+        setState({ status: 'loaded', material })
+        if (material.submission) onResultRef.current?.(material.submission)
+      },
       (error: unknown) =>
         active &&
         setState({ status: 'error', message: error instanceof Error ? error.message : 'No se pudo cargar el material' }),
@@ -49,7 +58,7 @@ export function StudentMaterialPanel({ lessonId, loadMaterial, submitMaterial, o
           submitMaterial={submitMaterial}
           onSubmitted={(submission) => {
             setState({ status: 'loaded', material: { ...state.material, submission } })
-            onSubmitted?.(submission)
+            onResult?.(submission)
           }}
         />
       )}
