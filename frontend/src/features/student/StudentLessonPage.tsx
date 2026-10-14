@@ -91,10 +91,11 @@ function LessonView({ lesson, downloadPdf, openPdf, loadMaterial, submitMaterial
         {lesson.score !== null && (
           <section
             aria-label="Tu nota"
-            className="flex flex-col gap-1 self-start rounded-xl bg-white p-5 shadow-md md:order-last"
+            className="flex flex-col items-center justify-center gap-1 rounded-xl bg-white p-5 text-center shadow-md md:order-last"
           >
             <h2 className="text-xs font-semibold uppercase tracking-wide text-ink/70">Tu nota</h2>
-            <p className="text-3xl font-semibold text-ocean">{formatScore(lesson.score)}</p>
+            <p className="text-5xl font-semibold text-ocean">{formatScore(lesson.score)}</p>
+            <p className="text-xs text-ink/70">del refuerzo</p>
           </section>
         )}
 
