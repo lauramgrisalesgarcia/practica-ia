@@ -3,7 +3,8 @@ import type { LessonPdf } from '@/domain/lesson'
 
 interface PdfDownloadButtonProps {
   lessonId: string
-  filename: string
+  // Sin nombre, el botón es compacto («PDF»)
+  filename?: string
   downloadPdf: (lessonId: string) => Promise<LessonPdf>
   openPdf: (pdf: LessonPdf) => void
 }
@@ -31,9 +32,13 @@ export function PdfDownloadButton({ lessonId, filename, downloadPdf, openPdf }: 
         type="button"
         onClick={handleDownload}
         disabled={isDownloading}
-        className="self-start rounded-md bg-ocean px-4 py-2 font-medium text-white hover:bg-ink disabled:opacity-50"
+        className={
+          filename
+            ? 'self-start rounded-md bg-ocean px-4 py-2 font-medium text-white hover:bg-ink disabled:opacity-50'
+            : 'self-start rounded-md border border-ink/20 px-3 py-1.5 text-sm font-medium text-ocean hover:bg-mist disabled:opacity-50'
+        }
       >
-        {isDownloading ? 'Descargando…' : `Descargar PDF (${filename})`}
+        {isDownloading ? 'Descargando…' : filename ? `Descargar PDF (${filename})` : 'PDF'}
       </button>
       {error && (
         <p role="alert" className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">

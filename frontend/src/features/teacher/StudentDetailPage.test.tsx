@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
 import type { StudentDetail } from '@/domain/student'
 import { StudentDetailPage } from './StudentDetailPage'
@@ -36,7 +36,15 @@ describe('StudentDetailPage', () => {
     expect(screen.getByText('emma@correo.com')).toBeInTheDocument()
     expect(screen.getByText('A2')).toBeInTheDocument()
     expect(screen.getByText('alemán')).toBeInTheDocument()
-    expect(screen.getByText('12')).toBeInTheDocument()
+    // Las clases realizadas se muestran en el historial, con las horas: no se repiten aquí
+    expect(screen.queryByText('Clases realizadas')).not.toBeInTheDocument()
+  })
+
+  it('muestra el avatar con las iniciales del alumno', async () => {
+    setup()
+
+    const header = (await screen.findByRole('heading', { level: 1, name: 'Emma Schmidt' })).closest('header') as HTMLElement
+    expect(within(header).getByText('ES')).toBeInTheDocument()
   })
 
   it('indica que está cargando mientras obtiene el alumno', async () => {

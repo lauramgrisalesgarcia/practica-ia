@@ -28,3 +28,10 @@ export const STUDENT_LESSON_ROUTE = '/estudiante/clases/:lessonId'
 export function studentLessonPath(lessonId: string): string {
   return `/estudiante/clases/${encodeURIComponent(lessonId)}`
 }
+
+// Ancla del formulario de generar material en la página de la clase
+export const GENERATE_MATERIAL_ANCHOR = 'generar-material'
+
+export function generateMaterialPath(lessonId: string): string {
+  return `${lessonDetailPath(lessonId)}#${GENERATE_MATERIAL_ANCHOR}`
+}

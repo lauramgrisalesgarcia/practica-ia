@@ -1,8 +1,8 @@
 import { useEffect, useId, useState } from 'react'
-import { Link } from 'react-router'
+import { Link, useLocation } from 'react-router'
 import { formatDate } from '@/shared/i18n/formatDate'
 import type { LessonDetail, LessonPdf, MaterialRequest, SubmissionSummary, TeacherMaterial } from '@/domain/lesson'
-import { studentDetailPath } from '@/shared/routes/paths'
+import { GENERATE_MATERIAL_ANCHOR, studentDetailPath } from '@/shared/routes/paths'
 import { GenerateMaterialForm } from './components/GenerateMaterialForm'
 import { PdfDownloadButton } from '@/shared/components/PdfDownloadButton'
 
@@ -38,6 +38,16 @@ export function LessonDetailPage({ lessonId, loadLesson, downloadPdf, openPdf, g
       active = false
     }
   }, [lessonId, loadLesson])
+
+  // El enlace «Generar material» del historial llega con el ancla del formulario,
+  // que solo existe cuando la clase ya está cargada
+  const { hash } = useLocation()
+  const isLoaded = state.status === 'loaded'
+  useEffect(() => {
+    if (isLoaded && hash === `#${GENERATE_MATERIAL_ANCHOR}`) {
+      document.getElementById(GENERATE_MATERIAL_ANCHOR)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+  }, [isLoaded, hash])
 
   if (state.status === 'loading') {
     return <p className="mx-auto max-w-2xl text-sm text-ink/70">Cargando clase…</p>

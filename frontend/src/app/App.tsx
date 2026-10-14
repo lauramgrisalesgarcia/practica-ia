@@ -25,8 +25,14 @@ function StudentDetailRoute() {
   return (
     <div className="flex flex-col gap-6">
       <StudentDetailPage key={studentId} studentId={studentId} loadStudent={teacherService.getStudent} />
-      <div className="mx-auto w-full max-w-2xl">
-        <StudentLessons key={studentId} studentId={studentId} loadLessons={teacherLessonService.getStudentLessons} />
+      <div className="mx-auto w-full max-w-4xl">
+        <StudentLessons
+          key={studentId}
+          studentId={studentId}
+          loadLessons={teacherLessonService.getStudentLessons}
+          downloadPdf={teacherLessonService.downloadPdf}
+          openPdf={saveFile}
+        />
       </div>
     </div>
   )

@@ -12,6 +12,8 @@ interface SetupOptions {
   loadLesson?: (lessonId: string) => Promise<LessonDetail>
   downloadPdf?: (lessonId: string) => Promise<LessonPdf>
   generateMaterial?: (lessonId: string, request: MaterialRequest) => Promise<TeacherMaterial>
+  // Ruta inicial (p. ej. con el ancla #generar-material)
+  path?: string
 }
 
 const NEW_MATERIAL: TeacherMaterial = {
@@ -27,10 +29,11 @@ function setup({
   loadLesson = vi.fn().mockResolvedValue(lesson),
   downloadPdf = vi.fn().mockResolvedValue(PDF),
   generateMaterial = vi.fn().mockResolvedValue(NEW_MATERIAL),
+  path = '/',
 }: SetupOptions = {}) {
   const openPdf = vi.fn()
   render(
-    <MemoryRouter>
+    <MemoryRouter initialEntries={[path]}>
       <LessonDetailPage
         lessonId={lesson.id}
         loadLesson={loadLesson}
@@ -150,6 +153,28 @@ describe('LessonDetailPage', () => {
   })
 
   describe('generar material', () => {
+    it('lleva al formulario de generar material si se llega con su ancla', async () => {
+      const scrollIntoView = vi.fn()
+      Element.prototype.scrollIntoView = scrollIntoView
+
+      setup({ lesson: INTRODUCTIONS_LESSON, path: '/docente/clases/x#generar-material' })
+
+      const form = await screen.findByRole('form', { name: 'Generar material' })
+      expect(form).toHaveAttribute('id', 'generar-material')
+      expect(scrollIntoView).toHaveBeenCalled()
+      expect(scrollIntoView.mock.contexts[0]).toBe(form)
+    })
+
+    it('no se desplaza al formulario si se llega sin ancla', async () => {
+      const scrollIntoView = vi.fn()
+      Element.prototype.scrollIntoView = scrollIntoView
+
+      setup({ lesson: INTRODUCTIONS_LESSON })
+
+      await screen.findByRole('form', { name: 'Generar material' })
+      expect(scrollIntoView).not.toHaveBeenCalled()
+    })
+
     it('ofrece generar material si la clase aún no lo tiene', async () => {
       setup({ lesson: INTRODUCTIONS_LESSON })
 
