@@ -156,6 +156,7 @@ class TestHistorialDeClasesDeUnEstudiante:
         recent = create_lesson(
             db_session, student=emma, teacher=teacher, date=now - timedelta(days=2), duration_minutes=45,
             topic="Pedir en un restaurante", context="Pedir comida y bebida en un restaurante",
+            keywords=["la carta", "quisiera"],
         )
         create_lesson(db_session, student=emma, teacher=teacher, date=now + timedelta(days=3))
         create_material(db_session, lesson=recent)
@@ -172,9 +173,26 @@ class TestHistorialDeClasesDeUnEstudiante:
             "topic": "Pedir en un restaurante",
             "context": "Pedir comida y bebida en un restaurante",
             "material_status": "pending",
+            "keywords": ["la carta", "quisiera"],
+            "score": None,
         }
         assert datetime.fromisoformat(body[0]["date"]) == recent.date
         assert body[1]["material_status"] == "none"
+
+    def test_incluye_la_nota_de_las_clases_resueltas(self, client: TestClient, db_session: Session) -> None:
+        teacher = create_user(db_session)
+        emma = create_student(db_session, teacher=teacher)
+        lesson = create_lesson(db_session, student=emma, teacher=teacher, date=datetime.now(UTC) - timedelta(days=1))
+        create_submission(
+            db_session, material=create_material(db_session, lesson=lesson), student=emma, score=Decimal("66.67")
+        )
+
+        response = client.get(f"/teachers/me/students/{emma.public_id}/lessons", headers=auth_header(teacher.public_id))
+
+        assert response.status_code == 200
+        [summary] = response.json()
+        assert summary["material_status"] == "completed"
+        assert summary["score"] == 66.67
 
     def test_un_estudiante_de_otro_docente_responde_404(self, client: TestClient, db_session: Session) -> None:
         teacher = create_user(db_session, email="docente@colegio.edu")

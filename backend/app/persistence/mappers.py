@@ -1,5 +1,6 @@
 """Conversión de modelos SQLAlchemy a entidades del dominio (compartida por los repositories)."""
 
+from decimal import Decimal
 from typing import Any
 
 from app.domain.entities import (
@@ -33,7 +34,7 @@ def to_student(user: UserModel, profile: StudentProfileModel) -> Student:
     )
 
 
-def to_lesson_summary(lesson: LessonModel, material_status: str) -> LessonSummary:
+def to_lesson_summary(lesson: LessonModel, material_status: str, score: Decimal | None) -> LessonSummary:
     return LessonSummary(
         id=lesson.public_id,
         date=lesson.date,
@@ -42,6 +43,8 @@ def to_lesson_summary(lesson: LessonModel, material_status: str) -> LessonSummar
         context=lesson.context,
         material_status=MaterialStatus(material_status),
         pdf_filename=lesson.pdf_filename,
+        keywords=tuple(lesson.keywords),
+        score=score,
     )
 
 

@@ -209,6 +209,8 @@ def make_lesson(
     topic: str = "Pedir en un restaurante",
     material_status: MaterialStatus = MaterialStatus.NONE,
     pdf_filename: str = "restaurante-a2.pdf",
+    keywords: tuple[str, ...] = ("la carta", "quisiera"),
+    score: Decimal | None = None,
 ) -> LessonSummary:
     return LessonSummary(
         id=lesson_id or uuid4(),
@@ -218,6 +220,8 @@ def make_lesson(
         context="Pedir comida y bebida en un restaurante y pedir la cuenta",
         material_status=material_status,
         pdf_filename=pdf_filename,
+        keywords=keywords,
+        score=score,
     )
 
 

@@ -1,4 +1,5 @@
 from datetime import UTC, datetime, timedelta
+from decimal import Decimal
 
 from sqlalchemy.orm import Session
 
@@ -64,3 +65,27 @@ def test_calcula_el_estado_del_material_de_cada_clase(db_session: Session) -> No
         pending.public_id: MaterialStatus.PENDING,
         completed.public_id: MaterialStatus.COMPLETED,
     }
+
+
+def test_incluye_las_palabras_clave_y_la_nota_de_cada_clase(db_session: Session) -> None:
+    teacher = create_user(db_session)
+    emma = create_student(db_session, teacher=teacher)
+    pending = create_lesson(
+        db_session, student=emma, teacher=teacher, date=NOW - timedelta(days=2), keywords=["me llamo", "mi familia"]
+    )
+    completed = create_lesson(
+        db_session, student=emma, teacher=teacher, date=NOW - timedelta(days=1), keywords=["la carta", "quisiera"]
+    )
+    create_material(db_session, lesson=pending)
+    create_submission(
+        db_session, material=create_material(db_session, lesson=completed), student=emma, score=Decimal("66.67")
+    )
+
+    lessons = SqlAlchemyLessonRepository(db_session).list_completed_by_student(emma.public_id, until=NOW)
+
+    by_id = {lesson.id: lesson for lesson in lessons}
+    assert by_id[pending.public_id].keywords == ("me llamo", "mi familia")
+    assert by_id[pending.public_id].score is None
+    assert by_id[completed.public_id].keywords == ("la carta", "quisiera")
+    assert by_id[completed.public_id].score == Decimal("66.67")
+

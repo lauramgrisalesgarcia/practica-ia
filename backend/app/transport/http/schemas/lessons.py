@@ -27,6 +27,11 @@ class LessonSummaryOut(BaseModel):
     material_status: MaterialStatus
 
 
+class TeacherLessonSummaryOut(LessonSummaryOut):
+    keywords: list[str] = Field(min_length=1)
+    score: float | None = Field(ge=0, le=100, description="Porcentaje de aciertos, o null si no está resuelto")
+
+
 class PdfRefOut(BaseModel):
     filename: str
     url: str = Field(description="Ruta de la API para descargar el PDF")
