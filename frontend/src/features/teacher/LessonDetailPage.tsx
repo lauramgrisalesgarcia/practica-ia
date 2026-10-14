@@ -78,38 +78,42 @@ export function LessonDetailPage({ lessonId, loadLesson, downloadPdf, openPdf, g
         ← Volver a {lesson.student.name}
       </Link>
 
-      {lesson.submission && <SubmissionSection submission={lesson.submission} />}
+      {/* Con resultado, en pantallas anchas va en una columna estrecha a la derecha de la clase;
+          en el DOM va primero para que se lea antes que los datos de la clase */}
+      <div className={lesson.submission ? 'grid gap-6 md:grid-cols-[minmax(0,1fr)_12rem]' : 'flex flex-col'}>
+        {lesson.submission && <SubmissionSection submission={lesson.submission} />}
 
-      <section className="flex flex-col gap-4 rounded-xl bg-white p-6 shadow-md">
-        <header className="flex items-start justify-between gap-4">
+        <section className="flex flex-col gap-4 rounded-xl bg-white p-6 shadow-md">
+          <header className="flex items-start justify-between gap-4">
+            <div className="flex flex-col gap-1">
+              <h1 className="text-2xl font-semibold text-ink">{lesson.topic}</h1>
+              <p className="text-sm text-ink/70">
+                {formatDate(lesson.date)} · {lesson.durationMinutes} min
+              </p>
+            </div>
+            <div className="max-w-xs shrink-0">
+              <PdfDownloadButton lessonId={lesson.id} filename={lesson.pdfFilename} downloadPdf={downloadPdf} openPdf={openPdf} />
+            </div>
+          </header>
+          <p className="text-ink/80">{lesson.context}</p>
+
+          <div className="flex flex-col gap-2">
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-ink/70">Palabras clave</h2>
+            <ul aria-label="Palabras clave" className="flex flex-wrap gap-2">
+              {lesson.keywords.map((keyword) => (
+                <li key={keyword} className="rounded-full bg-mist px-2 py-0.5 text-sm text-ocean">
+                  {keyword}
+                </li>
+              ))}
+            </ul>
+          </div>
+
           <div className="flex flex-col gap-1">
-            <h1 className="text-2xl font-semibold text-ink">{lesson.topic}</h1>
-            <p className="text-sm text-ink/70">
-              {formatDate(lesson.date)} · {lesson.durationMinutes} min
-            </p>
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-ink/70">Notas</h2>
+            <p className="text-ink/80">{lesson.notes ?? 'Sin notas.'}</p>
           </div>
-          <div className="max-w-xs shrink-0">
-            <PdfDownloadButton lessonId={lesson.id} filename={lesson.pdfFilename} downloadPdf={downloadPdf} openPdf={openPdf} />
-          </div>
-        </header>
-        <p className="text-ink/80">{lesson.context}</p>
-
-        <div className="flex flex-col gap-2">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-ink/70">Palabras clave</h2>
-          <ul aria-label="Palabras clave" className="flex flex-wrap gap-2">
-            {lesson.keywords.map((keyword) => (
-              <li key={keyword} className="rounded-full bg-mist px-2 py-0.5 text-sm text-ocean">
-                {keyword}
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        <div className="flex flex-col gap-1">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-ink/70">Notas</h2>
-          <p className="text-ink/80">{lesson.notes ?? 'Sin notas.'}</p>
-        </div>
-      </section>
+        </section>
+      </div>
 
       {lesson.material ? (
         <MaterialSection material={lesson.material} />
@@ -177,13 +181,16 @@ function MaterialSection({ material }: { material: TeacherMaterial }) {
 
 function SubmissionSection({ submission }: { submission: SubmissionSummary }) {
   return (
-    <section aria-label="Resultado del alumno" className="flex flex-col gap-2 rounded-xl bg-white p-6 shadow-md">
-      <h2 className="text-lg font-semibold text-ink">Resultado del alumno</h2>
-      <p className="text-3xl font-semibold text-ink">{scoreFormat.format(submission.score)} %</p>
-      <p className="text-sm text-ink/70">
-        {submission.correctCount} correctas · {submission.incorrectCount} incorrectas · resuelto el{' '}
-        {formatDate(submission.submittedAt)}
+    <section
+      aria-label="Resultado del alumno"
+      className="flex flex-col gap-1 self-start rounded-xl bg-white p-5 shadow-md md:order-last"
+    >
+      <h2 className="text-xs font-semibold uppercase tracking-wide text-ink/70">Resultado del alumno</h2>
+      <p className="text-3xl font-semibold text-ocean">{scoreFormat.format(submission.score)} %</p>
+      <p className="text-sm text-ink/80">
+        {submission.correctCount} correctas · {submission.incorrectCount} incorrectas
       </p>
+      <p className="text-xs text-ink/70">Resuelto el {formatDate(submission.submittedAt)}</p>
     </section>
   )
 }
