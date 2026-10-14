@@ -1,8 +1,14 @@
 import { useState } from 'react'
-import type { CalendarLesson } from '@/domain/insights'
+// Clase en el calendario: el texto (p. ej. «Emma Schmidt · Presentarse») lo decide quien lo usa
+export interface CalendarEntry {
+  id: string
+  // Fecha y hora de inicio (ISO 8601)
+  start: string
+  label: string
+}
 
 interface LessonCalendarProps {
-  lessons: CalendarLesson[]
+  lessons: CalendarEntry[]
   today: Date
   // Zona horaria en la que se agrupan y muestran las clases (por defecto, la del navegador)
   timeZone?: string
@@ -40,7 +46,7 @@ export function LessonCalendar({ lessons, today, timeZone }: LessonCalendarProps
   const [selectedKey, setSelectedKey] = useState(todayKey)
 
   const timeFormat = new Intl.DateTimeFormat('es', { hour: '2-digit', minute: '2-digit', timeZone })
-  const lessonsByDay = new Map<string, CalendarLesson[]>()
+  const lessonsByDay = new Map<string, CalendarEntry[]>()
   for (const lesson of lessons) {
     const key = dayKey(new Date(lesson.start), timeZone)
     lessonsByDay.set(key, [...(lessonsByDay.get(key) ?? []), lesson])
@@ -129,9 +135,7 @@ export function LessonCalendar({ lessons, today, timeZone }: LessonCalendarProps
                 <time dateTime={lesson.start} className="font-semibold text-ocean">
                   {timeFormat.format(new Date(lesson.start))}
                 </time>
-                <span className="text-ink">
-                  {lesson.studentName} · {lesson.topic}
-                </span>
+                <span className="text-ink">{lesson.label}</span>
               </li>
             ))}
           </ul>

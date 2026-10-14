@@ -23,6 +23,9 @@ export function lessonDetailPath(lessonId: string): string {
   return `/docente/clases/${encodeURIComponent(lessonId)}`
 }
 
+// Historial de clases del estudiante
+export const STUDENT_LESSONS_PATH = '/estudiante/clases'
+
 export const STUDENT_LESSON_ROUTE = '/estudiante/clases/:lessonId'
 
 export function studentLessonPath(lessonId: string): string {

@@ -34,7 +34,7 @@ function ServicesProbe() {
 describe('ServicesContext', () => {
   it('entrega a los componentes los servicios inyectados en el provider', () => {
     render(
-      <ServicesProvider services={{ authService, teacherService, teacherLessonService, studentService, teacherInsightsService: { getInsights: vi.fn() } }}>
+      <ServicesProvider services={{ authService, teacherService, teacherLessonService, studentService, teacherInsightsService: { getInsights: vi.fn() }, studentInsightsService: { getInsights: vi.fn() } }}>
         <ServicesProbe />
       </ServicesProvider>,
     )

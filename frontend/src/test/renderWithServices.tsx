@@ -28,6 +28,7 @@ function createFakeServices(): Services {
       submitMaterial: vi.fn().mockRejectedValue(new Error('submitMaterial no configurado en el test')),
     },
     teacherInsightsService: { getInsights: vi.fn().mockReturnValue(new Promise(() => {})) },
+    studentInsightsService: { getInsights: vi.fn().mockReturnValue(new Promise(() => {})) },
   }
 }
 

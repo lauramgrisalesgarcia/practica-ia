@@ -1,25 +1,19 @@
 import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
-import { MY_LESSONS } from '@/test/contracts/studentServiceContract'
-import type { StudentService } from './services/studentService'
+import { STUDENT_INSIGHTS } from '@/test/contracts/studentInsightsServiceContract'
 import { StudentHomePage } from './StudentHomePage'
 
 describe('StudentHomePage', () => {
-  it('saluda al estudiante y muestra sus clases', async () => {
-    const studentService: StudentService = {
-      getMyLessons: vi.fn().mockResolvedValue(MY_LESSONS),
-      downloadPdf: vi.fn(),
-      getMaterial: vi.fn(),
-      submitMaterial: vi.fn(),
-    }
+  it('saluda al estudiante y muestra su resumen', async () => {
+    const loadInsights = vi.fn().mockResolvedValue(STUDENT_INSIGHTS)
     render(
       <MemoryRouter>
-        <StudentHomePage name="Ana Gómez" studentService={studentService} />
+        <StudentHomePage name="Ana Gómez" loadInsights={loadInsights} />
       </MemoryRouter>,
     )
 
     expect(screen.getByRole('heading', { level: 1, name: 'Hola, Ana Gómez' })).toBeInTheDocument()
-    expect(await screen.findByRole('list', { name: /mis clases/i })).toHaveTextContent('Pedir en un restaurante')
-    expect(studentService.getMyLessons).toHaveBeenCalled()
+    expect(await screen.findByRole('region', { name: 'Refuerzos pendientes' })).toHaveTextContent('Presentarse')
+    expect(loadInsights).toHaveBeenCalled()
   })
 })

@@ -3,12 +3,20 @@ import { LoginPage } from '@/features/auth/LoginPage'
 import { LessonDetailPage } from '@/features/teacher/LessonDetailPage'
 import { StudentLessons } from '@/features/teacher/components/StudentLessons'
 import { StudentHomePage } from '@/features/student/StudentHomePage'
+import { StudentLessonsPage } from '@/features/student/StudentLessonsPage'
 import { StudentMaterialPage } from '@/features/student/StudentMaterialPage'
 import { useSession } from '@/features/auth/session/sessionContext'
 import { StudentDetailPage } from '@/features/teacher/StudentDetailPage'
 import { TeacherDashboardPage } from '@/features/teacher/TeacherDashboardPage'
 import { saveFile } from '@/shared/files/saveFile'
-import { homePathFor, LESSON_DETAIL_ROUTE, LOGIN_PATH, STUDENT_DETAIL_ROUTE, STUDENT_LESSON_ROUTE } from '@/shared/routes/paths'
+import {
+  homePathFor,
+  LESSON_DETAIL_ROUTE,
+  LOGIN_PATH,
+  STUDENT_DETAIL_ROUTE,
+  STUDENT_LESSON_ROUTE,
+  STUDENT_LESSONS_PATH,
+} from '@/shared/routes/paths'
 import { AuthenticatedLayout } from './AuthenticatedLayout'
 import { RequireRole } from './routes/RequireRole'
 import { useServices } from './services/servicesContext'
@@ -67,7 +75,7 @@ function StudentMaterialRoute() {
 }
 
 function App() {
-  const { teacherService, studentService, teacherInsightsService } = useServices()
+  const { teacherService, studentService, teacherInsightsService, studentInsightsService } = useServices()
   const session = useSession()
 
   if (session.status === 'loading') {
@@ -127,7 +135,19 @@ function App() {
           <RequireRole role="estudiante">
             {(user) => (
               <AuthenticatedLayout>
-                <StudentHomePage name={user.name} studentService={studentService} />
+                <StudentHomePage name={user.name} loadInsights={studentInsightsService.getInsights} />
+              </AuthenticatedLayout>
+            )}
+          </RequireRole>
+        }
+      />
+      <Route
+        path={STUDENT_LESSONS_PATH}
+        element={
+          <RequireRole role="estudiante">
+            {() => (
+              <AuthenticatedLayout>
+                <StudentLessonsPage loadLessons={studentService.getMyLessons} downloadPdf={studentService.downloadPdf} />
               </AuthenticatedLayout>
             )}
           </RequireRole>

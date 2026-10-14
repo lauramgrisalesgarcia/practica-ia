@@ -3,7 +3,7 @@ import type { ActivityType, TeacherInsights } from '@/domain/insights'
 import { activityDescription } from './activityDescription'
 import { BarChart } from '@/shared/components/charts/BarChart'
 import { formatDate } from '@/shared/i18n/formatDate'
-import { LessonCalendar } from './LessonCalendar'
+import { LessonCalendar } from '@/shared/components/LessonCalendar'
 
 interface InsightsPanelProps {
   // Debe ser una referencia estable: cada cambio vuelve a cargar los indicadores
@@ -110,7 +110,11 @@ export function InsightsPanel({ loadInsights, today = new Date(), timeZone }: In
           </ul>
         </Card>
         <Card title="Calendario de clases">
-          <LessonCalendar lessons={insights.calendar} today={today} timeZone={timeZone} />
+          <LessonCalendar
+            lessons={insights.calendar.map(({ id, start, studentName, topic }) => ({ id, start, label: `${studentName} · ${topic}` }))}
+            today={today}
+            timeZone={timeZone}
+          />
         </Card>
       </div>
 
