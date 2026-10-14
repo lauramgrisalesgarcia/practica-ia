@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import type { ActivityType, TeacherInsights } from '@/domain/insights'
+import { activityDescription } from './activityDescription'
 import { BarChart } from '@/shared/components/charts/BarChart'
 import { formatDate } from '@/shared/i18n/formatDate'
 import { LessonCalendar } from './LessonCalendar'
@@ -99,7 +100,7 @@ export function InsightsPanel({ loadInsights, today = new Date(), timeZone }: In
                   <span className="flex min-w-0 flex-col gap-0.5">
                     <span className="text-xs font-semibold uppercase tracking-wide text-ocean">{type.label}</span>
                     <span className="text-ink">
-                      <span className="font-semibold">{activity.studentName}</span> {activity.description}
+                      <span className="font-semibold">{activity.studentName}</span> {activityDescription(activity)}
                     </span>
                     <span className="text-xs text-ink/70">{formatDate(activity.date)}</span>
                   </span>

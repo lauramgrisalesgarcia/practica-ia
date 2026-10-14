@@ -11,8 +11,11 @@ export interface RecentActivity {
   id: string
   type: ActivityType
   date: string
+  lessonId: string
   studentName: string
-  description: string
+  topic: string
+  // Porcentaje de aciertos; solo en las entregas
+  score: number | null
 }
 
 // Clase en el calendario del docente
@@ -25,7 +28,7 @@ export interface CalendarLesson {
 }
 
 export interface TeacherInsights {
-  // true mientras los datos son de ejemplo (aún no hay endpoint en el back)
+  // true si los datos son de ejemplo (modo de desarrollo sin back)
   isSample: boolean
   lessonsThisMonth: number
   pendingMaterials: number

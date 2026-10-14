@@ -2,8 +2,7 @@ import type { TeacherInsights } from '@/domain/insights'
 import { wait } from '@/dev/wait'
 import type { TeacherInsightsService } from './teacherInsightsService'
 
-// Datos de ejemplo fijos: el back aún no ofrece estos indicadores.
-// Cuando exista el endpoint, se sustituye por una implementación HTTP en composition.ts.
+// Datos de ejemplo fijos para desarrollar sin back (con back se usa httpTeacherInsightsService)
 const SAMPLE_INSIGHTS: TeacherInsights = {
   isSample: true,
   lessonsThisMonth: 14,
@@ -21,32 +20,40 @@ const SAMPLE_INSIGHTS: TeacherInsights = {
   ],
   recentActivity: [
     {
-      id: 'a1',
+      id: 'submission-c3',
       type: 'submission',
       date: '2026-10-12T18:05:00Z',
+      lessonId: 'c3',
       studentName: 'Emma Schmidt',
-      description: 'resolvió «En el restaurante» con un 67 %',
+      topic: 'Pedir en un restaurante',
+      score: 66.67,
     },
     {
-      id: 'a2',
+      id: 'material-c4',
       type: 'material',
       date: '2026-10-12T10:30:00Z',
+      lessonId: 'c4',
       studentName: 'John Miller',
-      description: 'tiene material nuevo de «Hablar del tiempo»',
+      topic: 'Hablar del tiempo',
+      score: null,
     },
     {
-      id: 'a3',
+      id: 'lesson-c3',
       type: 'lesson',
-      date: '2026-10-11T16:00:00Z',
+      date: '2026-10-08T16:00:00Z',
+      lessonId: 'c3',
       studentName: 'Emma Schmidt',
-      description: 'tuvo clase de «Pedir en un restaurante»',
+      topic: 'Pedir en un restaurante',
+      score: null,
     },
     {
-      id: 'a4',
+      id: 'submission-c2',
       type: 'submission',
-      date: '2026-10-10T19:20:00Z',
+      date: '2026-10-07T19:20:00Z',
+      lessonId: 'c2',
       studentName: 'John Miller',
-      description: 'resolvió «Mi fin de semana» con un 100 %',
+      topic: 'Hablar del fin de semana',
+      score: 100,
     },
   ],
   calendar: [
