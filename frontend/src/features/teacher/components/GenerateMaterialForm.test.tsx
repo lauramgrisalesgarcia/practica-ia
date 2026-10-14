@@ -12,18 +12,21 @@ interface SetupOptions {
 
 function setup({ generateMaterial = vi.fn().mockResolvedValue(MATERIAL) }: SetupOptions = {}) {
   const onGenerated = vi.fn()
+  const onCancel = vi.fn()
   render(
     <GenerateMaterialForm
       lessonId={INTRODUCTIONS_LESSON.id}
       initialKeywords={INTRODUCTIONS_LESSON.keywords}
       generateMaterial={generateMaterial}
       onGenerated={onGenerated}
+      onCancel={onCancel}
     />,
   )
   return {
     user: userEvent.setup(),
     generateMaterial,
     onGenerated,
+    onCancel,
     exerciseCount: screen.getByLabelText(/número de ejercicios/i),
     keywords: screen.getByLabelText(/palabras clave/i),
   }
@@ -106,5 +109,14 @@ describe('GenerateMaterialForm', () => {
     await user.click(button)
 
     expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+  })
+
+  it('permite cancelar sin generar nada', async () => {
+    const { user, generateMaterial, onCancel } = setup()
+
+    await user.click(screen.getByRole('button', { name: 'Cancelar' }))
+
+    expect(onCancel).toHaveBeenCalled()
+    expect(generateMaterial).not.toHaveBeenCalled()
   })
 })

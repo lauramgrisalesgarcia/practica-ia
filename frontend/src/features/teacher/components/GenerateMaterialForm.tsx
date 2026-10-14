@@ -8,6 +8,8 @@ interface GenerateMaterialFormProps {
   initialKeywords: string[]
   generateMaterial: (lessonId: string, request: MaterialRequest) => Promise<TeacherMaterial>
   onGenerated: (material: TeacherMaterial) => void
+  // Si se indica, el formulario ofrece «Cancelar»
+  onCancel?: () => void
 }
 
 const DEFAULT_EXERCISE_COUNT = '5'
@@ -17,6 +19,7 @@ export function GenerateMaterialForm({
   initialKeywords,
   generateMaterial,
   onGenerated,
+  onCancel,
 }: GenerateMaterialFormProps) {
   const id = useId()
   const [exerciseCount, setExerciseCount] = useState(DEFAULT_EXERCISE_COUNT)
@@ -54,7 +57,7 @@ export function GenerateMaterialForm({
       aria-label="Generar material"
       className="flex flex-col gap-4 rounded-xl bg-white p-6 shadow-md"
     >
-      <h2 className="text-lg font-semibold text-ink">Generar material de refuerzo</h2>
+      <h2 className="text-lg font-semibold text-ink">Configurar el material</h2>
       <p className="text-sm text-ink/70">El material se genera una única vez: después no se podrá volver a generar.</p>
 
       <div className="flex flex-col gap-1">
@@ -108,13 +111,25 @@ export function GenerateMaterialForm({
         </p>
       )}
 
-      <button
-        type="submit"
-        disabled={isGenerating}
-        className="self-start rounded-md bg-ocean px-4 py-2 font-medium text-white hover:bg-ink disabled:opacity-50"
-      >
-        {isGenerating ? 'Generando…' : 'Generar material'}
-      </button>
+      <div className="flex flex-wrap gap-2">
+        <button
+          type="submit"
+          disabled={isGenerating}
+          className="rounded-md bg-ocean px-4 py-2 font-medium text-white hover:bg-ink disabled:opacity-50"
+        >
+          {isGenerating ? 'Generando…' : 'Generar material'}
+        </button>
+        {onCancel && (
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={isGenerating}
+            className="rounded-md border border-ink/20 px-4 py-2 font-medium text-ocean hover:bg-mist disabled:opacity-50"
+          >
+            Cancelar
+          </button>
+        )}
+      </div>
     </form>
   )
 }
