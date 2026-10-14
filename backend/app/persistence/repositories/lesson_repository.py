@@ -137,16 +137,15 @@ class SqlAlchemyLessonRepository(LessonRepository):
 
     def get_generation_context_for_teacher(self, teacher_id: UUID, lesson_id: UUID) -> GenerationContext | None:
         row = self._session.execute(
-            select(LessonModel, StudentProfileModel, MaterialSubmissionModel.id)
+            select(LessonModel, StudentProfileModel, ReinforcementMaterialModel.id)
             .join(StudentProfileModel, StudentProfileModel.user_id == LessonModel.student_id)
             .join(_Teacher, _Teacher.id == StudentProfileModel.teacher_id)
             .outerjoin(ReinforcementMaterialModel, ReinforcementMaterialModel.lesson_id == LessonModel.id)
-            .outerjoin(MaterialSubmissionModel, MaterialSubmissionModel.material_id == ReinforcementMaterialModel.id)
             .where(_of_teacher(teacher_id), LessonModel.public_id == lesson_id)
         ).one_or_none()
         if row is None:
             return None
-        lesson, profile, submission_id = row
+        lesson, profile, material_id = row
         return GenerationContext(
             lesson_id=lesson.public_id,
             date=lesson.date,
@@ -158,5 +157,5 @@ class SqlAlchemyLessonRepository(LessonRepository):
             pdf_path=lesson.pdf_path,
             student_level=profile.level,
             native_language=profile.native_language,
-            has_submission=submission_id is not None,
+            has_material=material_id is not None,
         )

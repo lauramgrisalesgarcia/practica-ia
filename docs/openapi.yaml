@@ -363,14 +363,14 @@ paths:
     post:
       tags: [Docente]
       operationId: generateMaterial
-      summary: Generar (o regenerar) el material de refuerzo
+      summary: Generar el material de refuerzo
       description: |
         Construye la petición al LLM con el nivel e idioma natal del estudiante, el PDF, las palabras clave,
         el contexto, el tema y las notas de la clase, y el tipo y cantidad de ejercicios pedidos.
 
         - Si se envían `keywords`, sustituyen a las de la clase **solo para esta generación** (no modifican la clase).
         - La respuesta del LLM se valida; si no es válida responde `502` y no se guarda nada.
-        - Regenerar reemplaza el material anterior, salvo que el estudiante ya lo haya resuelto (`409`).
+        - El material se genera **una única vez**: si la clase ya tiene material, responde `409`.
       requestBody:
         required: true
         content:
@@ -423,7 +423,7 @@ paths:
         '404':
           $ref: '#/components/responses/LessonNotFound'
         '409':
-          description: La clase aún no se ha realizado o el estudiante ya resolvió el material.
+          description: La clase aún no se ha realizado o ya tiene material de refuerzo.
           content:
             application/json:
               schema:
@@ -432,9 +432,9 @@ paths:
                 claseFutura:
                   value:
                     detail: Solo se puede generar material para clases ya realizadas
-                materialResuelto:
+                materialYaGenerado:
                   value:
-                    detail: El material ya fue resuelto por el estudiante y no se puede regenerar
+                    detail: El material de refuerzo de esta clase ya se generó y no se puede volver a generar
         '422':
           $ref: '#/components/responses/ValidationError'
         '502':

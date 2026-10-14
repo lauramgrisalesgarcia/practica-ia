@@ -138,7 +138,19 @@ def test_una_clase_futura_responde_409(client: TestClient, db_session: Session) 
     assert response.json() == {"detail": "Solo se puede generar material para clases ya realizadas"}
 
 
-def test_un_material_ya_resuelto_no_se_regenera(
+def test_un_material_pendiente_no_se_vuelve_a_generar(
+    client: TestClient, db_session: Session, lesson_setup: tuple[UserModel, UserModel, LessonModel]
+) -> None:
+    teacher, _, lesson = lesson_setup
+    create_material(db_session, lesson=lesson)
+
+    response = client.post(url(lesson), json={"activity_type": "complete_sentence", "exercise_count": 3}, headers=auth_header(teacher.public_id))
+
+    assert response.status_code == 409
+    assert response.json() == {"detail": "El material de refuerzo de esta clase ya se generó y no se puede volver a generar"}
+
+
+def test_un_material_ya_resuelto_no_se_vuelve_a_generar(
     client: TestClient, db_session: Session, lesson_setup: tuple[UserModel, UserModel, LessonModel]
 ) -> None:
     teacher, emma, lesson = lesson_setup
@@ -147,7 +159,7 @@ def test_un_material_ya_resuelto_no_se_regenera(
     response = client.post(url(lesson), json={"activity_type": "complete_sentence", "exercise_count": 3}, headers=auth_header(teacher.public_id))
 
     assert response.status_code == 409
-    assert response.json() == {"detail": "El material ya fue resuelto por el estudiante y no se puede regenerar"}
+    assert response.json() == {"detail": "El material de refuerzo de esta clase ya se generó y no se puede volver a generar"}
 
 
 class BrokenLLMClient(LLMClient):

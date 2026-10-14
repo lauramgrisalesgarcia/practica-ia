@@ -88,7 +88,8 @@ class TeacherInsightsRepository(Protocol):
 
 class MaterialRepository(Protocol):
     def save(self, lesson_id: UUID, llm_request: Mapping[str, Any], material: Material) -> None:
-        """Guarda el material de la clase (reemplaza el anterior) junto con la petición enviada al LLM."""
+        """Guarda el material de la clase junto con la petición enviada al LLM. Si la clase ya tiene
+        material (incluso por generaciones simultáneas), lanza MaterialAlreadyGeneratedError."""
         ...
 
     def save_submission(self, lesson_id: UUID, student_id: UUID, submission: Submission) -> None:
