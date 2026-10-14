@@ -1,13 +1,12 @@
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import type { CalendarLesson } from '@/domain/insights'
-import { LessonCalendar } from './LessonCalendar'
+import { LessonCalendar, type CalendarEntry } from './LessonCalendar'
 
-const LESSONS: CalendarLesson[] = [
-  { id: 'c1', start: '2026-10-08T16:00:00Z', studentName: 'Emma Schmidt', topic: 'Pedir en un restaurante' },
-  { id: 'c2', start: '2026-10-13T15:00:00Z', studentName: 'John Miller', topic: 'Hablar del tiempo' },
-  { id: 'c3', start: '2026-10-13T17:00:00Z', studentName: 'Emma Schmidt', topic: 'Ir de compras' },
-  { id: 'c4', start: '2026-11-03T16:00:00Z', studentName: 'Emma Schmidt', topic: 'En el médico' },
+const LESSONS: CalendarEntry[] = [
+  { id: 'c1', start: '2026-10-08T16:00:00Z', label: 'Emma Schmidt · Pedir en un restaurante' },
+  { id: 'c2', start: '2026-10-13T15:00:00Z', label: 'John Miller · Hablar del tiempo' },
+  { id: 'c3', start: '2026-10-13T17:00:00Z', label: 'Emma Schmidt · Ir de compras' },
+  { id: 'c4', start: '2026-11-03T16:00:00Z', label: 'Emma Schmidt · En el médico' },
 ]
 
 function setup() {

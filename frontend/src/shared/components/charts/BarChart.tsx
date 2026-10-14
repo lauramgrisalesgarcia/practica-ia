@@ -8,9 +8,13 @@ export interface BarDatum {
 interface BarChartProps {
   // Describe el gráfico para lectores de pantalla y titula la tabla de datos
   title: string
+  // Cabecera de la columna de etiquetas en la tabla de datos (por defecto, «Semana»)
+  labelHeader?: string
   valueHeader: string
   data: BarDatum[]
   formatValue?: (value: number) => string
+  // Valor del tope de la escala (por defecto, el mayor de los datos)
+  maxValue?: number
 }
 
 const WIDTH = 320
@@ -20,8 +24,8 @@ const TOP = 16
 const CORNER = 4
 
 // Barras verticales de una sola serie con tabla de datos accesible
-export function BarChart({ title, valueHeader, data, formatValue = String }: BarChartProps) {
-  const max = Math.max(1, ...data.map((d) => d.value))
+export function BarChart({ title, labelHeader, valueHeader, data, formatValue = String, maxValue }: BarChartProps) {
+  const max = maxValue ?? Math.max(1, ...data.map((d) => d.value))
   const slot = WIDTH / Math.max(1, data.length)
   const barWidth = Math.min(24, slot * 0.5)
   const last = data.length - 1
@@ -40,7 +44,7 @@ export function BarChart({ title, valueHeader, data, formatValue = String }: Bar
           const x = i * slot + (slot - barWidth) / 2
           const y = BASELINE - height
           return (
-            <g key={d.label} className="group">
+            <g key={i} className="group">
               <title>{`${d.label}: ${formatValue(d.value)}`}</title>
               {/* Área de hover mayor que la barra */}
               <rect x={i * slot} y={TOP} width={slot} height={BASELINE - TOP} fill="transparent" />
@@ -69,7 +73,7 @@ export function BarChart({ title, valueHeader, data, formatValue = String }: Bar
           )
         })}
       </svg>
-      <DataTable title={title} valueHeader={valueHeader} rows={data.map((d) => [d.label, formatValue(d.value)])} />
+      <DataTable title={title} labelHeader={labelHeader} valueHeader={valueHeader} rows={data.map((d) => [d.label, formatValue(d.value)])} />
     </div>
   )
 }

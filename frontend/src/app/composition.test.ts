@@ -48,6 +48,15 @@ describe('createServices', () => {
     expect(fetchFn).toHaveBeenCalledWith('/api/teachers/me/insights', expect.objectContaining({ method: 'GET' }))
   })
 
+  it('pide los indicadores del estudiante a la API real cuando hay URL configurada', async () => {
+    const fetchFn = vi.fn<typeof fetch>().mockResolvedValue(new Response(null, { status: 503 }))
+    const { studentInsightsService } = createServices({ apiUrl: '/api', fetchFn })
+
+    await studentInsightsService.getInsights().catch(() => {})
+
+    expect(fetchFn).toHaveBeenCalledWith('/api/students/me/insights', expect.objectContaining({ method: 'GET' }))
+  })
+
   it('usa los servicios de desarrollo en memoria si no hay URL configurada', async () => {
     const fetchFn = vi.fn<typeof fetch>()
     const { authService } = createServices({ apiUrl: undefined, fetchFn })

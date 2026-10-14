@@ -1,6 +1,8 @@
 import type { LessonDetail, StudentMaterial, StudentSubmission, TeacherLessonSummary } from '@/domain/lesson'
+import type { StudentActivity, StudentInsights } from '@/domain/studentInsights'
 import { createMockAuthService } from '@/features/auth/services/mockAuthService'
 import { createMockTeacherLessonService } from '@/features/teacher/services/mockTeacherLessonService'
+import { createMockStudentInsightsService } from '@/features/student/services/mockStudentInsightsService'
 import { createMockStudentService } from '@/features/student/services/mockStudentService'
 import { createMockTeacherService } from '@/features/teacher/services/mockTeacherService'
 
@@ -206,3 +208,58 @@ export const devStudentService = createMockStudentService({
     .map((lesson) => ({ ...toSummary(lesson), pdfFilename: lesson.pdfFilename })),
   pdfContent: DEV_PDF_CONTENT,
 })
+
+// Indicadores de Ana calculados con sus clases (el back los calcula igual: docs/openapi.yaml, StudentInsights)
+function buildStudentInsights(lessons: LessonDetail[]): StudentInsights {
+  const solved = lessons.flatMap((lesson) => (lesson.submission ? [{ lesson, submission: lesson.submission }] : []))
+  const activity: StudentActivity[] = lessons.flatMap((lesson) => {
+    const base = { lessonId: lesson.id, topic: lesson.topic }
+    return [
+      { ...base, id: `lesson-${lesson.id}`, type: 'lesson' as const, date: lesson.date, score: null },
+      ...(lesson.material
+        ? [{ ...base, id: `material-${lesson.id}`, type: 'material' as const, date: lesson.material.generatedAt, score: null }]
+        : []),
+      ...(lesson.submission
+        ? [
+            {
+              ...base,
+              id: `submission-${lesson.id}`,
+              type: 'submission' as const,
+              date: lesson.submission.submittedAt,
+              score: lesson.submission.score,
+            },
+          ]
+        : []),
+    ]
+  })
+  const scores = solved.map(({ submission }) => submission.score)
+  return {
+    lessonsCount: lessons.length,
+    completedMaterials: solved.length,
+    averageScore: scores.length ? Math.round((scores.reduce((a, b) => a + b, 0) / scores.length) * 100) / 100 : null,
+    pendingMaterials: lessons
+      .filter((lesson) => lesson.material && !lesson.submission)
+      .sort((a, b) => b.date.localeCompare(a.date))
+      .map((lesson) => ({
+        lessonId: lesson.id,
+        topic: lesson.topic,
+        date: lesson.date,
+        exerciseCount: lesson.material?.exercises.length ?? 0,
+      })),
+    recentActivity: activity.sort((a, b) => b.date.localeCompare(a.date)).slice(0, 10),
+    calendar: [...lessons]
+      .sort((a, b) => a.date.localeCompare(b.date))
+      .map(({ id, date, topic }) => ({ id, start: date, topic })),
+    scoreHistory: solved
+      .sort((a, b) => a.submission.submittedAt.localeCompare(b.submission.submittedAt))
+      .slice(-10)
+      .map(({ lesson, submission }) => ({
+        lessonId: lesson.id,
+        topic: lesson.topic,
+        submittedAt: submission.submittedAt,
+        score: submission.score,
+      })),
+  }
+}
+
+export const devStudentInsightsService = createMockStudentInsightsService({ insights: buildStudentInsights(anaLessons) })

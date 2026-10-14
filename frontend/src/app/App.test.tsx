@@ -11,6 +11,7 @@ import type { StudentService } from '@/features/student/services/studentService'
 import type { TeacherService } from '@/features/teacher/services/teacherService'
 import { EMMA_LESSONS, RESTAURANT_LESSON } from '@/test/contracts/teacherLessonServiceContract'
 import { MY_LESSONS, PENDING_MATERIAL } from '@/test/contracts/studentServiceContract'
+import { STUDENT_INSIGHTS } from '@/test/contracts/studentInsightsServiceContract'
 import { renderWithServices } from '@/test/renderWithServices'
 
 const TEACHER: User = { name: 'María López', email: 'docente@colegio.edu', role: 'docente' }
@@ -64,6 +65,7 @@ function renderApp(
   teacherService = createTeacherService(),
   teacherLessonService = createTeacherLessonService(),
   studentService = createStudentService(),
+  studentInsightsService = { getInsights: vi.fn().mockResolvedValue(STUDENT_INSIGHTS) },
 ) {
   return renderWithServices(
     <MemoryRouter initialEntries={[path]}>
@@ -72,7 +74,7 @@ function renderApp(
         <CurrentPath />
       </SessionProvider>
     </MemoryRouter>,
-    { services: { authService, teacherService, teacherLessonService, studentService } },
+    { services: { authService, teacherService, teacherLessonService, studentService, studentInsightsService } },
   )
 }
 
@@ -146,10 +148,25 @@ describe('App', () => {
       await expectPath('/docente')
     })
 
-    it('muestra al estudiante sus clases', async () => {
-      const studentService = createStudentService()
+    it('muestra al estudiante su panel con el resumen', async () => {
+      const studentInsightsService = { getInsights: vi.fn().mockResolvedValue(STUDENT_INSIGHTS) }
       renderApp(
         '/estudiante',
+        createAuthService({ current: STUDENT }),
+        createTeacherService(),
+        createTeacherLessonService(),
+        createStudentService(),
+        studentInsightsService,
+      )
+
+      expect(await screen.findByRole('region', { name: 'Refuerzos pendientes' })).toHaveTextContent('Presentarse')
+      expect(studentInsightsService.getInsights).toHaveBeenCalled()
+    })
+
+    it('muestra al estudiante su historial de clases', async () => {
+      const studentService = createStudentService()
+      renderApp(
+        '/estudiante/clases',
         createAuthService({ current: STUDENT }),
         createTeacherService(),
         createTeacherLessonService(),

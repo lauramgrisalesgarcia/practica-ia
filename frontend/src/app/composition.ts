@@ -1,9 +1,16 @@
-import { devAuthService, devStudentService, devTeacherLessonService, devTeacherService } from '@/dev/devServices'
+import {
+  devAuthService,
+  devStudentInsightsService,
+  devStudentService,
+  devTeacherLessonService,
+  devTeacherService,
+} from '@/dev/devServices'
 import { createHttpAuthService } from '@/features/auth/services/httpAuthService'
 import { createSessionExpiry } from '@/features/auth/services/sessionExpiry'
 import { createBrowserTokenStorage } from '@/features/auth/services/tokenStorage'
 import { createHttpTeacherInsightsService } from '@/features/teacher/services/httpTeacherInsightsService'
 import { createHttpTeacherLessonService } from '@/features/teacher/services/httpTeacherLessonService'
+import { createHttpStudentInsightsService } from '@/features/student/services/httpStudentInsightsService'
 import { createHttpStudentService } from '@/features/student/services/httpStudentService'
 import { createSampleTeacherInsightsService } from '@/features/teacher/services/sampleTeacherInsightsService'
 import { createHttpTeacherService } from '@/features/teacher/services/httpTeacherService'
@@ -24,6 +31,7 @@ export function createServices({ apiUrl, fetchFn }: CompositionOptions): Service
       teacherLessonService: devTeacherLessonService,
       studentService: devStudentService,
       teacherInsightsService: createSampleTeacherInsightsService(),
+      studentInsightsService: devStudentInsightsService,
     }
   }
 
@@ -36,5 +44,6 @@ export function createServices({ apiUrl, fetchFn }: CompositionOptions): Service
     teacherLessonService: createHttpTeacherLessonService(http),
     studentService: createHttpStudentService(http),
     teacherInsightsService: createHttpTeacherInsightsService(http),
+    studentInsightsService: createHttpStudentInsightsService(http),
   }
 }
