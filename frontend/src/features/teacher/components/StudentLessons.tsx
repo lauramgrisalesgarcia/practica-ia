@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { Link } from 'react-router'
-import type { LessonPdf, LessonSummary, MaterialStatus } from '@/domain/lesson'
+import type { LessonPdf, MaterialStatus, TeacherLessonSummary } from '@/domain/lesson'
 import { PdfDownloadButton } from '@/shared/components/PdfDownloadButton'
 import { formatDate } from '@/shared/i18n/formatDate'
 import { generateMaterialPath, lessonDetailPath } from '@/shared/routes/paths'
@@ -8,6 +8,7 @@ import {
   filterLessons,
   formatDaysAgo,
   formatDuration,
+  formatScore,
   groupByMonth,
   summarizeHistory,
   type MaterialFilter,
@@ -16,7 +17,7 @@ import {
 interface StudentLessonsProps {
   studentId: string
   // Debe ser una referencia estable: cada cambio vuelve a cargar el historial
-  loadLessons: (studentId: string) => Promise<LessonSummary[]>
+  loadLessons: (studentId: string) => Promise<TeacherLessonSummary[]>
   downloadPdf: (lessonId: string) => Promise<LessonPdf>
   openPdf: (pdf: LessonPdf) => void
   today?: Date
@@ -26,7 +27,7 @@ interface StudentLessonsProps {
 
 type LessonsState =
   | { status: 'loading' }
-  | { status: 'loaded'; lessons: LessonSummary[] }
+  | { status: 'loaded'; lessons: TeacherLessonSummary[] }
   | { status: 'error'; message: string }
 
 const MATERIAL_STATUS: Record<MaterialStatus, { label: string; badge: string; dot: string }> = {
@@ -100,7 +101,7 @@ export function StudentLessons({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard title="Clases realizadas">
           <p className="text-3xl font-semibold text-ocean">{summary.lessonCount}</p>
           <p className="text-xs text-ink/70">{formatDuration(summary.totalMinutes)} en total</p>
@@ -130,6 +131,16 @@ export function StudentLessons({
               style={{ width: `${summary.withMaterial ? (summary.completedMaterial / summary.withMaterial) * 100 : 0}%` }}
             />
           </div>
+        </StatCard>
+        <StatCard title="Nota media">
+          {summary.averageScore === null ? (
+            <p className="text-sm text-ink/70">Sin material resuelto</p>
+          ) : (
+            <>
+              <p className="text-3xl font-semibold text-ocean">{formatScore(summary.averageScore)}</p>
+              <p className="text-xs text-ink/70">del material resuelto</p>
+            </>
+          )}
         </StatCard>
       </div>
 
@@ -191,7 +202,7 @@ export function StudentLessons({
 }
 
 interface LessonEntryProps {
-  lesson: LessonSummary
+  lesson: TeacherLessonSummary
   isLast: boolean
   downloadPdf: (lessonId: string) => Promise<LessonPdf>
   openPdf: (pdf: LessonPdf) => void
@@ -199,6 +210,8 @@ interface LessonEntryProps {
 
 function LessonEntry({ lesson, isLast, downloadPdf, openPdf }: LessonEntryProps) {
   const status = MATERIAL_STATUS[lesson.materialStatus]
+  const statusLabel =
+    lesson.materialStatus === 'completed' && lesson.score !== null ? `Resuelto · ${formatScore(lesson.score)}` : status.label
   const generateLabel =
     lesson.materialStatus === 'none' ? 'Generar material' : lesson.materialStatus === 'pending' ? 'Regenerar material' : null
 
@@ -211,12 +224,21 @@ function LessonEntry({ lesson, isLast, downloadPdf, openPdf }: LessonEntryProps)
       <div className="flex min-w-0 flex-1 flex-col gap-1 pb-5">
         <div className="flex flex-wrap items-start justify-between gap-2">
           <h4 className="font-semibold text-ink">{lesson.topic}</h4>
-          <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${status.badge}`}>{status.label}</span>
+          <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${status.badge}`}>{statusLabel}</span>
         </div>
         <p className="text-sm text-ink/70">
           <time dateTime={lesson.date}>{formatDate(lesson.date)}</time> · {lesson.durationMinutes} min
         </p>
         <p className="text-sm text-ink/80">{lesson.context}</p>
+        {lesson.keywords.length > 0 && (
+          <ul aria-label="Palabras clave" className="flex flex-wrap gap-1.5">
+            {lesson.keywords.map((keyword) => (
+              <li key={keyword} className="rounded-md bg-mist px-2 py-0.5 text-xs text-ink">
+                {keyword}
+              </li>
+            ))}
+          </ul>
+        )}
         <div className="mt-2 flex flex-wrap items-start gap-2">
           <Link
             to={lessonDetailPath(lesson.id)}

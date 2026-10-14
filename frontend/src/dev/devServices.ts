@@ -1,4 +1,4 @@
-import type { LessonDetail, LessonSummary, StudentMaterial, StudentSubmission } from '@/domain/lesson'
+import type { LessonDetail, StudentMaterial, StudentSubmission, TeacherLessonSummary } from '@/domain/lesson'
 import { createMockAuthService } from '@/features/auth/services/mockAuthService'
 import { createMockTeacherLessonService } from '@/features/teacher/services/mockTeacherLessonService'
 import { createMockStudentService } from '@/features/student/services/mockStudentService'
@@ -130,11 +130,11 @@ const devLessons: LessonDetail[] = [
   },
 ]
 
-function toSummary({ id, date, durationMinutes, topic, context, materialStatus }: LessonDetail): LessonSummary {
-  return { id, date, durationMinutes, topic, context, materialStatus }
+function toSummary({ id, date, durationMinutes, topic, context, materialStatus, keywords, submission }: LessonDetail): TeacherLessonSummary {
+  return { id, date, durationMinutes, topic, context, materialStatus, keywords, score: submission?.score ?? null }
 }
 
-function lessonsOf(studentId: string): LessonSummary[] {
+function lessonsOf(studentId: string): TeacherLessonSummary[] {
   return devLessons
     .filter((lesson) => lesson.student.id === studentId)
     .sort((a, b) => b.date.localeCompare(a.date))

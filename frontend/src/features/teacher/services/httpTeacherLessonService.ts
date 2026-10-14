@@ -7,6 +7,12 @@ import type { TeacherLessonService } from './teacherLessonService'
 // Formas de la API (docs/openapi.yaml)
 
 // schema TeacherMaterial
+// docs/openapi.yaml, schema TeacherLessonSummary
+interface ApiTeacherLessonSummary extends ApiLessonSummary {
+  keywords: string[]
+  score: number | null
+}
+
 interface ApiTeacherMaterial {
   generated_at: string
   activity_type: ActivityType
@@ -93,8 +99,10 @@ function lessonPath(lessonId: string): string {
 export function createHttpTeacherLessonService(http: HttpClient): TeacherLessonService {
   return {
     async getStudentLessons(studentId) {
-      const lessons = await http.get<ApiLessonSummary[]>(`/teachers/me/students/${encodeURIComponent(studentId)}/lessons`)
-      return lessons.map(toLessonSummary)
+      const lessons = await http.get<ApiTeacherLessonSummary[]>(
+        `/teachers/me/students/${encodeURIComponent(studentId)}/lessons`,
+      )
+      return lessons.map((lesson) => ({ ...toLessonSummary(lesson), keywords: lesson.keywords, score: lesson.score }))
     },
     async getLesson(lessonId) {
       return toLessonDetail(await http.get<ApiLessonDetail>(lessonPath(lessonId)))

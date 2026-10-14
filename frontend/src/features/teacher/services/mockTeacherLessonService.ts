@@ -1,11 +1,11 @@
-import type { LessonDetail, LessonSummary } from '@/domain/lesson'
+import type { LessonDetail, TeacherLessonSummary } from '@/domain/lesson'
 import { buildFakeMaterial, materialGenerationError } from '@/dev/fakeMaterial'
 import { wait } from '@/dev/wait'
 import type { TeacherLessonService } from './teacherLessonService'
 
 interface MockTeacherLessonServiceOptions {
   // Clases por id de alumno; un alumno que no aparece no está asignado al docente
-  lessonsByStudent: Record<string, LessonSummary[]>
+  lessonsByStudent: Record<string, TeacherLessonSummary[]>
   // Detalle de cada clase del docente
   lessons: LessonDetail[]
   // Contenido de prueba del PDF de todas las clases

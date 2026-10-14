@@ -1,13 +1,13 @@
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
-import type { LessonPdf, LessonSummary } from '@/domain/lesson'
+import type { LessonPdf, TeacherLessonSummary } from '@/domain/lesson'
 import { StudentLessons } from './StudentLessons'
 
 const STUDENT_ID = '3f2b8c1e-9a4d-4e7b-b6a2-1c9d0e5f7a83'
 const PDF: LessonPdf = { blob: new Blob(['%PDF']), filename: 'restaurante-a2.pdf' }
 
-const LESSONS: LessonSummary[] = [
+const LESSONS: TeacherLessonSummary[] = [
   {
     id: 'l1',
     date: '2026-10-08T16:00:00Z',
@@ -15,6 +15,8 @@ const LESSONS: LessonSummary[] = [
     topic: 'Pedir en un restaurante',
     context: 'Pedir comida y bebida y pedir la cuenta',
     materialStatus: 'completed',
+    keywords: ['la carta', 'quisiera'],
+    score: 66.67,
   },
   {
     id: 'l2',
@@ -23,6 +25,8 @@ const LESSONS: LessonSummary[] = [
     topic: 'Hablar del fin de semana',
     context: 'Contar lo que hiciste a un compañero',
     materialStatus: 'pending',
+    keywords: ['el sábado', 'fui'],
+    score: null,
   },
   {
     id: 'l3',
@@ -31,11 +35,13 @@ const LESSONS: LessonSummary[] = [
     topic: 'Presentarse',
     context: 'Presentarse y hablar de la familia',
     materialStatus: 'none',
+    keywords: ['me llamo'],
+    score: null,
   },
 ]
 
 interface SetupOptions {
-  loadLessons?: (studentId: string) => Promise<LessonSummary[]>
+  loadLessons?: (studentId: string) => Promise<TeacherLessonSummary[]>
   downloadPdf?: (lessonId: string) => Promise<LessonPdf>
 }
 
@@ -109,6 +115,36 @@ describe('StudentLessons', () => {
     })
   })
 
+  describe('notas', () => {
+    it('muestra la nota media del material resuelto', async () => {
+      setup()
+
+      expect(await screen.findByRole('region', { name: 'Nota media' })).toHaveTextContent('67 %')
+    })
+
+    it('indica que aún no hay nota media si no hay material resuelto', async () => {
+      setup({ loadLessons: vi.fn().mockResolvedValue([LESSONS[1], LESSONS[2]]) })
+
+      expect(await screen.findByRole('region', { name: 'Nota media' })).toHaveTextContent('Sin material resuelto')
+    })
+
+    it('muestra la nota de cada clase resuelta en su etiqueta', async () => {
+      setup()
+
+      await findHistory()
+      expect(lessonItem('Pedir en un restaurante')).toHaveTextContent('Resuelto · 67 %')
+      expect(lessonItem('Hablar del fin de semana')).toHaveTextContent('Material pendiente')
+    })
+  })
+
+  it('muestra las palabras clave de cada clase', async () => {
+    setup()
+
+    await findHistory()
+    const keywords = within(lessonItem('Pedir en un restaurante')).getByRole('list', { name: 'Palabras clave' })
+    expect(within(keywords).getAllByRole('listitem').map((item) => item.textContent)).toEqual(['la carta', 'quisiera'])
+  })
+
   describe('filtros', () => {
     it('ofrece un filtro por estado con el número de clases de cada uno', async () => {
       setup()
@@ -166,7 +202,7 @@ describe('StudentLessons', () => {
     const restaurante = lessonItem('Pedir en un restaurante')
     expect(restaurante).toHaveTextContent('8 de octubre de 2026 · 60 min')
     expect(restaurante).toHaveTextContent('Pedir comida y bebida y pedir la cuenta')
-    expect(restaurante).toHaveTextContent('Material resuelto')
+    expect(restaurante).toHaveTextContent('Resuelto · 67 %')
     expect(lessonItem('Hablar del fin de semana')).toHaveTextContent('Material pendiente')
     expect(lessonItem('Presentarse')).toHaveTextContent('Sin material')
   })
