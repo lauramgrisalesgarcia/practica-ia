@@ -2,6 +2,7 @@ import { devAuthService, devStudentService, devTeacherLessonService, devTeacherS
 import { createHttpAuthService } from '@/features/auth/services/httpAuthService'
 import { createSessionExpiry } from '@/features/auth/services/sessionExpiry'
 import { createBrowserTokenStorage } from '@/features/auth/services/tokenStorage'
+import { createHttpTeacherInsightsService } from '@/features/teacher/services/httpTeacherInsightsService'
 import { createHttpTeacherLessonService } from '@/features/teacher/services/httpTeacherLessonService'
 import { createHttpStudentService } from '@/features/student/services/httpStudentService'
 import { createSampleTeacherInsightsService } from '@/features/teacher/services/sampleTeacherInsightsService'
@@ -14,9 +15,6 @@ interface CompositionOptions {
   fetchFn?: typeof fetch
 }
 
-// El back aún no ofrece los indicadores del panel del docente: datos de ejemplo en ambos modos
-const teacherInsightsService = createSampleTeacherInsightsService()
-
 // Único lugar que elige las implementaciones de los servicios
 export function createServices({ apiUrl, fetchFn }: CompositionOptions): Services {
   if (!apiUrl) {
@@ -25,7 +23,7 @@ export function createServices({ apiUrl, fetchFn }: CompositionOptions): Service
       teacherService: devTeacherService,
       teacherLessonService: devTeacherLessonService,
       studentService: devStudentService,
-      teacherInsightsService,
+      teacherInsightsService: createSampleTeacherInsightsService(),
     }
   }
 
@@ -37,6 +35,6 @@ export function createServices({ apiUrl, fetchFn }: CompositionOptions): Service
     teacherService: createHttpTeacherService(http),
     teacherLessonService: createHttpTeacherLessonService(http),
     studentService: createHttpStudentService(http),
-    teacherInsightsService,
+    teacherInsightsService: createHttpTeacherInsightsService(http),
   }
 }

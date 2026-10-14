@@ -13,14 +13,32 @@ const INSIGHTS: TeacherInsights = {
   ],
   recentActivity: [
     {
-      id: 'a1',
+      id: 'submission-1',
       type: 'submission',
       date: '2026-10-12T18:05:00Z',
+      lessonId: '1',
       studentName: 'Emma Schmidt',
-      description: 'resolvió «En el restaurante» con un 67 %',
+      topic: 'Pedir en un restaurante',
+      score: 66.67,
     },
-    { id: 'a2', type: 'material', date: '2026-10-12T10:30:00Z', studentName: 'John Miller', description: 'tiene material nuevo' },
-    { id: 'a3', type: 'lesson', date: '2026-10-11T16:00:00Z', studentName: 'Emma Schmidt', description: 'tuvo clase' },
+    {
+      id: 'material-2',
+      type: 'material',
+      date: '2026-10-12T10:30:00Z',
+      lessonId: '2',
+      studentName: 'John Miller',
+      topic: 'Hablar del tiempo',
+      score: null,
+    },
+    {
+      id: 'lesson-1',
+      type: 'lesson',
+      date: '2026-10-11T16:00:00Z',
+      lessonId: '1',
+      studentName: 'Emma Schmidt',
+      topic: 'Pedir en un restaurante',
+      score: null,
+    },
   ],
   calendar: [{ id: 'c1', start: '2026-10-13T15:00:00Z', studentName: 'John Miller', topic: 'Hablar del tiempo' }],
 }
@@ -87,7 +105,7 @@ describe('InsightsPanel', () => {
 
     const activity = await findRegion('Actividad reciente')
     const items = within(activity).getAllByRole('listitem')
-    expect(items[0]).toHaveTextContent('Emma Schmidt resolvió «En el restaurante» con un 67 %')
+    expect(items[0]).toHaveTextContent('Emma Schmidt resolvió «Pedir en un restaurante» con un 67 %')
   })
 
   it('indica el tipo de cada actividad con una etiqueta, no solo con el icono', async () => {
