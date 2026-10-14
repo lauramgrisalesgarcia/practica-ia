@@ -53,14 +53,14 @@ class SqlAlchemyLessonRepository(LessonRepository):
 
     def list_completed_by_student(self, student_id: UUID, until: datetime) -> list[LessonSummary]:
         rows = self._session.execute(
-            select(LessonModel, _MATERIAL_STATUS)
+            select(LessonModel, _MATERIAL_STATUS, MaterialSubmissionModel.score)
             .join(UserModel, UserModel.id == LessonModel.student_id)
             .outerjoin(ReinforcementMaterialModel, ReinforcementMaterialModel.lesson_id == LessonModel.id)
             .outerjoin(MaterialSubmissionModel, MaterialSubmissionModel.material_id == ReinforcementMaterialModel.id)
             .where(UserModel.public_id == student_id, LessonModel.date <= until)
             .order_by(LessonModel.date.desc())
         ).all()
-        return [to_lesson_summary(lesson, status) for lesson, status in rows]
+        return [to_lesson_summary(lesson, status, score) for lesson, status, score in rows]
 
     def get_detail_for_teacher(self, teacher_id: UUID, lesson_id: UUID) -> LessonDetail | None:
         row = self._session.execute(
@@ -83,7 +83,7 @@ class SqlAlchemyLessonRepository(LessonRepository):
             return None
         lesson, student, profile, material, submission, status = row
         return LessonDetail(
-            summary=to_lesson_summary(lesson, status),
+            summary=to_lesson_summary(lesson, status, submission.score if submission else None),
             keywords=tuple(lesson.keywords),
             notes=lesson.notes,
             student=to_student(student, profile),

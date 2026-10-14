@@ -210,12 +210,16 @@ paths:
                   topic: Pedir en un restaurante
                   context: Pedir comida y bebida en un restaurante y pedir la cuenta
                   material_status: completed
+                  keywords: [la carta, quisiera, la cuenta]
+                  score: 66.67
                 - id: '1e7d3b5a-8c2f-4a6e-9d0b-3f5a7c9e1b28'
                   date: '2026-10-01T16:00:00Z'
                   duration_minutes: 60
                   topic: Presentarse
                   context: Presentarse y hablar de la familia en una reunión
                   material_status: none
+                  keywords: [me llamo, mi familia]
+                  score: null
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -1049,7 +1053,23 @@ components:
           $ref: '#/components/schemas/MaterialStatus'
 
     TeacherLessonSummary:
-      $ref: '#/components/schemas/LessonBase'
+      allOf:
+        - $ref: '#/components/schemas/LessonBase'
+        - type: object
+          required: [keywords, score]
+          properties:
+            keywords:
+              type: array
+              minItems: 1
+              items:
+                type: string
+            score:
+              description: Porcentaje de aciertos del estudiante, o `null` si no ha resuelto el material.
+              anyOf:
+                - type: number
+                  minimum: 0
+                  maximum: 100
+                - type: 'null'
 
     StudentLessonSummary:
       allOf:

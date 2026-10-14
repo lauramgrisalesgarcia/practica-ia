@@ -65,6 +65,8 @@ class LessonSummary:
     context: str
     material_status: MaterialStatus
     pdf_filename: str
+    keywords: tuple[str, ...]
+    score: Decimal | None  # porcentaje de aciertos, o None si el material no está resuelto
 
 
 class ActivityType(enum.StrEnum):
