@@ -3,6 +3,7 @@ import { NetworkError } from '@/shared/http/errors'
 import { describeAuthServiceContract, TEST_ACCOUNT, type TestAccount } from '@/test/contracts/authServiceContract'
 import { createMemoryTokenStorage } from '@/test/fakes/memoryTokenStorage'
 import { createHttpAuthService } from './httpAuthService'
+import { createSessionExpiry } from './sessionExpiry'
 import type { TokenStorage } from './tokenStorage'
 
 const VALID_TOKEN = 'token-valido'
@@ -41,8 +42,9 @@ function createFakeBackend({ user, password }: TestAccount): typeof fetch {
 }
 
 function createService(fetchFn: typeof fetch, tokenStorage: TokenStorage = createMemoryTokenStorage()) {
-  const http = createHttpClient({ baseUrl: 'http://api.test', getToken: tokenStorage.get, fetchFn })
-  return createHttpAuthService({ http, tokenStorage })
+  const sessionExpiry = createSessionExpiry()
+  const http = createHttpClient({ baseUrl: 'http://api.test', getToken: tokenStorage.get, fetchFn, onUnauthorized: sessionExpiry.notify })
+  return Object.assign(createHttpAuthService({ http, tokenStorage, sessionExpiry }), { http })
 }
 
 describe('httpAuthService', () => {
@@ -104,5 +106,45 @@ describe('httpAuthService', () => {
     await createService(createFakeBackend(TEST_ACCOUNT), tokenStorage).logout()
 
     expect(tokenStorage.get()).toBeNull()
+  })
+
+  describe('sesión caducada', () => {
+    it('avisa y borra el token cuando la API rechaza el token en cualquier petición', async () => {
+      const tokenStorage = createMemoryTokenStorage(VALID_TOKEN)
+      const fetchFn = vi.fn<typeof fetch>().mockResolvedValue(json(401, { detail: 'No autenticado' }))
+      const service = createService(fetchFn, tokenStorage)
+      const listener = vi.fn()
+      service.onSessionExpired(listener)
+
+      await service.http.get('/teachers/me/students').catch(() => {})
+
+      expect(listener).toHaveBeenCalledOnce()
+      expect(tokenStorage.get()).toBeNull()
+    })
+
+    it('deja de avisar a quien se da de baja', async () => {
+      const fetchFn = vi.fn<typeof fetch>().mockResolvedValue(json(401, { detail: 'No autenticado' }))
+      const service = createService(fetchFn, createMemoryTokenStorage(VALID_TOKEN))
+      const listener = vi.fn()
+      const unsubscribe = service.onSessionExpired(listener)
+
+      unsubscribe()
+      await service.http.get('/teachers/me/students').catch(() => {})
+
+      expect(listener).not.toHaveBeenCalled()
+    })
+
+    it('un login fallido no cuenta como sesión caducada aunque hubiera un token antiguo', async () => {
+      const tokenStorage = createMemoryTokenStorage('token-antiguo')
+      const fetchFn = vi.fn(createFakeBackend(TEST_ACCOUNT))
+      const service = createService(fetchFn, tokenStorage)
+      const listener = vi.fn()
+      service.onSessionExpired(listener)
+
+      await service.login({ email: user.email, password: 'Otra#12345' }).catch(() => {})
+
+      expect(new Headers(fetchFn.mock.calls[0][1]?.headers).has('Authorization')).toBe(false)
+      expect(listener).not.toHaveBeenCalled()
+    })
   })
 })

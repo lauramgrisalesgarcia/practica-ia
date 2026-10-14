@@ -16,6 +16,8 @@ interface HttpClientOptions {
   baseUrl: string
   getToken: () => string | null
   fetchFn?: typeof fetch
+  // Se llama cuando la API rechaza el token enviado (401): la sesión ha caducado
+  onUnauthorized?: () => void
 }
 
 const VALIDATION_MESSAGE = 'Los datos enviados no son válidos'
@@ -47,7 +49,7 @@ function filenameFrom(contentDisposition: string | null): string | null {
   return /filename="([^"]*)"/i.exec(contentDisposition)?.[1] ?? null
 }
 
-export function createHttpClient({ baseUrl, getToken, fetchFn = fetch }: HttpClientOptions): HttpClient {
+export function createHttpClient({ baseUrl, getToken, fetchFn = fetch, onUnauthorized }: HttpClientOptions): HttpClient {
   const root = baseUrl.replace(/\/+$/, '')
 
   async function send(method: string, path: string, body?: unknown): Promise<Response> {
@@ -67,7 +69,11 @@ export function createHttpClient({ baseUrl, getToken, fetchFn = fetch }: HttpCli
       throw new NetworkError()
     }
 
-    if (!response.ok) throw new ApiError(response.status, await errorMessage(response))
+    if (!response.ok) {
+      // Un 401 sin token (p. ej. un login fallido) no es una sesión caducada
+      if (response.status === 401 && token) onUnauthorized?.()
+      throw new ApiError(response.status, await errorMessage(response))
+    }
     return response
   }
 

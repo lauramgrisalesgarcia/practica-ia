@@ -9,6 +9,7 @@ function createFakeServices(): Services {
       login: vi.fn().mockRejectedValue(new Error('login no configurado en el test')),
       getCurrentUser: vi.fn().mockResolvedValue(null),
       logout: vi.fn().mockResolvedValue(undefined),
+      onSessionExpired: vi.fn(() => () => {}),
     },
     teacherService: {
       getAssignedStudents: vi.fn().mockResolvedValue([]),

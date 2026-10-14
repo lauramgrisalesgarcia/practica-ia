@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { act, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router'
 import type { User } from '@/domain/user'
@@ -13,6 +13,7 @@ function createAuthService(current: User | null = null): AuthService {
     login: vi.fn().mockResolvedValue(TEACHER),
     getCurrentUser: vi.fn().mockResolvedValue(current),
     logout: vi.fn().mockResolvedValue(undefined),
+    onSessionExpired: vi.fn(() => () => {}),
   }
 }
 
@@ -60,5 +61,29 @@ describe('LoginPage', () => {
     renderLoginPage(createAuthService(TEACHER))
 
     await waitFor(() => expect(screen.getByText('panel del docente')).toBeInTheDocument())
+  })
+
+  it('avisa de que la sesión ha caducado', async () => {
+    let expire = () => {}
+    const authService: AuthService = {
+      ...createAuthService(),
+      onSessionExpired: (listener) => {
+        expire = listener
+        return () => {}
+      },
+    }
+    renderLoginPage(authService)
+    await screen.findByRole('heading', { level: 1, name: /iniciar sesión/i })
+
+    act(() => expire())
+
+    expect(screen.getByRole('status')).toHaveTextContent('Tu sesión ha caducado. Vuelve a iniciar sesión.')
+  })
+
+  it('no muestra el aviso en un inicio de sesión normal', async () => {
+    renderLoginPage(createAuthService())
+
+    await screen.findByRole('heading', { level: 1, name: /iniciar sesión/i })
+    expect(screen.queryByRole('status')).not.toBeInTheDocument()
   })
 })

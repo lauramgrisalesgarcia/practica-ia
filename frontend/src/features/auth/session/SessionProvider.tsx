@@ -24,6 +24,11 @@ export function SessionProvider({ authService, children }: SessionProviderProps)
     }
   }, [authService])
 
+  useEffect(
+    () => authService.onSessionExpired(() => setState({ status: 'anonymous', expired: true })),
+    [authService],
+  )
+
   async function login(credentials: LoginCredentials) {
     const user = await authService.login(credentials)
     setState({ status: 'authenticated', user })

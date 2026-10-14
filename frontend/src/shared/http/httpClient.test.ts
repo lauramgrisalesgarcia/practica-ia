@@ -67,6 +67,43 @@ describe('httpClient', () => {
     })
   })
 
+  describe('sesión caducada', () => {
+    function setupWithListener(token: string | null, response: Response) {
+      const onUnauthorized = vi.fn()
+      const fetchFn = vi.fn<typeof fetch>().mockResolvedValue(response)
+      const client = createHttpClient({ baseUrl: BASE_URL, getToken: () => token, fetchFn, onUnauthorized })
+      return { client, onUnauthorized }
+    }
+
+    it('avisa cuando la API rechaza el token (401 a una petición con token)', async () => {
+      const { client, onUnauthorized } = setupWithListener('token-caducado', jsonResponse(401, { detail: 'No autenticado' }))
+
+      await expect(client.get('/teachers/me/students')).rejects.toMatchObject({ status: 401 })
+      expect(onUnauthorized).toHaveBeenCalledOnce()
+    })
+
+    it('no avisa de un 401 sin token, como un login con credenciales incorrectas', async () => {
+      const { client, onUnauthorized } = setupWithListener(null, jsonResponse(401, { detail: 'Credenciales incorrectas' }))
+
+      await expect(client.post('/auth/login', {})).rejects.toMatchObject({ status: 401 })
+      expect(onUnauthorized).not.toHaveBeenCalled()
+    })
+
+    it('no avisa de otros errores', async () => {
+      const { client, onUnauthorized } = setupWithListener('token', jsonResponse(403, { detail: 'Sin permiso' }))
+
+      await expect(client.get('/recurso')).rejects.toMatchObject({ status: 403 })
+      expect(onUnauthorized).not.toHaveBeenCalled()
+    })
+
+    it('también avisa en las descargas de archivos', async () => {
+      const { client, onUnauthorized } = setupWithListener('token-caducado', jsonResponse(401, { detail: 'No autenticado' }))
+
+      await expect(client.getBlob('/archivo')).rejects.toMatchObject({ status: 401 })
+      expect(onUnauthorized).toHaveBeenCalledOnce()
+    })
+  })
+
   describe('peticiones', () => {
     it('hace GET a la URL base más la ruta y devuelve el JSON', async () => {
       const { client, fetchFn } = setup({ response: jsonResponse(200, { status: 'ok' }) })
