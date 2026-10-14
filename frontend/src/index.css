@@ -1,1 +1,14 @@
 @import "tailwindcss";
+
+/* Paleta de PractIcA */
+@theme {
+  --color-ink: #2d2d29;
+  --color-ocean: #215a6d;
+  --color-teal: #3ca2a2;
+  --color-mint: #92c7a3;
+  --color-mist: #dfece6;
+}
+
+body {
+  @apply bg-mist text-ink antialiased;
+}

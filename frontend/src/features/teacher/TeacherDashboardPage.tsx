@@ -1,81 +1,150 @@
-import { useState } from 'react'
+import { useCallback, useEffect, useState, type ReactNode } from 'react'
 import { Link } from 'react-router'
-import { languageName } from '@/shared/i18n/languageName'
+import type { TeacherInsights } from '@/domain/insights'
 import type { Student } from '@/domain/student'
+import { languageName } from '@/shared/i18n/languageName'
 import { studentDetailPath } from '@/shared/routes/paths'
+import { InsightsPanel } from './components/InsightsPanel'
+import { countByLanguage, countByLevel, initials } from './components/studentStats'
 
 interface TeacherDashboardProps {
   teacherName: string
+  // Debe ser una referencia estable: cada cambio vuelve a cargar los alumnos
   loadStudents: () => Promise<Student[]>
+  loadInsights: () => Promise<TeacherInsights>
 }
 
 type StudentsState =
-  | { status: 'idle' }
   | { status: 'loading' }
   | { status: 'loaded'; students: Student[] }
   | { status: 'error'; message: string }
 
-export function TeacherDashboardPage({ teacherName, loadStudents }: TeacherDashboardProps) {
-  const [state, setState] = useState<StudentsState>({ status: 'idle' })
+export function TeacherDashboardPage({ teacherName, loadStudents, loadInsights }: TeacherDashboardProps) {
+  const [state, setState] = useState<StudentsState>({ status: 'loading' })
 
-  async function handleViewStudents() {
-    setState({ status: 'loading' })
-    try {
-      const students = await loadStudents()
-      setState({ status: 'loaded', students })
-    } catch (error) {
-      setState({
-        status: 'error',
-        message: error instanceof Error ? error.message : 'No se pudieron cargar los alumnos',
-      })
+  const load = useCallback(() => {
+    let active = true
+    loadStudents().then(
+      (students) => active && setState({ status: 'loaded', students }),
+      (error: unknown) =>
+        active &&
+        setState({ status: 'error', message: error instanceof Error ? error.message : 'No se pudieron cargar los alumnos' }),
+    )
+    return () => {
+      active = false
     }
+  }, [loadStudents])
+
+  useEffect(() => load(), [load])
+
+  function retry() {
+    setState({ status: 'loading' })
+    load()
   }
 
+  const students = state.status === 'loaded' ? state.students : []
+
   return (
-    <div className="mx-auto flex w-full max-w-2xl flex-col gap-6">
+    <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
       <header className="flex flex-col gap-1">
-        <p className="text-sm text-gray-500">Panel del docente</p>
-        <h1 className="text-2xl font-semibold text-gray-900">Hola, {teacherName}</h1>
+        <p className="text-sm font-medium uppercase tracking-wide text-ocean">Panel del docente</p>
+        <h1 className="text-3xl font-semibold text-ink">Hola, {teacherName}</h1>
       </header>
 
-      <section className="flex flex-col gap-4 rounded-xl bg-white p-6 shadow-md">
-        <button
-          type="button"
-          onClick={handleViewStudents}
-          disabled={state.status === 'loading'}
-          className="self-start rounded-md bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700 disabled:opacity-50"
-        >
-          Ver alumnos asignados
-        </button>
+      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[20rem_1fr]">
+        <aside aria-label="Mis alumnos" className="flex flex-col gap-4 rounded-xl bg-white p-5 shadow-sm lg:sticky lg:top-6">
+          <div className="flex items-baseline justify-between gap-2">
+            <h2 className="text-lg font-semibold text-ink">Mis alumnos</h2>
+            {state.status === 'loaded' && (
+              <span className="rounded-full bg-mist px-2.5 py-0.5 text-sm font-medium text-ocean">
+                {students.length} {students.length === 1 ? 'alumno' : 'alumnos'}
+              </span>
+            )}
+          </div>
 
-        {state.status === 'loading' && <p className="text-sm text-gray-500">Cargando alumnos…</p>}
+          {state.status === 'loading' && <p className="text-sm text-ink/70">Cargando alumnos…</p>}
 
-        {state.status === 'error' && (
-          <p role="alert" className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">
-            {state.message}
-          </p>
-        )}
+          {state.status === 'error' && (
+            <div className="flex flex-col items-start gap-2">
+              <p role="alert" className="text-sm text-red-700">
+                {state.message}
+              </p>
+              <button
+                type="button"
+                onClick={retry}
+                className="rounded-md bg-ocean px-3 py-1.5 text-sm font-medium text-white hover:bg-ink"
+              >
+                Reintentar
+              </button>
+            </div>
+          )}
 
-        {state.status === 'loaded' && state.students.length === 0 && (
-          <p className="text-sm text-gray-500">No tienes alumnos asignados.</p>
-        )}
+          {state.status === 'loaded' && students.length === 0 && (
+            <p className="text-sm text-ink/70">No tienes alumnos asignados.</p>
+          )}
 
-        {state.status === 'loaded' && state.students.length > 0 && (
-          <ul aria-label="Alumnos asignados" className="divide-y divide-gray-200">
-            {state.students.map((student) => (
-              <li key={student.id} className="flex flex-col py-3">
-                <Link to={studentDetailPath(student.id)} className="font-medium text-blue-700 hover:underline">
-                  {student.name}
-                </Link>
-                <span className="text-sm text-gray-500">{student.email}</span>
-                <span className="text-sm text-gray-500">
-                  {student.level} · {languageName(student.nativeLanguage)}
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+          {students.length > 0 && (
+            <>
+              <ul aria-label="Alumnos asignados" className="-mx-2 flex flex-col">
+                {students.map((student) => (
+                  <li key={student.id}>
+                    <Link
+                      to={studentDetailPath(student.id)}
+                      className="flex items-center gap-3 rounded-lg px-2 py-2.5 transition hover:bg-mist focus-visible:outline-2 focus-visible:outline-ocean"
+                    >
+                      <span
+                        aria-hidden="true"
+                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-teal text-sm font-semibold text-white"
+                      >
+                        {initials(student.name)}
+                      </span>
+                      <span className="flex min-w-0 flex-col">
+                        <span className="truncate font-semibold text-ink">{student.name}</span>
+                        <span className="truncate text-xs text-ink/70">{student.email}</span>
+                        <span className="text-xs text-ocean">
+                          {student.level} · {languageName(student.nativeLanguage)}
+                        </span>
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+
+              <SidebarSection title="Alumnos por nivel">
+                <ul className="flex flex-wrap gap-2">
+                  {countByLevel(students).map(({ level, count }) => (
+                    <li key={level} className="flex items-center gap-1 rounded-full bg-mist px-3 py-1 text-sm">
+                      <span className="font-semibold text-ocean">{level}</span> <span className="text-ink">{count}</span>
+                    </li>
+                  ))}
+                </ul>
+              </SidebarSection>
+
+              <SidebarSection title="Idiomas natales">
+                <ul className="flex flex-col gap-1">
+                  {countByLanguage(students).map(({ language, count }) => (
+                    <li key={language} className="flex items-center justify-between text-sm">
+                      <span className="capitalize text-ink">{language}</span>{' '}
+                      <span className="font-semibold text-ocean">{count}</span>
+                    </li>
+                  ))}
+                </ul>
+              </SidebarSection>
+            </>
+          )}
+        </aside>
+
+        <InsightsPanel loadInsights={loadInsights} />
+      </div>
     </div>
+  )
+}
+
+function SidebarSection({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <section aria-label={title} className="flex flex-col gap-2 border-t border-mist pt-3">
+      <h3 className="text-xs font-medium uppercase tracking-wide text-ink/70">{title}</h3>
+      {children}
+    </section>
   )
 }

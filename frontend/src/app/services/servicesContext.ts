@@ -2,6 +2,7 @@ import { createContext, useContext } from 'react'
 import type { AuthService } from '@/features/auth/services/authService'
 import type { TeacherLessonService } from '@/features/teacher/services/teacherLessonService'
 import type { StudentService } from '@/features/student/services/studentService'
+import type { TeacherInsightsService } from '@/features/teacher/services/teacherInsightsService'
 import type { TeacherService } from '@/features/teacher/services/teacherService'
 
 export interface Services {
@@ -9,6 +10,7 @@ export interface Services {
   teacherService: TeacherService
   teacherLessonService: TeacherLessonService
   studentService: StudentService
+  teacherInsightsService: TeacherInsightsService
 }
 
 export const ServicesContext = createContext<Services | null>(null)

@@ -31,7 +31,7 @@ export function PdfDownloadButton({ lessonId, filename, downloadPdf, openPdf }: 
         type="button"
         onClick={handleDownload}
         disabled={isDownloading}
-        className="self-start rounded-md bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+        className="self-start rounded-md bg-ocean px-4 py-2 font-medium text-white hover:bg-ink disabled:opacity-50"
       >
         {isDownloading ? 'Descargando…' : `Descargar PDF (${filename})`}
       </button>

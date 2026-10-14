@@ -61,13 +61,13 @@ function StudentMaterialRoute() {
 }
 
 function App() {
-  const { teacherService, studentService } = useServices()
+  const { teacherService, studentService, teacherInsightsService } = useServices()
   const session = useSession()
 
   if (session.status === 'loading') {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
-        <p className="text-gray-500">Cargando…</p>
+      <main className="flex min-h-screen items-center justify-center bg-mist px-4">
+        <p className="text-ink/70">Cargando…</p>
       </main>
     )
   }
@@ -81,7 +81,11 @@ function App() {
           <RequireRole role="docente">
             {(user) => (
               <AuthenticatedLayout>
-                <TeacherDashboardPage teacherName={user.name} loadStudents={teacherService.getAssignedStudents} />
+                <TeacherDashboardPage
+                  teacherName={user.name}
+                  loadStudents={teacherService.getAssignedStudents}
+                  loadInsights={teacherInsightsService.getInsights}
+                />
               </AuthenticatedLayout>
             )}
           </RequireRole>

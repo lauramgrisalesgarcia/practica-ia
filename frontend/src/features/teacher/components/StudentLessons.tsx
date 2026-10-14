@@ -22,9 +22,9 @@ const MATERIAL_STATUS_LABELS: Record<MaterialStatus, string> = {
 }
 
 const MATERIAL_STATUS_STYLES: Record<MaterialStatus, string> = {
-  none: 'bg-gray-100 text-gray-700',
-  pending: 'bg-amber-100 text-amber-800',
-  completed: 'bg-green-100 text-green-800',
+  none: 'bg-mist text-ink/80',
+  pending: 'bg-teal/20 text-ocean',
+  completed: 'bg-mint text-ink',
 }
 
 export function StudentLessons({ studentId, loadLessons }: StudentLessonsProps) {
@@ -45,9 +45,9 @@ export function StudentLessons({ studentId, loadLessons }: StudentLessonsProps) 
 
   return (
     <section className="flex flex-col gap-4 rounded-xl bg-white p-6 shadow-md">
-      <h2 className="text-lg font-semibold text-gray-900">Historial de clases</h2>
+      <h2 className="text-lg font-semibold text-ink">Historial de clases</h2>
 
-      {state.status === 'loading' && <p className="text-sm text-gray-500">Cargando clases…</p>}
+      {state.status === 'loading' && <p className="text-sm text-ink/70">Cargando clases…</p>}
 
       {state.status === 'error' && (
         <p role="alert" className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">
@@ -56,18 +56,18 @@ export function StudentLessons({ studentId, loadLessons }: StudentLessonsProps) 
       )}
 
       {state.status === 'loaded' && state.lessons.length === 0 && (
-        <p className="text-sm text-gray-500">Este alumno aún no tiene clases realizadas.</p>
+        <p className="text-sm text-ink/70">Este alumno aún no tiene clases realizadas.</p>
       )}
 
       {state.status === 'loaded' && state.lessons.length > 0 && (
-        <ul aria-label="Historial de clases" className="divide-y divide-gray-200">
+        <ul aria-label="Historial de clases" className="divide-y divide-mist">
           {state.lessons.map((lesson) => (
             <li key={lesson.id} className="flex flex-wrap items-center justify-between gap-2 py-3">
               <div className="flex flex-col">
-                <Link to={lessonDetailPath(lesson.id)} className="font-medium text-blue-700 hover:underline">
+                <Link to={lessonDetailPath(lesson.id)} className="font-medium text-ocean hover:underline">
                   {lesson.topic}
                 </Link>
-                <span className="text-sm text-gray-500">
+                <span className="text-sm text-ink/70">
                   <time dateTime={lesson.date}>{formatDate(lesson.date)}</time> ·{' '}
                   {lesson.durationMinutes} min
                 </span>

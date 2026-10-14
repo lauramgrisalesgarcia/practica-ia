@@ -36,11 +36,11 @@ export function StudentMaterialPage({ lessonId, loadMaterial, submitMaterial }: 
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-6">
-      <Link to={homePathFor('estudiante')} className="self-start text-sm font-medium text-blue-600 hover:text-blue-800">
+      <Link to={homePathFor('estudiante')} className="self-start text-sm font-medium text-ocean hover:text-ink">
         ← Volver a mis clases
       </Link>
 
-      {state.status === 'loading' && <p className="text-sm text-gray-500">Cargando material…</p>}
+      {state.status === 'loading' && <p className="text-sm text-ink/70">Cargando material…</p>}
 
       {state.status === 'error' && (
         <p role="alert" className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">
@@ -72,10 +72,10 @@ function MaterialView({ material, submitMaterial, onSubmitted }: MaterialViewPro
     <>
       <section className="flex flex-col gap-4 rounded-xl bg-white p-6 shadow-md">
         <header className="flex flex-col gap-1">
-          <p className="text-sm text-gray-500">Material de refuerzo</p>
-          <h1 className="text-2xl font-semibold text-gray-900">{material.title}</h1>
+          <p className="text-sm text-ink/70">Material de refuerzo</p>
+          <h1 className="text-2xl font-semibold text-ink">{material.title}</h1>
         </header>
-        <p className="text-gray-700">{material.instructions}</p>
+        <p className="text-ink/80">{material.instructions}</p>
         {submission ? (
           <CorrectedExercises material={material} submission={submission} />
         ) : (
@@ -102,10 +102,10 @@ function CorrectedExercises({ material, submission }: { material: StudentMateria
         const result = resultsById.get(exercise.id)
         return (
           <li key={exercise.id} className="flex flex-col gap-1">
-            <span className="text-gray-900">{exercise.sentence}</span>
+            <span className="text-ink">{exercise.sentence}</span>
             <span className="flex flex-wrap gap-2 text-sm">
               {exercise.options.map((option) => (
-                <span key={option} className="rounded-md bg-gray-100 px-2 py-0.5 text-gray-700">
+                <span key={option} className="rounded-md bg-mist px-2 py-0.5 text-ink/80">
                   {option}
                 </span>
               ))}
@@ -123,13 +123,13 @@ function ExerciseOutcome({ result }: { result: ExerciseResult }) {
     <span className="flex flex-wrap items-center gap-2 text-sm">
       <span
         className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-          result.isCorrect ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+          result.isCorrect ? 'bg-mint text-ink' : 'bg-red-100 text-red-800'
         }`}
       >
         {result.isCorrect ? 'Correcto' : 'Incorrecto'}
       </span>
-      <span className="text-gray-700">Tu respuesta: {result.selectedOption}</span>
-      {!result.isCorrect && <span className="text-gray-700">· Respuesta correcta: {result.correctOption}</span>}
+      <span className="text-ink/80">Tu respuesta: {result.selectedOption}</span>
+      {!result.isCorrect && <span className="text-ink/80">· Respuesta correcta: {result.correctOption}</span>}
     </span>
   )
 }
@@ -137,14 +137,14 @@ function ExerciseOutcome({ result }: { result: ExerciseResult }) {
 function SubmissionResult({ submission }: { submission: StudentSubmission }) {
   return (
     <section aria-label="Tu resultado" className="flex flex-col gap-3 rounded-xl bg-white p-6 shadow-md">
-      <h2 className="text-lg font-semibold text-gray-900">Tu resultado</h2>
-      <p className="text-3xl font-semibold text-gray-900">{scoreFormat.format(submission.score)} %</p>
-      <p className="text-sm text-gray-500">
+      <h2 className="text-lg font-semibold text-ink">Tu resultado</h2>
+      <p className="text-3xl font-semibold text-ink">{scoreFormat.format(submission.score)} %</p>
+      <p className="text-sm text-ink/70">
         {submission.correctCount} correctas · {submission.incorrectCount} incorrectas
       </p>
-      <p className="text-gray-700">{submission.feedback}</p>
-      <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-500">Recomendaciones</h3>
-      <ul aria-label="Recomendaciones" className="flex list-disc flex-col gap-1 pl-5 text-gray-700">
+      <p className="text-ink/80">{submission.feedback}</p>
+      <h3 className="text-sm font-semibold uppercase tracking-wide text-ink/70">Recomendaciones</h3>
+      <ul aria-label="Recomendaciones" className="flex list-disc flex-col gap-1 pl-5 text-ink/80">
         {submission.recommendations.map((recommendation) => (
           <li key={recommendation}>{recommendation}</li>
         ))}
