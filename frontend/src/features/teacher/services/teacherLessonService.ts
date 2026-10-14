@@ -7,8 +7,8 @@ export interface TeacherLessonService {
   // Fallan con «Clase no encontrada» si no existe o es de otro docente
   getLesson: (lessonId: string) => Promise<LessonDetail>
   downloadPdf: (lessonId: string) => Promise<LessonPdf>
-  // Genera (o regenera) el material de refuerzo y lo deja pendiente de resolver.
-  // Falla si la clase aún no se ha realizado, si el alumno ya resolvió el material
+  // Genera el material de refuerzo (una única vez) y lo deja pendiente de resolver.
+  // Falla si la clase aún no se ha realizado, si ya tiene material
   // o si la respuesta del LLM no es válida (en ese caso no se guarda nada).
   generateMaterial: (lessonId: string, request: MaterialRequest) => Promise<TeacherMaterial>
 }

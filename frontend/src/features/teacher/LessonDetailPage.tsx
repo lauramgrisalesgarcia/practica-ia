@@ -127,11 +127,10 @@ export function LessonDetailPage({ lessonId, loadLesson, downloadPdf, openPdf, g
         <p className="rounded-xl bg-white p-6 text-sm text-ink/70 shadow-md">El alumno aún no ha resuelto el material.</p>
       )}
 
-      {!lesson.submission && (
+      {!lesson.material && (
         <GenerateMaterialForm
           lessonId={lesson.id}
           initialKeywords={lesson.keywords}
-          hasMaterial={lesson.material !== null}
           generateMaterial={generateMaterial}
           onGenerated={handleGenerated}
         />

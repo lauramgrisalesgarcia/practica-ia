@@ -203,13 +203,15 @@ describe('LessonDetailPage', () => {
       expect(await screen.findByRole('button', { name: 'Generar material' })).toBeInTheDocument()
     })
 
-    it('ofrece regenerar el material que el alumno aún no ha resuelto', async () => {
+    it('no permite volver a generar el material aunque el alumno aún no lo haya resuelto', async () => {
       setup({ lesson: { ...RESTAURANT_LESSON, materialStatus: 'pending', submission: null } })
 
-      expect(await screen.findByRole('button', { name: 'Regenerar material' })).toBeInTheDocument()
+      await findHeading()
+      expect(screen.queryByRole('form', { name: /generar material/i })).not.toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: /generar material/i })).not.toBeInTheDocument()
     })
 
-    it('no permite regenerar el material que el alumno ya resolvió', async () => {
+    it('no permite volver a generar el material que el alumno ya resolvió', async () => {
       setup()
 
       await findHeading()
@@ -224,7 +226,7 @@ describe('LessonDetailPage', () => {
       const material = await screen.findByRole('region', { name: 'Material de refuerzo' })
       expect(within(material).getByRole('heading', { name: 'Presentaciones' })).toBeInTheDocument()
       expect(screen.getByText(/aún no ha resuelto el material/i)).toBeInTheDocument()
-      expect(screen.getByRole('button', { name: 'Regenerar material' })).toBeInTheDocument()
+      expect(screen.queryByRole('form', { name: /generar material/i })).not.toBeInTheDocument()
       expect(generateMaterial).toHaveBeenCalledWith(INTRODUCTIONS_LESSON.id, expect.objectContaining({ exerciseCount: 5 }))
     })
   })

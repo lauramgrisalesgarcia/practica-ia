@@ -212,8 +212,6 @@ function LessonEntry({ lesson, isLast, downloadPdf, openPdf }: LessonEntryProps)
   const status = MATERIAL_STATUS[lesson.materialStatus]
   const statusLabel =
     lesson.materialStatus === 'completed' && lesson.score !== null ? `Resuelto · ${formatScore(lesson.score)}` : status.label
-  const generateLabel =
-    lesson.materialStatus === 'none' ? 'Generar material' : lesson.materialStatus === 'pending' ? 'Regenerar material' : null
 
   return (
     <li className="flex gap-4">
@@ -246,12 +244,12 @@ function LessonEntry({ lesson, isLast, downloadPdf, openPdf }: LessonEntryProps)
           >
             Ver clase
           </Link>
-          {generateLabel && (
+          {lesson.materialStatus === 'none' && (
             <Link
               to={generateMaterialPath(lesson.id)}
               className="rounded-md border border-teal px-3 py-1.5 text-sm font-medium text-ocean hover:bg-mist"
             >
-              {generateLabel}
+              Generar material
             </Link>
           )}
           <PdfDownloadButton lessonId={lesson.id} downloadPdf={downloadPdf} openPdf={openPdf} />

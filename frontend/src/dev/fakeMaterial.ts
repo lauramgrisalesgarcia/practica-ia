@@ -20,6 +20,6 @@ export function buildFakeMaterial(lesson: LessonDetail, { activityType, exercise
 // Reglas del back para generar material (docs/openapi.yaml, generateMaterial)
 export function materialGenerationError(lesson: LessonDetail, now = new Date()): string | null {
   if (new Date(lesson.date) > now) return 'Solo se puede generar material para clases ya realizadas'
-  if (lesson.submission) return 'El material ya fue resuelto por el estudiante y no se puede regenerar'
+  if (lesson.material) return 'El material de refuerzo de esta clase ya se generó y no se puede volver a generar'
   return null
 }

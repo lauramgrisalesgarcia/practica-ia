@@ -216,14 +216,14 @@ describe('StudentLessons', () => {
       expect(link).toHaveAttribute('href', '/docente/clases/l1')
     })
 
-    it('ofrece generar material si la clase no tiene y regenerarlo si está pendiente', async () => {
+    it('ofrece generar material solo si la clase aún no tiene', async () => {
       setup()
       await findHistory()
 
       const generate = within(lessonItem('Presentarse')).getByRole('link', { name: 'Generar material' })
       expect(generate).toHaveAttribute('href', '/docente/clases/l3#generar-material')
-      const regenerate = within(lessonItem('Hablar del fin de semana')).getByRole('link', { name: 'Regenerar material' })
-      expect(regenerate).toHaveAttribute('href', '/docente/clases/l2#generar-material')
+      const pending = lessonItem('Hablar del fin de semana')
+      expect(within(pending).queryByRole('link', { name: /generar material/i })).not.toBeInTheDocument()
       const completed = lessonItem('Pedir en un restaurante')
       expect(within(completed).queryByRole('link', { name: /generar material/i })).not.toBeInTheDocument()
     })
