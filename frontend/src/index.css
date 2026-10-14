@@ -21,16 +21,13 @@ body {
   }
 }
 
-/* Movimiento que invita a arrastrar la rueda de opciones */
-@keyframes wheel-hint {
+/* Icono de mano que invita a arrastrar la rueda de opciones (la rueda no se mueve sola) */
+@keyframes drag-hint {
   0%,
   100% {
-    transform: translateY(0);
+    transform: translateY(3px);
   }
-  30% {
-    transform: translateY(-14px);
-  }
-  60% {
-    transform: translateY(6px);
+  50% {
+    transform: translateY(-5px);
   }
 }

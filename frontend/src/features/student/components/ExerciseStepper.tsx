@@ -253,7 +253,7 @@ function OptionWheel({ options, value, onChange }: OptionWheelProps) {
         onPointerLeave={endDrag}
         className={`h-[168px] select-none overflow-y-auto overscroll-contain rounded-2xl py-14 outline-none [scrollbar-width:none] focus-visible:ring-2 focus-visible:ring-teal ${
           isDragging ? 'cursor-grabbing' : 'snap-y snap-mandatory cursor-grab'
-        } ${hasInteracted ? '' : 'motion-safe:[&>li]:animate-[wheel-hint_1.8s_ease-in-out_0.4s_2]'}`}
+        }`}
       >
         {options.map((option, index) => {
           const isSelected = index === selectedIndex
@@ -280,8 +280,18 @@ function OptionWheel({ options, value, onChange }: OptionWheelProps) {
       <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 h-5 rounded-b-2xl bg-gradient-to-t from-white/80 to-transparent" />
       {selectedIndex === -1 && (
         <p className="mt-2 flex items-center justify-center gap-1.5 text-xs text-ink/70">
-          <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-            <path d="M12 3v18M8 7l4-4 4 4M8 17l4 4 4-4" />
+          {/* Solo se mueve el icono: la rueda queda quieta hasta que el estudiante la usa */}
+          <svg
+            aria-hidden="true"
+            viewBox="0 0 24 24"
+            className={`h-5 w-5 text-ocean ${hasInteracted ? '' : 'motion-safe:animate-[drag-hint_1.4s_ease-in-out_infinite]'}`}
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M9 11V6a1.5 1.5 0 0 1 3 0v4m0-1.5a1.5 1.5 0 0 1 3 0V11m0-1a1.5 1.5 0 0 1 3 0v4.5a6 6 0 0 1-6 6h-1a6 6 0 0 1-5-2.7L3.5 14a1.5 1.5 0 0 1 2.4-1.8L9 15" />
           </svg>
           Arrastra la rueda o toca una opción para elegirla
         </p>
