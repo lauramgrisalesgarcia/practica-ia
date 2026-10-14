@@ -4,7 +4,7 @@ import { LessonDetailPage } from '@/features/teacher/LessonDetailPage'
 import { StudentLessons } from '@/features/teacher/components/StudentLessons'
 import { StudentHomePage } from '@/features/student/StudentHomePage'
 import { StudentLessonsPage } from '@/features/student/StudentLessonsPage'
-import { StudentMaterialPage } from '@/features/student/StudentMaterialPage'
+import { StudentLessonPage } from '@/features/student/StudentLessonPage'
 import { useSession } from '@/features/auth/session/sessionContext'
 import { StudentDetailPage } from '@/features/teacher/StudentDetailPage'
 import { TeacherDashboardPage } from '@/features/teacher/TeacherDashboardPage'
@@ -61,13 +61,16 @@ function LessonDetailRoute() {
   )
 }
 
-function StudentMaterialRoute() {
+function StudentLessonRoute() {
   const { studentService } = useServices()
   const { lessonId = '' } = useParams()
   return (
-    <StudentMaterialPage
+    <StudentLessonPage
       key={lessonId}
       lessonId={lessonId}
+      loadLesson={studentService.getLesson}
+      downloadPdf={studentService.downloadPdf}
+      openPdf={saveFile}
       loadMaterial={studentService.getMaterial}
       submitMaterial={studentService.submitMaterial}
     />
@@ -147,7 +150,11 @@ function App() {
           <RequireRole role="estudiante">
             {() => (
               <AuthenticatedLayout>
-                <StudentLessonsPage loadLessons={studentService.getMyLessons} downloadPdf={studentService.downloadPdf} />
+                <StudentLessonsPage
+                  loadLessons={studentService.getMyLessons}
+                  downloadPdf={studentService.downloadPdf}
+                  openPdf={saveFile}
+                />
               </AuthenticatedLayout>
             )}
           </RequireRole>
@@ -159,7 +166,7 @@ function App() {
           <RequireRole role="estudiante">
             {() => (
               <AuthenticatedLayout>
-                <StudentMaterialRoute />
+                <StudentLessonRoute />
               </AuthenticatedLayout>
             )}
           </RequireRole>

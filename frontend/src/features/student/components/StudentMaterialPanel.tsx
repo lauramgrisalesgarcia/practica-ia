@@ -1,14 +1,14 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router'
 import type { Answer, ExerciseResult, StudentMaterial, StudentSubmission } from '@/domain/lesson'
-import { homePathFor } from '@/shared/routes/paths'
-import { AnswerForm } from './components/AnswerForm'
+import { AnswerForm } from './AnswerForm'
 
-interface StudentMaterialPageProps {
+interface StudentMaterialPanelProps {
   lessonId: string
   // Debe ser una referencia estable: cada cambio vuelve a cargar el material
   loadMaterial: (lessonId: string) => Promise<StudentMaterial>
   submitMaterial: (lessonId: string, answers: Answer[]) => Promise<StudentSubmission>
+  // Avisa a la página cuando el estudiante resuelve el material
+  onSubmitted?: (submission: StudentSubmission) => void
 }
 
 type MaterialState =
@@ -18,7 +18,8 @@ type MaterialState =
 
 const scoreFormat = new Intl.NumberFormat('es', { maximumFractionDigits: 2 })
 
-export function StudentMaterialPage({ lessonId, loadMaterial, submitMaterial }: StudentMaterialPageProps) {
+// Refuerzo de una clase: el formulario para resolverlo o, si ya está resuelto, la corrección y el resultado
+export function StudentMaterialPanel({ lessonId, loadMaterial, submitMaterial, onSubmitted }: StudentMaterialPanelProps) {
   const [state, setState] = useState<MaterialState>({ status: 'loading' })
 
   useEffect(() => {
@@ -35,11 +36,7 @@ export function StudentMaterialPage({ lessonId, loadMaterial, submitMaterial }: 
   }, [lessonId, loadMaterial])
 
   return (
-    <div className="mx-auto flex w-full max-w-2xl flex-col gap-6">
-      <Link to={homePathFor('estudiante')} className="self-start text-sm font-medium text-ocean hover:text-ink">
-        ← Volver a mis clases
-      </Link>
-
+    <div className="flex flex-col gap-6">
       {state.status === 'loading' && <p className="text-sm text-ink/70">Cargando material…</p>}
 
       {state.status === 'error' && (
@@ -52,7 +49,10 @@ export function StudentMaterialPage({ lessonId, loadMaterial, submitMaterial }: 
         <MaterialView
           material={state.material}
           submitMaterial={submitMaterial}
-          onSubmitted={(submission) => setState({ status: 'loaded', material: { ...state.material, submission } })}
+          onSubmitted={(submission) => {
+            setState({ status: 'loaded', material: { ...state.material, submission } })
+            onSubmitted?.(submission)
+          }}
         />
       )}
     </div>
@@ -73,7 +73,7 @@ function MaterialView({ material, submitMaterial, onSubmitted }: MaterialViewPro
       <section className="flex flex-col gap-4 rounded-xl bg-white p-6 shadow-md">
         <header className="flex flex-col gap-1">
           <p className="text-sm text-ink/70">Material de refuerzo</p>
-          <h1 className="text-2xl font-semibold text-ink">{material.title}</h1>
+          <h2 className="text-xl font-semibold text-ink">{material.title}</h2>
         </header>
         <p className="text-ink/80">{material.instructions}</p>
         {submission ? (

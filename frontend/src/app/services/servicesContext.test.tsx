@@ -16,6 +16,7 @@ const teacherService: TeacherService = { getAssignedStudents: vi.fn(), getStuden
 const teacherLessonService: TeacherLessonService = { getStudentLessons: vi.fn(), getLesson: vi.fn(), downloadPdf: vi.fn(), generateMaterial: vi.fn() }
 const studentService: StudentService = {
   getMyLessons: vi.fn(),
+  getLesson: vi.fn(),
   downloadPdf: vi.fn(),
   getMaterial: vi.fn(),
   submitMaterial: vi.fn(),

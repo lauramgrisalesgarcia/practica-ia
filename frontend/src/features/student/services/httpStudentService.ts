@@ -12,10 +12,12 @@ import type { StudentService } from './studentService'
 // docs/openapi.yaml, schema StudentLessonSummary
 interface ApiStudentLessonSummary extends ApiLessonSummary {
   pdf: ApiPdfRef
+  keywords: string[]
+  score: number | null
 }
 
 function toStudentLessonSummary(lesson: ApiStudentLessonSummary): StudentLessonSummary {
-  return { ...toLessonSummary(lesson), pdfFilename: lesson.pdf.filename }
+  return { ...toLessonSummary(lesson), pdfFilename: lesson.pdf.filename, keywords: lesson.keywords, score: lesson.score }
 }
 
 function lessonPath(lessonId: string): string {
@@ -27,6 +29,9 @@ export function createHttpStudentService(http: HttpClient): StudentService {
     async getMyLessons() {
       const lessons = await http.get<ApiStudentLessonSummary[]>('/students/me/lessons')
       return lessons.map(toStudentLessonSummary)
+    },
+    async getLesson(lessonId) {
+      return toStudentLessonSummary(await http.get<ApiStudentLessonSummary>(lessonPath(lessonId)))
     },
     async downloadPdf(lessonId) {
       const { blob, filename } = await http.getBlob(`${lessonPath(lessonId)}/pdf`)

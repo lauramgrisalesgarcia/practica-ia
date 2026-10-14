@@ -44,6 +44,10 @@ export function createMockStudentService({
       await wait(delayMs)
       return currentLessons
     },
+    async getLesson(lessonId) {
+      await wait(delayMs)
+      return findLesson(lessonId)
+    },
     async downloadPdf(lessonId) {
       await wait(delayMs)
       const { pdfFilename } = findLesson(lessonId)
@@ -61,7 +65,7 @@ export function createMockStudentService({
       const submission = gradeFakeSubmission(answers, answerKeys[lessonId])
       materialsById.set(lessonId, { ...material, submission })
       currentLessons = currentLessons.map((lesson) =>
-        lesson.id === lessonId ? { ...lesson, materialStatus: 'completed' } : lesson,
+        lesson.id === lessonId ? { ...lesson, materialStatus: 'completed', score: submission.score } : lesson,
       )
       return submission
     },

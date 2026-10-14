@@ -1,4 +1,4 @@
-import type { LessonSummary, MaterialStatus, TeacherLessonSummary } from '@/domain/lesson'
+import type { LessonSummary, LessonWithResult, MaterialStatus } from '@/domain/lesson'
 
 export type MaterialFilter = 'all' | MaterialStatus
 
@@ -29,7 +29,7 @@ function calendarDaysBetween(from: Date, to: Date): number {
 }
 
 // Las clases llegan de la más reciente a la más antigua
-export function summarizeHistory(lessons: TeacherLessonSummary[], today: Date): HistorySummary {
+export function summarizeHistory(lessons: LessonWithResult[], today: Date): HistorySummary {
   const last = lessons[0]
   const scores = lessons.flatMap((lesson) => (lesson.score === null ? [] : [lesson.score]))
   return {
