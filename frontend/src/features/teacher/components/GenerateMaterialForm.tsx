@@ -6,7 +6,6 @@ import { validateMaterialForm, type MaterialFormErrors } from './materialForm'
 interface GenerateMaterialFormProps {
   lessonId: string
   initialKeywords: string[]
-  hasMaterial: boolean
   generateMaterial: (lessonId: string, request: MaterialRequest) => Promise<TeacherMaterial>
   onGenerated: (material: TeacherMaterial) => void
 }
@@ -16,7 +15,6 @@ const DEFAULT_EXERCISE_COUNT = '5'
 export function GenerateMaterialForm({
   lessonId,
   initialKeywords,
-  hasMaterial,
   generateMaterial,
   onGenerated,
 }: GenerateMaterialFormProps) {
@@ -47,20 +45,17 @@ export function GenerateMaterialForm({
 
   const exerciseCountId = `${id}-exercise-count`
   const keywordsId = `${id}-keywords`
-  const actionLabel = hasMaterial ? 'Regenerar material' : 'Generar material'
 
   return (
     <form
       id={GENERATE_MATERIAL_ANCHOR}
       noValidate
       onSubmit={handleSubmit}
-      aria-label={actionLabel}
+      aria-label="Generar material"
       className="flex flex-col gap-4 rounded-xl bg-white p-6 shadow-md"
     >
-      <h2 className="text-lg font-semibold text-ink">{actionLabel} de refuerzo</h2>
-      {hasMaterial && (
-        <p className="text-sm text-ink/70">El material nuevo sustituirá al actual, que el alumno aún no ha resuelto.</p>
-      )}
+      <h2 className="text-lg font-semibold text-ink">Generar material de refuerzo</h2>
+      <p className="text-sm text-ink/70">El material se genera una única vez: después no se podrá volver a generar.</p>
 
       <div className="flex flex-col gap-1">
         <label htmlFor={exerciseCountId} className="text-sm font-medium">
@@ -118,7 +113,7 @@ export function GenerateMaterialForm({
         disabled={isGenerating}
         className="self-start rounded-md bg-ocean px-4 py-2 font-medium text-white hover:bg-ink disabled:opacity-50"
       >
-        {isGenerating ? 'Generando…' : actionLabel}
+        {isGenerating ? 'Generando…' : 'Generar material'}
       </button>
     </form>
   )

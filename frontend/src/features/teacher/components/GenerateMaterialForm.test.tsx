@@ -7,17 +7,15 @@ import { GenerateMaterialForm } from './GenerateMaterialForm'
 const MATERIAL = RESTAURANT_LESSON.material as TeacherMaterial
 
 interface SetupOptions {
-  hasMaterial?: boolean
   generateMaterial?: (lessonId: string, request: MaterialRequest) => Promise<TeacherMaterial>
 }
 
-function setup({ hasMaterial = false, generateMaterial = vi.fn().mockResolvedValue(MATERIAL) }: SetupOptions = {}) {
+function setup({ generateMaterial = vi.fn().mockResolvedValue(MATERIAL) }: SetupOptions = {}) {
   const onGenerated = vi.fn()
   render(
     <GenerateMaterialForm
       lessonId={INTRODUCTIONS_LESSON.id}
       initialKeywords={INTRODUCTIONS_LESSON.keywords}
-      hasMaterial={hasMaterial}
       generateMaterial={generateMaterial}
       onGenerated={onGenerated}
     />,
@@ -53,12 +51,6 @@ describe('GenerateMaterialForm', () => {
       keywords: ['me llamo', 'mi familia', 'mi hermano'],
     })
     expect(onGenerated).toHaveBeenCalledWith(MATERIAL)
-  })
-
-  it('ofrece regenerar si la clase ya tiene material', () => {
-    setup({ hasMaterial: true })
-
-    expect(screen.getByRole('button', { name: 'Regenerar material' })).toBeInTheDocument()
   })
 
   it('no genera nada si el formulario no es válido', async () => {

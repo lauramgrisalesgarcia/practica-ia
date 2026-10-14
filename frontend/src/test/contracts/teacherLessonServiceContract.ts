@@ -168,14 +168,14 @@ export function describeTeacherLessonServiceContract(createService: (fixtures: T
         expect(history.find((lesson) => lesson.id === INTRODUCTIONS_LESSON.id)?.materialStatus).toBe('pending')
       })
 
-      it('regenerar reemplaza el material que el alumno aún no ha resuelto', async () => {
+      it('genera el material una única vez: rechaza generarlo de nuevo y conserva el primero', async () => {
         const service = createService(DEFAULT_FIXTURES)
-        await service.generateMaterial(INTRODUCTIONS_LESSON.id, REQUEST)
+        const first = await service.generateMaterial(INTRODUCTIONS_LESSON.id, REQUEST)
 
-        const regenerated = await service.generateMaterial(INTRODUCTIONS_LESSON.id, { ...REQUEST, exerciseCount: 5 })
-
-        expect(regenerated.exercises).toHaveLength(5)
-        await expect(service.getLesson(INTRODUCTIONS_LESSON.id)).resolves.toMatchObject({ material: regenerated })
+        await expect(service.generateMaterial(INTRODUCTIONS_LESSON.id, { ...REQUEST, exerciseCount: 5 })).rejects.toThrow(
+          'El material de refuerzo de esta clase ya se generó y no se puede volver a generar',
+        )
+        await expect(service.getLesson(INTRODUCTIONS_LESSON.id)).resolves.toMatchObject({ material: first })
       })
 
       it('no modifica las palabras clave de la clase', async () => {
@@ -200,11 +200,11 @@ export function describeTeacherLessonServiceContract(createService: (fixtures: T
         )
       })
 
-      it('rechaza regenerar el material que el alumno ya resolvió', async () => {
+      it('rechaza generar material para una clase cuyo material ya está resuelto', async () => {
         const service = createService(DEFAULT_FIXTURES)
 
         await expect(service.generateMaterial(RESTAURANT_LESSON.id, REQUEST)).rejects.toThrow(
-          'El material ya fue resuelto por el estudiante y no se puede regenerar',
+          'El material de refuerzo de esta clase ya se generó y no se puede volver a generar',
         )
         await expect(service.getLesson(RESTAURANT_LESSON.id)).resolves.toEqual(RESTAURANT_LESSON)
       })
