@@ -66,7 +66,10 @@ describe('StudentLessonPage', () => {
   it('muestra la nota de una clase resuelta junto a sus datos', async () => {
     setup({ lesson: MY_LESSONS[2] })
 
-    expect(await screen.findByRole('region', { name: 'Tu nota' })).toHaveTextContent('50 %')
+    const card = await screen.findByRole('region', { name: 'Tu nota' })
+    expect(card).toHaveTextContent('50 %')
+    // La fecha llega con el refuerzo resuelto
+    expect(await within(card).findByText('Resuelto el 25 de septiembre de 2026')).toBeInTheDocument()
   })
 
   it('avisa si la clase aún no tiene refuerzo, sin pedirlo', async () => {

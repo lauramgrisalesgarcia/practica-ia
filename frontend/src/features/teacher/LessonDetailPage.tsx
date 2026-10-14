@@ -219,7 +219,7 @@ function SubmissionSection({ submission }: { submission: SubmissionSummary }) {
   return (
     <section
       aria-label="Resultado del alumno"
-      className="flex flex-col gap-1 self-start rounded-xl bg-white p-5 shadow-md md:order-last"
+      className="flex flex-col items-center justify-center gap-1 rounded-xl bg-white p-5 text-center shadow-md md:order-last"
     >
       <h2 className="text-xs font-semibold uppercase tracking-wide text-ink/70">Resultado del alumno</h2>
       <p className="text-3xl font-semibold text-ocean">{scoreFormat.format(submission.score)} %</p>

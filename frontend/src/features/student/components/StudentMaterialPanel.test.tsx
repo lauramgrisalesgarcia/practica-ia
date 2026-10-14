@@ -30,6 +30,13 @@ function setup(
   return { loadMaterial, submitMaterial, user: userEvent.setup() }
 }
 
+// Tarjetas de las preguntas corregidas (sin las opciones, que también son elementos de lista)
+function questionItems() {
+  return within(screen.getByRole('list', { name: 'Ejercicios' }))
+    .getAllByRole('heading', { level: 3 })
+    .map((heading) => heading.closest('li') as HTMLElement)
+}
+
 describe('StudentMaterialPanel', () => {
   it('carga el material de la clase indicada', async () => {
     const { loadMaterial } = setup()
@@ -65,20 +72,37 @@ describe('StudentMaterialPanel', () => {
     await user.click(screen.getByRole('option', { name: 'Quiero que' }))
     await user.click(screen.getByRole('button', { name: 'Enviar respuestas' }))
 
-    const result = await screen.findByRole('region', { name: 'Tu resultado' })
-    expect(result).toHaveTextContent('50 %')
-    expect(within(result).getByRole('list', { name: 'Recomendaciones' })).toHaveTextContent('Usa «quisiera»')
-    const [secondResult] = within(screen.getByRole('list', { name: 'Ejercicios' })).getAllByRole('listitem').slice(1)
-    expect(secondResult).toHaveTextContent('Respuesta correcta: Quisiera')
+    const summary = await screen.findByRole('region', { name: 'Resumen del resultado' })
+    expect(summary).toHaveTextContent('1 correctas · 1 incorrectas')
+    expect(within(summary).getByRole('list', { name: 'Recomendaciones' })).toHaveTextContent('Usa «quisiera»')
+    const [, second] = questionItems()
+    expect(second).toHaveTextContent('Incorrecta')
     expect(screen.queryByRole('button', { name: 'Enviar respuestas' })).not.toBeInTheDocument()
     expect(submitMaterial).toHaveBeenCalledOnce()
     expect(loadMaterial).toHaveBeenCalledOnce()
   })
 
+  it('avisa del resultado al cargar un material ya resuelto', async () => {
+    const onResult = vi.fn()
+    render(
+      <MemoryRouter>
+        <StudentMaterialPanel
+          lessonId={COMPLETED_MATERIAL.lessonId}
+          loadMaterial={vi.fn().mockResolvedValue(COMPLETED_MATERIAL)}
+          submitMaterial={vi.fn()}
+          onResult={onResult}
+        />
+      </MemoryRouter>,
+    )
+
+    await screen.findByRole('region', { name: 'Resumen del resultado' })
+    expect(onResult).toHaveBeenCalledWith(COMPLETED_MATERIAL.submission)
+  })
+
   it('no permite volver a resolver un material ya resuelto', async () => {
     setup(vi.fn().mockResolvedValue(COMPLETED_MATERIAL))
 
-    await screen.findByRole('region', { name: 'Tu resultado' })
+    await screen.findByRole('region', { name: 'Resumen del resultado' })
     expect(screen.queryByRole('button', { name: 'Resolver refuerzo' })).not.toBeInTheDocument()
     expect(screen.queryByRole('listbox')).not.toBeInTheDocument()
   })
@@ -87,37 +111,46 @@ describe('StudentMaterialPanel', () => {
     setup()
 
     await screen.findByRole('heading', { level: 2, name: 'En el restaurante' })
-    expect(screen.queryByRole('region', { name: 'Tu resultado' })).not.toBeInTheDocument()
-    expect(screen.queryByText(/correcto|incorrecto/i)).not.toBeInTheDocument()
+    expect(screen.queryByRole('region', { name: 'Resumen del resultado' })).not.toBeInTheDocument()
+    expect(screen.queryByText(/incorrecta/i)).not.toBeInTheDocument()
   })
 
-  it('muestra el resultado si ya resolvió el material', async () => {
+  it('muestra el resumen del resultado antes de las preguntas, sin una sección «Tu resultado» aparte', async () => {
     setup(vi.fn().mockResolvedValue(COMPLETED_MATERIAL))
 
-    const result = await screen.findByRole('region', { name: 'Tu resultado' })
-    expect(result).toHaveTextContent('50 %')
-    expect(result).toHaveTextContent('1 correctas · 1 incorrectas')
-  })
-
-  it('marca cada ejercicio resuelto como correcto o incorrecto con la respuesta correcta', async () => {
-    setup(vi.fn().mockResolvedValue(COMPLETED_MATERIAL))
-
-    const [first, second] = within(await screen.findByRole('list', { name: 'Ejercicios' })).getAllByRole('listitem')
-    expect(first).toHaveTextContent('Correcto')
-    expect(first).toHaveTextContent('Tu respuesta: hace')
-    expect(second).toHaveTextContent('Incorrecto')
-    expect(second).toHaveTextContent('Tu respuesta: lluvia')
-    expect(second).toHaveTextContent('Respuesta correcta: llover')
-  })
-
-  it('muestra el comentario y las recomendaciones', async () => {
-    setup(vi.fn().mockResolvedValue(COMPLETED_MATERIAL))
-
-    const result = await screen.findByRole('region', { name: 'Tu resultado' })
-    expect(result).toHaveTextContent('Bien con «hace calor». Repasa el verbo llover.')
-    expect(within(result).getByRole('list', { name: 'Recomendaciones' })).toHaveTextContent(
+    const summary = await screen.findByRole('region', { name: 'Resumen del resultado' })
+    expect(summary).toHaveTextContent('1 correctas · 1 incorrectas')
+    expect(summary).toHaveTextContent('Bien con «hace calor». Repasa el verbo llover.')
+    expect(within(summary).getByRole('list', { name: 'Recomendaciones' })).toHaveTextContent(
       'Después de «va a» va un verbo en infinitivo: «va a llover».',
     )
+    const questions = screen.getByRole('list', { name: 'Ejercicios' })
+    expect(summary.compareDocumentPosition(questions) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(screen.queryByRole('region', { name: 'Tu resultado' })).not.toBeInTheDocument()
+  })
+
+  it('presenta cada pregunta en su tarjeta numerada como la ve el docente', async () => {
+    setup(vi.fn().mockResolvedValue(COMPLETED_MATERIAL))
+
+    const questions = await screen.findByRole('list', { name: 'Ejercicios' })
+    expect(within(questions).getAllByRole('heading', { level: 3 }).map((heading) => heading.textContent)).toEqual([
+      'Pregunta 1',
+      'Pregunta 2',
+    ])
+  })
+
+  it('indica qué preguntas acertó y en las incorrectas su respuesta y la correcta', async () => {
+    setup(vi.fn().mockResolvedValue(COMPLETED_MATERIAL))
+
+    await screen.findByRole('list', { name: 'Ejercicios' })
+    const [first, second] = questionItems()
+    expect(first).toHaveTextContent('Correcta')
+    expect(first).not.toHaveTextContent('Incorrecta')
+    expect(within(first).getByText('hace')).toHaveAccessibleDescription('Tu respuesta, correcta')
+    expect(second).toHaveTextContent('Incorrecta')
+    expect(within(second).getByText('lluvia')).toHaveAccessibleDescription('Tu respuesta, incorrecta')
+    expect(within(second).getByText('llover')).toHaveAccessibleDescription('Respuesta correcta')
+    expect(within(second).getByText('lloviendo')).not.toHaveAccessibleDescription()
   })
 
   it('indica que está cargando mientras obtiene el material', () => {
