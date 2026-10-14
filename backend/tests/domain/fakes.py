@@ -19,6 +19,7 @@ from app.domain.entities import (
     Submission,
     Role,
     Student,
+    StudentInsightLesson,
     User,
 )
 from app.domain.errors import SubmissionAlreadyExistsError
@@ -29,6 +30,7 @@ from app.domain.ports import (
     LLMClient,
     MaterialRepository,
     PasswordHasher,
+    StudentInsightsRepository,
     StudentRepository,
     TeacherInsightsRepository,
     UserRepository,
@@ -292,3 +294,36 @@ class InMemoryTeacherInsightsRepository(TeacherInsightsRepository):
     def list_completed_by_teacher(self, teacher_id: UUID, until: datetime) -> list[InsightLesson]:
         self.requested.append((teacher_id, until))
         return [lesson for lesson in self._lessons.get(teacher_id, []) if lesson.date <= until]
+
+
+def make_student_insight_lesson(
+    *,
+    date: datetime,
+    lesson_id: UUID | None = None,
+    topic: str = "Pedir en un restaurante",
+    material_generated_at: datetime | None = None,
+    exercise_count: int | None = None,
+    submitted_at: datetime | None = None,
+    score: Decimal | None = None,
+) -> StudentInsightLesson:
+    if material_generated_at is not None and exercise_count is None:
+        exercise_count = 5
+    return StudentInsightLesson(
+        id=lesson_id or uuid4(),
+        date=date,
+        topic=topic,
+        material_generated_at=material_generated_at,
+        exercise_count=exercise_count,
+        submitted_at=submitted_at,
+        score=score,
+    )
+
+
+class InMemoryStudentInsightsRepository(StudentInsightsRepository):
+    def __init__(self, lessons_by_student: dict[UUID, list[StudentInsightLesson]] | None = None) -> None:
+        self._lessons = lessons_by_student or {}
+        self.requested: list[tuple[UUID, datetime]] = []
+
+    def list_completed_by_student(self, student_id: UUID, until: datetime) -> list[StudentInsightLesson]:
+        self.requested.append((student_id, until))
+        return [lesson for lesson in self._lessons.get(student_id, []) if lesson.date <= until]

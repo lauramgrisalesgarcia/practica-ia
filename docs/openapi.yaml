@@ -446,6 +446,49 @@ paths:
               example:
                 detail: No se pudo generar el material de refuerzo
 
+  /students/me/insights:
+    get:
+      tags: [Estudiante]
+      operationId: getStudentInsights
+      summary: Indicadores del panel del estudiante
+      description: |
+        Resumen de la actividad del estudiante. Solo cuenta clases ya realizadas; los meses se calculan en UTC.
+      responses:
+        '200':
+          description: Indicadores del estudiante.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudentInsights'
+              example:
+                lessons_count: 2
+                completed_materials: 1
+                average_score: 66.67
+                pending_materials:
+                  - lesson_id: '1e7d3b5a-8c2f-4a6e-9d0b-3f5a7c9e1b28'
+                    topic: Presentarse
+                    date: '2026-10-01T16:00:00Z'
+                    exercise_count: 5
+                recent_activity:
+                  - type: submission
+                    date: '2026-10-12T18:05:00Z'
+                    lesson_id: 'c4a9e2d7-5f1b-4c8e-a3d6-7b2e9f0c1d45'
+                    topic: Pedir en un restaurante
+                    score: 66.67
+                calendar:
+                  - lesson_id: 'c4a9e2d7-5f1b-4c8e-a3d6-7b2e9f0c1d45'
+                    start: '2026-10-08T16:00:00Z'
+                    topic: Pedir en un restaurante
+                score_history:
+                  - lesson_id: 'c4a9e2d7-5f1b-4c8e-a3d6-7b2e9f0c1d45'
+                    topic: Pedir en un restaurante
+                    submitted_at: '2026-10-12T18:05:00Z'
+                    score: 66.67
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
   /students/me/lessons:
     get:
       tags: [Estudiante]
@@ -924,6 +967,119 @@ components:
           description: Clases realizadas en los últimos 6 meses (incluido el actual), en orden cronológico.
           items:
             $ref: '#/components/schemas/CalendarLesson'
+
+    StudentPendingMaterial:
+      type: object
+      required: [lesson_id, topic, date, exercise_count]
+      properties:
+        lesson_id:
+          type: string
+          format: uuid
+        topic:
+          type: string
+        date:
+          type: string
+          format: date-time
+          description: Fecha de la clase.
+        exercise_count:
+          type: integer
+          minimum: 1
+          maximum: 15
+
+    StudentActivity:
+      type: object
+      required: [type, date, lesson_id, topic, score]
+      properties:
+        type:
+          $ref: '#/components/schemas/InsightActivityType'
+        date:
+          type: string
+          format: date-time
+        lesson_id:
+          type: string
+          format: uuid
+        topic:
+          type: string
+        score:
+          anyOf:
+            - type: number
+              minimum: 0
+              maximum: 100
+            - type: 'null'
+          description: Porcentaje de aciertos; solo en las actividades `submission`.
+
+    StudentCalendarLesson:
+      type: object
+      required: [lesson_id, start, topic]
+      properties:
+        lesson_id:
+          type: string
+          format: uuid
+        start:
+          type: string
+          format: date-time
+        topic:
+          type: string
+
+    ScorePoint:
+      type: object
+      required: [lesson_id, topic, submitted_at, score]
+      properties:
+        lesson_id:
+          type: string
+          format: uuid
+        topic:
+          type: string
+        submitted_at:
+          type: string
+          format: date-time
+        score:
+          type: number
+          minimum: 0
+          maximum: 100
+
+    StudentInsights:
+      type: object
+      required:
+        [lessons_count, completed_materials, average_score, pending_materials, recent_activity, calendar, score_history]
+      properties:
+        lessons_count:
+          type: integer
+          minimum: 0
+          description: Clases realizadas.
+        completed_materials:
+          type: integer
+          minimum: 0
+          description: Refuerzos resueltos.
+        average_score:
+          description: Nota media de los refuerzos resueltos (2 decimales), o `null` si no hay ninguno.
+          anyOf:
+            - type: number
+              minimum: 0
+              maximum: 100
+            - type: 'null'
+        pending_materials:
+          type: array
+          description: Refuerzos generados y sin resolver, de la clase más reciente a la más antigua.
+          items:
+            $ref: '#/components/schemas/StudentPendingMaterial'
+        recent_activity:
+          type: array
+          description: Las 10 actividades más recientes, de la más reciente a la más antigua.
+          maxItems: 10
+          items:
+            $ref: '#/components/schemas/StudentActivity'
+        calendar:
+          type: array
+          description: Clases realizadas en los últimos 6 meses (incluido el actual), en orden cronológico.
+          items:
+            $ref: '#/components/schemas/StudentCalendarLesson'
+        score_history:
+          type: array
+          description: Nota de los últimos 10 refuerzos resueltos, en orden cronológico.
+          maxItems: 10
+          items:
+            $ref: '#/components/schemas/ScorePoint'
 
     LoginRequest:
       type: object

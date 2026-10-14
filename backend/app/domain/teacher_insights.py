@@ -13,6 +13,7 @@ from app.domain.entities import (
     TeacherInsights,
     WeeklyCount,
 )
+from app.domain.periods import month_start
 
 WEEKS = 8
 RECENT_ACTIVITY_LIMIT = 10
@@ -22,13 +23,6 @@ CALENDAR_MONTHS = 6
 def _monday(moment: datetime) -> date:
     day = moment.astimezone(UTC).date()
     return day - timedelta(days=day.weekday())
-
-
-def _months_back(moment: datetime, months: int) -> datetime:
-    """Primer instante (UTC) del mes que está `months` meses antes del de `moment`."""
-    utc = moment.astimezone(UTC)
-    index = utc.year * 12 + utc.month - 1 - months
-    return datetime(index // 12, index % 12 + 1, 1, tzinfo=UTC)
 
 
 def _material_status(lessons: Sequence[InsightLesson]) -> MaterialStatusCounts:
@@ -69,7 +63,7 @@ def _recent_activity(lessons: Sequence[InsightLesson]) -> tuple[RecentActivity, 
 
 
 def _calendar(lessons: Sequence[InsightLesson], now: datetime) -> tuple[CalendarLesson, ...]:
-    since = _months_back(now, CALENDAR_MONTHS - 1)
+    since = month_start(now, CALENDAR_MONTHS - 1)
     return tuple(
         CalendarLesson(lesson_id=lesson.id, start=lesson.date, student_name=lesson.student_name, topic=lesson.topic)
         for lesson in sorted(lessons, key=lambda lesson: lesson.date)
@@ -79,10 +73,10 @@ def _calendar(lessons: Sequence[InsightLesson], now: datetime) -> tuple[Calendar
 
 def build_teacher_insights(lessons: Sequence[InsightLesson], now: datetime) -> TeacherInsights:
     """Indicadores a partir de las clases ya realizadas (fecha anterior o igual a `now`)."""
-    month_start = _months_back(now, 0)
+    this_month = month_start(now)
     status = _material_status(lessons)
     return TeacherInsights(
-        lessons_this_month=sum(1 for lesson in lessons if lesson.date >= month_start),
+        lessons_this_month=sum(1 for lesson in lessons if lesson.date >= this_month),
         pending_materials=status.pending,
         material_status=status,
         weekly_lessons=_weekly_lessons(lessons, now),
