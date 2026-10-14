@@ -106,6 +106,20 @@ describe('LessonDetailPage', () => {
     expect(result).toHaveTextContent('0 incorrectas')
   })
 
+  it('muestra el resultado del alumno al principio, antes de los datos de la clase', async () => {
+    setup()
+
+    const result = await screen.findByRole('region', { name: 'Resultado del alumno' })
+    const heading = screen.getByRole('heading', { level: 1 })
+    expect(result.compareDocumentPosition(heading) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  })
+
+  it('muestra la nota del alumno con formato español', async () => {
+    setup({ lesson: { ...RESTAURANT_LESSON, submission: { submittedAt: '2026-10-12T18:05:00Z', correctCount: 2, incorrectCount: 1, score: 66.67 } } })
+
+    expect(await screen.findByRole('region', { name: 'Resultado del alumno' })).toHaveTextContent('66,67 %')
+  })
+
   it('indica que el alumno aún no ha resuelto el material', async () => {
     setup({ lesson: { ...RESTAURANT_LESSON, materialStatus: 'pending', submission: null } })
 
@@ -126,6 +140,14 @@ describe('LessonDetailPage', () => {
 
     expect(downloadPdf).toHaveBeenCalledWith(RESTAURANT_LESSON.id)
     expect(openPdf).toHaveBeenCalledWith(PDF)
+  })
+
+  it('ofrece el PDF con un botón compacto junto al título que indica el nombre del archivo', async () => {
+    setup()
+
+    const header = (await findHeading()).closest('header') as HTMLElement
+    const button = within(header).getByRole('button', { name: 'Descargar PDF (restaurante-a2.pdf)' })
+    expect(button).toHaveTextContent(/^PDF$/)
   })
 
   it('desactiva el botón mientras descarga el PDF', async () => {

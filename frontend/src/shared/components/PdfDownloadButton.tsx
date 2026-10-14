@@ -3,7 +3,7 @@ import type { LessonPdf } from '@/domain/lesson'
 
 interface PdfDownloadButtonProps {
   lessonId: string
-  // Sin nombre, el botón es compacto («PDF»)
+  // Si se indica, forma parte del nombre accesible y del tooltip del botón
   filename?: string
   downloadPdf: (lessonId: string) => Promise<LessonPdf>
   openPdf: (pdf: LessonPdf) => void
@@ -32,13 +32,14 @@ export function PdfDownloadButton({ lessonId, filename, downloadPdf, openPdf }: 
         type="button"
         onClick={handleDownload}
         disabled={isDownloading}
-        className={
-          filename
-            ? 'self-start rounded-md bg-ocean px-4 py-2 font-medium text-white hover:bg-ink disabled:opacity-50'
-            : 'self-start rounded-md border border-ink/20 px-3 py-1.5 text-sm font-medium text-ocean hover:bg-mist disabled:opacity-50'
-        }
+        aria-label={filename ? `Descargar PDF (${filename})` : undefined}
+        title={filename}
+        className="flex items-center gap-1.5 self-start rounded-md border border-ink/20 px-3 py-1.5 text-sm font-medium text-ocean hover:bg-mist disabled:opacity-50"
       >
-        {isDownloading ? 'Descargando…' : filename ? `Descargar PDF (${filename})` : 'PDF'}
+        <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+          <path d="M12 4v11m0 0-4-4m4 4 4-4M5 20h14" />
+        </svg>
+        {isDownloading ? 'Descargando…' : 'PDF'}
       </button>
       {error && (
         <p role="alert" className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">
