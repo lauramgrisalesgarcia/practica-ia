@@ -13,7 +13,7 @@ from app.domain.errors import (
     LessonNotCompletedError,
     LessonNotFoundError,
     LessonPdfNotFoundError,
-    MaterialAlreadySubmittedError,
+    MaterialAlreadyGeneratedError,
     MaterialNotFoundError,
     StudentNotFoundError,
     SubmissionAlreadyExistsError,
@@ -29,9 +29,9 @@ _RESPONSES: dict[type[DomainError], tuple[int, str]] = {
     MaterialNotFoundError: (status.HTTP_404_NOT_FOUND, "La clase no tiene material de refuerzo"),
     SubmissionNotFoundError: (status.HTTP_404_NOT_FOUND, "Aún no has resuelto este material"),
     LessonNotCompletedError: (status.HTTP_409_CONFLICT, "Solo se puede generar material para clases ya realizadas"),
-    MaterialAlreadySubmittedError: (
+    MaterialAlreadyGeneratedError: (
         status.HTTP_409_CONFLICT,
-        "El material ya fue resuelto por el estudiante y no se puede regenerar",
+        "El material de refuerzo de esta clase ya se generó y no se puede volver a generar",
     ),
     InvalidLLMResponseError: (status.HTTP_502_BAD_GATEWAY, "No se pudo generar el material de refuerzo"),
     SubmissionAlreadyExistsError: (status.HTTP_409_CONFLICT, "El material ya fue resuelto"),

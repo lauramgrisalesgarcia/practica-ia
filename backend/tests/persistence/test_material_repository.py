@@ -7,7 +7,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.domain.entities import ActivityType, Answer, Exercise, Level, Material, Submission
-from app.domain.errors import SubmissionAlreadyExistsError
+from app.domain.errors import MaterialAlreadyGeneratedError, SubmissionAlreadyExistsError
 from app.persistence.models import ReinforcementMaterialModel
 from app.persistence.repositories.lesson_repository import SqlAlchemyLessonRepository
 from app.persistence.repositories.material_repository import SqlAlchemyMaterialRepository
@@ -45,19 +45,20 @@ def test_guarda_el_material_y_la_peticion_al_llm(db_session: Session) -> None:
     assert model.llm_request == {"task": "generar"}
 
 
-def test_regenerar_reemplaza_el_material_anterior(db_session: Session) -> None:
+def test_un_segundo_material_viola_la_restriccion_unica_y_se_conserva_el_primero(db_session: Session) -> None:
     teacher = create_user(db_session)
     emma = create_student(db_session, teacher=teacher)
     lesson = create_lesson(db_session, student=emma, teacher=teacher, date=NOW - timedelta(days=1))
     repository = SqlAlchemyMaterialRepository(db_session)
-
     repository.save(lesson.public_id, {"version": 1}, make_material("Primero"))
-    repository.save(lesson.public_id, {"version": 2}, make_material("Segundo", count=3))
+
+    with pytest.raises(MaterialAlreadyGeneratedError):
+        repository.save(lesson.public_id, {"version": 2}, make_material("Segundo", count=3))
 
     assert db_session.scalar(select(func.count()).select_from(ReinforcementMaterialModel)) == 1
     detail = SqlAlchemyLessonRepository(db_session).get_detail_for_teacher(teacher.public_id, lesson.public_id)
     assert detail is not None
-    assert detail.material == make_material("Segundo", count=3)
+    assert detail.material == make_material("Primero")
 
 
 def test_contexto_de_generacion_de_una_clase(db_session: Session) -> None:
@@ -84,21 +85,21 @@ def test_contexto_de_generacion_de_una_clase(db_session: Session) -> None:
     assert context.pdf_path == lesson.pdf_path
     assert context.student_level is Level.A2
     assert context.native_language == "de"
-    assert context.has_submission is False
+    assert context.has_material is False
 
 
-def test_el_contexto_indica_si_el_material_ya_fue_resuelto(db_session: Session) -> None:
+def test_el_contexto_indica_si_la_clase_ya_tiene_material(db_session: Session) -> None:
     teacher = create_user(db_session)
     emma = create_student(db_session, teacher=teacher)
     lesson = create_lesson(db_session, student=emma, teacher=teacher, date=NOW - timedelta(days=4))
-    create_submission(db_session, material=create_material(db_session, lesson=lesson), student=emma)
+    create_material(db_session, lesson=lesson)
 
     context = SqlAlchemyLessonRepository(db_session).get_generation_context_for_teacher(
         teacher.public_id, lesson.public_id
     )
 
     assert context is not None
-    assert context.has_submission is True
+    assert context.has_material is True
 
 
 def test_no_hay_contexto_para_clases_de_otro_docente(db_session: Session) -> None:

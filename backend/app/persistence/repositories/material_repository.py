@@ -7,7 +7,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.domain.entities import Material, Submission
-from app.domain.errors import SubmissionAlreadyExistsError
+from app.domain.errors import MaterialAlreadyGeneratedError, SubmissionAlreadyExistsError
 from app.domain.ports import MaterialRepository
 from app.persistence.mappers import to_material, to_material_content, to_submission
 from app.persistence.models import LessonModel, MaterialSubmissionModel, ReinforcementMaterialModel, UserModel
@@ -24,19 +24,21 @@ class SqlAlchemyMaterialRepository(MaterialRepository):
         if lesson_pk is None:
             raise LookupError("La clase no existe")
 
-        model = self._session.scalar(
-            select(ReinforcementMaterialModel).where(ReinforcementMaterialModel.lesson_id == lesson_pk)
+        model = ReinforcementMaterialModel(
+            lesson_id=lesson_pk,
+            activity_type=material.activity_type.value,
+            exercise_count=material.exercise_count,
+            llm_request=dict(llm_request),
+            content=to_material_content(material),
+            generated_at=material.generated_at,
         )
-        if model is None:
-            model = ReinforcementMaterialModel(lesson_id=lesson_pk)
-            self._session.add(model)
-        # Regenerar reemplaza el material anterior (una clase tiene como máximo un material vigente).
-        model.activity_type = material.activity_type.value
-        model.exercise_count = material.exercise_count
-        model.llm_request = dict(llm_request)
-        model.content = to_material_content(material)
-        model.generated_at = material.generated_at
-        self._session.flush()
+        # La restricción única de lesson_id garantiza un único material por clase, incluso con
+        # generaciones simultáneas. El savepoint permite deshacer solo este insert si se viola.
+        try:
+            with self._session.begin_nested():
+                self._session.add(model)
+        except IntegrityError as error:
+            raise MaterialAlreadyGeneratedError from error
 
     def get_for_lesson(self, lesson_id: UUID) -> tuple[Material, Submission | None] | None:
         row = self._session.execute(

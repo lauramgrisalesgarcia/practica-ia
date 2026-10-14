@@ -5,7 +5,7 @@ from app.domain.errors import (
     InvalidLLMResponseError,
     LessonNotCompletedError,
     LessonNotFoundError,
-    MaterialAlreadySubmittedError,
+    MaterialAlreadyGeneratedError,
 )
 from app.domain.material_validation import parse_generated_material
 from app.domain.policies import require_teacher
@@ -13,7 +13,7 @@ from app.domain.ports import Clock, LessonRepository, LLMClient, MaterialReposit
 
 
 class GenerateMaterial:
-    """Genera (o regenera) con el LLM el material de refuerzo de una clase realizada."""
+    """Genera con el LLM el material de refuerzo de una clase realizada. Se genera una única vez."""
 
     def __init__(
         self, lessons: LessonRepository, materials: MaterialRepository, llm: LLMClient, clock: Clock
@@ -39,8 +39,8 @@ class GenerateMaterial:
         now = self._clock.now()
         if context.date > now:
             raise LessonNotCompletedError
-        if context.has_submission:
-            raise MaterialAlreadySubmittedError
+        if context.has_material:
+            raise MaterialAlreadyGeneratedError
 
         request = MaterialGenerationRequest(
             activity_type=activity_type,

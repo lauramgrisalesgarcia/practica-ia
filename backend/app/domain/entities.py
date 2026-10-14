@@ -140,7 +140,7 @@ class GenerationContext:
     pdf_path: str
     student_level: Level
     native_language: str
-    has_submission: bool
+    has_material: bool
 
 
 @dataclass(frozen=True, slots=True)

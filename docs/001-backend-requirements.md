@@ -105,7 +105,7 @@ Roles:
 - Los historiales solo incluyen clases ya realizadas (fecha ≤ momento actual).
 - Solo se puede generar material para clases ya realizadas. Clase futura → `409`.
 - Una clase tiene como máximo **un** material vigente, y un material como máximo **un** intento de resolución.
-- Material resuelto → no se puede regenerar.
+- El material de una clase se genera **una única vez**: si ya tiene material → `409`.
 - `material_status` de una clase: `none` (sin material), `pending` (generado, sin resolver), `completed` (resuelto).
 - Los idiomas natales se guardan como códigos ISO 639-1 (`en`, `de`, `fr`, …).
 
@@ -289,7 +289,7 @@ Reglas de validación:
 | GET | `/teachers/me/students/{student_id}/lessons` | Docente | Historial de clases del estudiante |
 | GET | `/teachers/me/lessons/{lesson_id}` | Docente | Detalle de una clase (material y resultado si existen) |
 | GET | `/teachers/me/lessons/{lesson_id}/pdf` | Docente | Descarga el PDF de la clase |
-| POST | `/teachers/me/lessons/{lesson_id}/material` | Docente | Genera (o regenera) el material |
+| POST | `/teachers/me/lessons/{lesson_id}/material` | Docente | Genera el material (una única vez) |
 | GET | `/students/me/lessons` | Estudiante | Su historial de clases |
 | GET | `/students/me/lessons/{lesson_id}/pdf` | Estudiante | Descarga el PDF de su clase |
 | GET | `/students/me/lessons/{lesson_id}/material` | Estudiante | Material sin respuestas (y su resultado si ya lo resolvió) |
@@ -587,7 +587,7 @@ Clase futura o material ya resuelto por el estudiante:
 ```
 ```json
 409 Conflict
-{ "detail": "El material ya fue resuelto por el estudiante y no se puede regenerar" }
+{ "detail": "El material de refuerzo de esta clase ya se generó y no se puede volver a generar" }
 ```
 
 Respuesta del LLM inválida:

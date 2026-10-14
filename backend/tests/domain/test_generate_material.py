@@ -10,7 +10,7 @@ from app.domain.errors import (
     InvalidLLMResponseError,
     LessonNotCompletedError,
     LessonNotFoundError,
-    MaterialAlreadySubmittedError,
+    MaterialAlreadyGeneratedError,
 )
 from app.domain.use_cases.generate_material import GenerateMaterial
 from tests.domain.fakes import (
@@ -39,7 +39,7 @@ def make_context(**overrides: Any) -> GenerationContext:
         "pdf_path": "lessons/10/restaurante-a2.pdf",
         "student_level": Level.A2,
         "native_language": "de",
-        "has_submission": False,
+        "has_material": False,
     }
     return GenerationContext(**(values | overrides))
 
@@ -146,13 +146,14 @@ def test_no_genera_material_para_una_clase_futura() -> None:
     assert scenario.llm.requests == []
 
 
-def test_no_regenera_un_material_ya_resuelto() -> None:
-    scenario = Scenario(context=make_context(has_submission=True))
+def test_el_material_se_genera_una_unica_vez() -> None:
+    scenario = Scenario(context=make_context(has_material=True))
 
-    with pytest.raises(MaterialAlreadySubmittedError):
+    with pytest.raises(MaterialAlreadyGeneratedError):
         scenario.generate()
 
     assert scenario.llm.requests == []
+    assert scenario.materials.saved == {}
 
 
 def test_una_clase_de_otro_docente_no_se_encuentra() -> None:

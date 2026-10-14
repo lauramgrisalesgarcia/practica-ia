@@ -34,8 +34,8 @@ class LessonNotCompletedError(ConflictError):
     """Solo se puede generar material para clases ya realizadas."""
 
 
-class MaterialAlreadySubmittedError(ConflictError):
-    """El estudiante ya resolvió el material: no se puede regenerar."""
+class MaterialAlreadyGeneratedError(ConflictError):
+    """La clase ya tiene material de refuerzo: se genera una única vez."""
 
 
 class InvalidLLMResponseError(DomainError):
