@@ -1,11 +1,11 @@
-import type { LessonDetail, LessonSummary } from '@/domain/lesson'
+import type { LessonDetail, LessonSummary, TeacherLessonSummary } from '@/domain/lesson'
 import type { TeacherLessonService } from '@/features/teacher/services/teacherLessonService'
 
 export const EMMA_ID = '3f2b8c1e-9a4d-4e7b-b6a2-1c9d0e5f7a83'
 export const UNKNOWN_STUDENT_ID = '00000000-0000-4000-8000-000000000000'
 export const UNKNOWN_LESSON_ID = '00000000-0000-4000-8000-000000000001'
 
-export const EMMA_LESSONS: LessonSummary[] = [
+export const EMMA_LESSONS: TeacherLessonSummary[] = [
   {
     id: 'c4a9e2d7-5f1b-4c8e-a3d6-7b2e9f0c1d45',
     date: '2026-10-08T16:00:00Z',
@@ -13,6 +13,8 @@ export const EMMA_LESSONS: LessonSummary[] = [
     topic: 'Pedir en un restaurante',
     context: 'Pedir comida y bebida en un restaurante y pedir la cuenta',
     materialStatus: 'completed',
+    keywords: ['la carta', 'quisiera', 'la cuenta'],
+    score: 100,
   },
   {
     id: '1e7d3b5a-8c2f-4a6e-9d0b-3f5a7c9e1b28',
@@ -21,14 +23,21 @@ export const EMMA_LESSONS: LessonSummary[] = [
     topic: 'Presentarse',
     context: 'Presentarse y hablar de la familia en una reunión',
     materialStatus: 'none',
+    keywords: ['me llamo', 'mi familia'],
+    score: null,
   },
 ]
+
+// Datos comunes de la clase, sin lo que solo aparece en el historial del docente
+function lessonBase({ id, date, durationMinutes, topic, context, materialStatus }: TeacherLessonSummary): LessonSummary {
+  return { id, date, durationMinutes, topic, context, materialStatus }
+}
 
 const EMMA_AS_LESSON_STUDENT = { id: EMMA_ID, name: 'Emma Schmidt', nativeLanguage: 'de', level: 'A2' } as const
 
 // Clase con material resuelto por el alumno
 export const RESTAURANT_LESSON: LessonDetail = {
-  ...EMMA_LESSONS[0],
+  ...lessonBase(EMMA_LESSONS[0]),
   keywords: ['la carta', 'quisiera', 'la cuenta'],
   notes: "Confunde 'quiero' y 'quisiera'.",
   pdfFilename: 'restaurante-a2.pdf',
@@ -52,7 +61,7 @@ export const RESTAURANT_LESSON: LessonDetail = {
 
 // Clase sin material ni notas
 export const INTRODUCTIONS_LESSON: LessonDetail = {
-  ...EMMA_LESSONS[1],
+  ...lessonBase(EMMA_LESSONS[1]),
   keywords: ['me llamo', 'mi familia'],
   notes: null,
   pdfFilename: 'presentarse-a2.pdf',
@@ -73,7 +82,7 @@ export const FUTURE_LESSON: LessonDetail = {
 export const PDF_CONTENT = '%PDF-1.4 contenido de prueba'
 
 // Clases por alumno; un alumno que no aparece no está asignado al docente
-export type LessonsByStudent = Record<string, LessonSummary[]>
+export type LessonsByStudent = Record<string, TeacherLessonSummary[]>
 
 export interface TeacherLessonFixtures {
   lessonsByStudent: LessonsByStudent

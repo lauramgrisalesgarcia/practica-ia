@@ -1,4 +1,4 @@
-import type { LessonDetail, LessonSummary, MaterialRequest, TeacherMaterial } from '@/domain/lesson'
+import type { LessonDetail, LessonSummary, MaterialRequest, TeacherLessonSummary, TeacherMaterial } from '@/domain/lesson'
 import { buildFakeMaterial, materialGenerationError } from '@/dev/fakeMaterial'
 import { ApiError } from '@/shared/http/errors'
 import { createHttpClient } from '@/shared/http/httpClient'
@@ -23,6 +23,11 @@ function splitName(name: string) {
 
 function toApiSummary({ id, date, durationMinutes, topic, context, materialStatus }: LessonSummary) {
   return { id, date, duration_minutes: durationMinutes, topic, context, material_status: materialStatus }
+}
+
+// docs/openapi.yaml, schema TeacherLessonSummary
+function toApiTeacherSummary(summary: TeacherLessonSummary) {
+  return { ...toApiSummary(summary), keywords: summary.keywords, score: summary.score }
 }
 
 // docs/openapi.yaml, schema TeacherMaterial
@@ -83,7 +88,10 @@ function createFakeBackend({ lessonsByStudent, lessons }: TeacherLessonFixtures)
       if (!Object.hasOwn(lessonsByStudent, studentId)) return json(404, { detail: 'Estudiante no encontrado' })
       return json(
         200,
-        lessonsByStudent[studentId].map((summary) => toApiSummary(lessonsById.get(summary.id) ?? summary)),
+        lessonsByStudent[studentId].map((summary) => {
+          const lesson = lessonsById.get(summary.id)
+          return toApiTeacherSummary(lesson ? { ...summary, materialStatus: lesson.materialStatus } : summary)
+        }),
       )
     }
 

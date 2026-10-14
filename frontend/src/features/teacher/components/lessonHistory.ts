@@ -1,4 +1,4 @@
-import type { LessonSummary, MaterialStatus } from '@/domain/lesson'
+import type { LessonSummary, MaterialStatus, TeacherLessonSummary } from '@/domain/lesson'
 
 export type MaterialFilter = 'all' | MaterialStatus
 
@@ -10,12 +10,14 @@ export interface HistorySummary {
   // Clases con material generado (pendiente o resuelto) y cuántas de ellas están resueltas
   withMaterial: number
   completedMaterial: number
+  // Media de las notas del material resuelto, o null si no hay ninguno
+  averageScore: number | null
 }
 
-export interface MonthGroup {
+export interface MonthGroup<T extends LessonSummary = LessonSummary> {
   key: string
   label: string
-  lessons: LessonSummary[]
+  lessons: T[]
 }
 
 const DAY_MS = 24 * 60 * 60 * 1000
@@ -27,8 +29,9 @@ function calendarDaysBetween(from: Date, to: Date): number {
 }
 
 // Las clases llegan de la más reciente a la más antigua
-export function summarizeHistory(lessons: LessonSummary[], today: Date): HistorySummary {
+export function summarizeHistory(lessons: TeacherLessonSummary[], today: Date): HistorySummary {
   const last = lessons[0]
+  const scores = lessons.flatMap((lesson) => (lesson.score === null ? [] : [lesson.score]))
   return {
     lessonCount: lessons.length,
     totalMinutes: lessons.reduce((total, lesson) => total + lesson.durationMinutes, 0),
@@ -36,6 +39,7 @@ export function summarizeHistory(lessons: LessonSummary[], today: Date): History
     daysSinceLastLesson: last ? calendarDaysBetween(new Date(last.date), today) : null,
     withMaterial: lessons.filter((lesson) => lesson.materialStatus !== 'none').length,
     completedMaterial: lessons.filter((lesson) => lesson.materialStatus === 'completed').length,
+    averageScore: scores.length ? scores.reduce((total, score) => total + score, 0) / scores.length : null,
   }
 }
 
@@ -44,7 +48,7 @@ function normalize(text: string): string {
   return text.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLocaleLowerCase('es').trim()
 }
 
-export function filterLessons(lessons: LessonSummary[], filter: MaterialFilter, query: string): LessonSummary[] {
+export function filterLessons<T extends LessonSummary>(lessons: T[], filter: MaterialFilter, query: string): T[] {
   const search = normalize(query)
   return lessons.filter(
     (lesson) =>
@@ -52,10 +56,10 @@ export function filterLessons(lessons: LessonSummary[], filter: MaterialFilter, 
   )
 }
 
-export function groupByMonth(lessons: LessonSummary[], timeZone?: string): MonthGroup[] {
+export function groupByMonth<T extends LessonSummary>(lessons: T[], timeZone?: string): MonthGroup<T>[] {
   const keyFormat = new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: '2-digit', timeZone })
   const labelFormat = new Intl.DateTimeFormat('es', { month: 'long', year: 'numeric', timeZone })
-  const groups: MonthGroup[] = []
+  const groups: MonthGroup<T>[] = []
   for (const lesson of lessons) {
     const date = new Date(lesson.date)
     const key = keyFormat.format(date)
@@ -68,6 +72,13 @@ export function groupByMonth(lessons: LessonSummary[], timeZone?: string): Month
     }
   }
   return groups
+}
+
+const scoreFormat = new Intl.NumberFormat('es', { maximumFractionDigits: 0 })
+
+// Porcentaje de aciertos redondeado: «67 %»
+export function formatScore(score: number): string {
+  return `${scoreFormat.format(score)} %`
 }
 
 export function formatDuration(minutes: number): string {

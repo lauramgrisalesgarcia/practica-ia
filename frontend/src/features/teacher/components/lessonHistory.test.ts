@@ -1,4 +1,4 @@
-import type { LessonSummary, MaterialStatus } from '@/domain/lesson'
+import type { MaterialStatus, TeacherLessonSummary } from '@/domain/lesson'
 import {
   filterLessons,
   formatDaysAgo,
@@ -7,18 +7,31 @@ import {
   summarizeHistory,
 } from './lessonHistory'
 
-function lesson(id: string, date: string, materialStatus: MaterialStatus, topic = `Tema ${id}`, durationMinutes = 60): LessonSummary {
-  return { id, date, durationMinutes, topic, context: `Contexto ${id}`, materialStatus }
+function lesson(
+  id: string,
+  date: string,
+  materialStatus: MaterialStatus,
+  topic = `Tema ${id}`,
+  durationMinutes = 60,
+  score: number | null = null,
+): TeacherLessonSummary {
+  return { id, date, durationMinutes, topic, context: `Contexto ${id}`, materialStatus, keywords: [`clave ${id}`], score }
 }
 
-const LESSONS: LessonSummary[] = [
-  lesson('1', '2026-10-08T16:00:00Z', 'completed', 'Pedir en un restaurante'),
+const LESSONS: TeacherLessonSummary[] = [
+  lesson('1', '2026-10-08T16:00:00Z', 'completed', 'Pedir en un restaurante', 60, 66.67),
   lesson('2', '2026-10-06T15:00:00Z', 'pending', 'Hablar del fin de semana', 45),
-  lesson('3', '2026-09-24T16:00:00Z', 'completed', 'Hablar del tiempo', 30),
+  lesson('3', '2026-09-24T16:00:00Z', 'completed', 'Hablar del tiempo', 30, 100),
   lesson('4', '2026-09-17T16:00:00Z', 'none', 'Presentarse'),
 ]
 
 describe('summarizeHistory', () => {
+  it('sin material resuelto no hay nota media', () => {
+    const lessons = [lesson('1', '2026-10-08T16:00:00Z', 'pending'), lesson('2', '2026-10-06T15:00:00Z', 'none')]
+
+    expect(summarizeHistory(lessons, new Date('2026-10-13T09:00:00Z')).averageScore).toBeNull()
+  })
+
   it('resume clases, tiempo, última clase y progreso del material', () => {
     expect(summarizeHistory(LESSONS, new Date('2026-10-13T09:00:00Z'))).toEqual({
       lessonCount: 4,
@@ -27,6 +40,7 @@ describe('summarizeHistory', () => {
       daysSinceLastLesson: 5,
       withMaterial: 3,
       completedMaterial: 2,
+      averageScore: expect.closeTo(83.335),
     })
   })
 
@@ -38,6 +52,7 @@ describe('summarizeHistory', () => {
       daysSinceLastLesson: null,
       withMaterial: 0,
       completedMaterial: 0,
+      averageScore: null,
     })
   })
 })

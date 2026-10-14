@@ -13,6 +13,13 @@ export interface LessonSummary {
   materialStatus: MaterialStatus
 }
 
+// Clase en el historial que ve el docente: incluye sus palabras clave y la nota del alumno
+export interface TeacherLessonSummary extends LessonSummary {
+  keywords: string[]
+  // Porcentaje de aciertos (0-100), o null si el material no está resuelto
+  score: number | null
+}
+
 // En el alcance del proyecto solo existe «completar la frase»
 export type ActivityType = 'complete_sentence'
 
