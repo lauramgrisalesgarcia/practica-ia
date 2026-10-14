@@ -14,6 +14,7 @@ from app.domain.entities import (
     LessonSummary,
     Material,
     Student,
+    StudentInsightLesson,
     Submission,
     User,
 )
@@ -83,6 +84,12 @@ class LessonRepository(Protocol):
 class TeacherInsightsRepository(Protocol):
     def list_completed_by_teacher(self, teacher_id: UUID, until: datetime) -> list[InsightLesson]:
         """Clases de los estudiantes del docente con fecha anterior o igual a `until`."""
+        ...
+
+
+class StudentInsightsRepository(Protocol):
+    def list_completed_by_student(self, student_id: UUID, until: datetime) -> list[StudentInsightLesson]:
+        """Clases del estudiante con fecha anterior o igual a `until`."""
         ...
 
 

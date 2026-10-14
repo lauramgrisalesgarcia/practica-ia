@@ -306,3 +306,59 @@ class TeacherInsights:
     weekly_lessons: tuple[WeeklyCount, ...]
     recent_activity: tuple[RecentActivity, ...]
     calendar: tuple[CalendarLesson, ...]
+
+
+@dataclass(frozen=True, slots=True)
+class StudentInsightLesson:
+    """Clase realizada de un estudiante, con lo necesario para calcular sus indicadores."""
+
+    id: UUID
+    date: datetime
+    topic: str
+    material_generated_at: datetime | None
+    exercise_count: int | None  # None si la clase no tiene material
+    submitted_at: datetime | None
+    score: Decimal | None
+
+
+@dataclass(frozen=True, slots=True)
+class PendingMaterial:
+    lesson_id: UUID
+    topic: str
+    date: datetime  # fecha de la clase
+    exercise_count: int
+
+
+@dataclass(frozen=True, slots=True)
+class StudentActivity:
+    type: InsightActivityType
+    date: datetime
+    lesson_id: UUID
+    topic: str
+    score: Decimal | None  # solo en las entregas
+
+
+@dataclass(frozen=True, slots=True)
+class StudentCalendarLesson:
+    lesson_id: UUID
+    start: datetime
+    topic: str
+
+
+@dataclass(frozen=True, slots=True)
+class ScorePoint:
+    lesson_id: UUID
+    topic: str
+    submitted_at: datetime
+    score: Decimal
+
+
+@dataclass(frozen=True, slots=True)
+class StudentInsights:
+    lessons_count: int
+    completed_materials: int
+    average_score: Decimal | None
+    pending_materials: tuple[PendingMaterial, ...]
+    recent_activity: tuple[StudentActivity, ...]
+    calendar: tuple[StudentCalendarLesson, ...]
+    score_history: tuple[ScorePoint, ...]

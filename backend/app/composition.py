@@ -18,6 +18,7 @@ from app.domain.ports import (
     LessonRepository,
     LLMClient,
     MaterialRepository,
+    StudentInsightsRepository,
     StudentRepository,
     TeacherInsightsRepository,
     UserRepository,
@@ -27,6 +28,7 @@ from app.domain.use_cases.authenticate_user import AuthenticateUser
 from app.domain.use_cases.get_my_lesson_pdf import GetMyLessonPdf
 from app.domain.use_cases.get_my_material import GetMyMaterial
 from app.domain.use_cases.get_my_submission import GetMySubmission
+from app.domain.use_cases.get_student_insights import GetStudentInsights
 from app.domain.use_cases.get_teacher_insights import GetTeacherInsights
 from app.domain.use_cases.get_teacher_lesson import GetTeacherLesson
 from app.domain.use_cases.get_teacher_lesson_pdf import GetTeacherLessonPdf
@@ -42,6 +44,7 @@ from app.llm.simulated import SimulatedLLMClient
 from app.persistence.repositories.lesson_repository import SqlAlchemyLessonRepository
 from app.persistence.repositories.material_repository import SqlAlchemyMaterialRepository
 from app.persistence.repositories.student_repository import SqlAlchemyStudentRepository
+from app.persistence.repositories.student_insights_repository import SqlAlchemyStudentInsightsRepository
 from app.persistence.repositories.teacher_insights_repository import SqlAlchemyTeacherInsightsRepository
 from app.persistence.repositories.user_repository import SqlAlchemyUserRepository
 
@@ -64,6 +67,10 @@ def get_material_repository(session: Annotated[Session, Depends(get_session)]) -
 
 def get_teacher_insights_repository(session: Annotated[Session, Depends(get_session)]) -> TeacherInsightsRepository:
     return SqlAlchemyTeacherInsightsRepository(session)
+
+
+def get_student_insights_repository(session: Annotated[Session, Depends(get_session)]) -> StudentInsightsRepository:
+    return SqlAlchemyStudentInsightsRepository(session)
 
 
 def get_clock() -> Clock:
@@ -164,3 +171,10 @@ def get_get_teacher_insights(
     clock: Annotated[Clock, Depends(get_clock)],
 ) -> GetTeacherInsights:
     return GetTeacherInsights(insights=insights, clock=clock)
+
+
+def get_get_student_insights(
+    insights: Annotated[StudentInsightsRepository, Depends(get_student_insights_repository)],
+    clock: Annotated[Clock, Depends(get_clock)],
+) -> GetStudentInsights:
+    return GetStudentInsights(insights=insights, clock=clock)

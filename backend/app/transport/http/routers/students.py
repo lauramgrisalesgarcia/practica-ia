@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, Response, status
 
 from app.composition import (
     get_get_my_lesson_pdf,
+    get_get_student_insights,
     get_get_my_material,
     get_get_my_submission,
     get_list_my_lessons,
@@ -14,14 +15,24 @@ from app.domain.entities import Answer
 from app.domain.use_cases.get_my_lesson_pdf import GetMyLessonPdf
 from app.domain.use_cases.get_my_material import GetMyMaterial
 from app.domain.use_cases.get_my_submission import GetMySubmission
+from app.domain.use_cases.get_student_insights import GetStudentInsights
 from app.domain.use_cases.list_my_lessons import ListMyLessons
 from app.domain.use_cases.submit_material import SubmitMaterial
 from app.transport.http.dependencies import CurrentUser
 from app.transport.http.files import PDF_RESPONSES, pdf_response
 from app.transport.http.schemas.lessons import StudentLessonSummaryOut
+from app.transport.http.schemas.student_insights import StudentInsightsOut
 from app.transport.http.schemas.materials import StudentMaterialOut, SubmissionOut, SubmitMaterialIn
 
 router = APIRouter(prefix="/students/me", tags=["Estudiante"])
+
+
+@router.get("/insights", response_model=StudentInsightsOut)
+def get_my_insights(
+    user: CurrentUser,
+    get_insights: Annotated[GetStudentInsights, Depends(get_get_student_insights)],
+) -> StudentInsightsOut:
+    return StudentInsightsOut.from_entity(get_insights.execute(user))
 
 
 @router.get("/lessons", response_model=list[StudentLessonSummaryOut])
