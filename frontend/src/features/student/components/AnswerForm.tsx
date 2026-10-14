@@ -51,14 +51,14 @@ export function AnswerForm({ lessonId, exercises, submitMaterial, onSubmitted }:
                 aria-invalid={isMissing || undefined}
                 className="flex flex-col gap-2"
               >
-                <span id={sentenceId} className="text-gray-900">
+                <span id={sentenceId} className="text-ink">
                   {exercise.sentence}
                 </span>
                 <span className="flex flex-wrap gap-2">
                   {exercise.options.map((option) => (
                     <label
                       key={option}
-                      className="flex cursor-pointer items-center gap-2 rounded-md border border-gray-300 px-3 py-1.5 text-sm has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50"
+                      className="flex cursor-pointer items-center gap-2 rounded-md border border-ink/20 px-3 py-1.5 text-sm has-[:checked]:border-ocean has-[:checked]:bg-mist"
                     >
                       <input
                         type="radio"
@@ -91,7 +91,7 @@ export function AnswerForm({ lessonId, exercises, submitMaterial, onSubmitted }:
       <button
         type="submit"
         disabled={isSubmitting}
-        className="self-start rounded-md bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+        className="self-start rounded-md bg-ocean px-4 py-2 font-medium text-white hover:bg-ink disabled:opacity-50"
       >
         {isSubmitting ? 'Enviando…' : 'Enviar respuestas'}
       </button>

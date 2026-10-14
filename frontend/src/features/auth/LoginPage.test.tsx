@@ -37,6 +37,12 @@ describe('LoginPage', () => {
     expect(screen.getByLabelText(/correo electrónico/i)).toBeInTheDocument()
   })
 
+  it('muestra el logo de la plataforma', async () => {
+    renderLoginPage(createAuthService())
+
+    expect(await screen.findByRole('img', { name: 'PractIcA' })).toBeInTheDocument()
+  })
+
   it('inicia sesión con las credenciales y lleva al panel del rol', async () => {
     const authService = createAuthService()
     renderLoginPage(authService)

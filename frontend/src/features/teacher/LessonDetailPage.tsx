@@ -40,7 +40,7 @@ export function LessonDetailPage({ lessonId, loadLesson, downloadPdf, openPdf, g
   }, [lessonId, loadLesson])
 
   if (state.status === 'loading') {
-    return <p className="mx-auto max-w-2xl text-sm text-gray-500">Cargando clase…</p>
+    return <p className="mx-auto max-w-2xl text-sm text-ink/70">Cargando clase…</p>
   }
 
   if (state.status === 'error') {
@@ -61,25 +61,25 @@ export function LessonDetailPage({ lessonId, loadLesson, downloadPdf, openPdf, g
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-6">
       <Link
         to={studentDetailPath(lesson.student.id)}
-        className="self-start text-sm font-medium text-blue-600 hover:text-blue-800"
+        className="self-start text-sm font-medium text-ocean hover:text-ink"
       >
         ← Volver a {lesson.student.name}
       </Link>
 
       <section className="flex flex-col gap-4 rounded-xl bg-white p-6 shadow-md">
         <header className="flex flex-col gap-1">
-          <h1 className="text-2xl font-semibold text-gray-900">{lesson.topic}</h1>
-          <p className="text-sm text-gray-500">
+          <h1 className="text-2xl font-semibold text-ink">{lesson.topic}</h1>
+          <p className="text-sm text-ink/70">
             {formatDate(lesson.date)} · {lesson.durationMinutes} min
           </p>
         </header>
-        <p className="text-gray-700">{lesson.context}</p>
+        <p className="text-ink/80">{lesson.context}</p>
 
         <div className="flex flex-col gap-2">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-500">Palabras clave</h2>
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-ink/70">Palabras clave</h2>
           <ul aria-label="Palabras clave" className="flex flex-wrap gap-2">
             {lesson.keywords.map((keyword) => (
-              <li key={keyword} className="rounded-full bg-blue-50 px-2 py-0.5 text-sm text-blue-800">
+              <li key={keyword} className="rounded-full bg-mist px-2 py-0.5 text-sm text-ocean">
                 {keyword}
               </li>
             ))}
@@ -87,8 +87,8 @@ export function LessonDetailPage({ lessonId, loadLesson, downloadPdf, openPdf, g
         </div>
 
         <div className="flex flex-col gap-1">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-500">Notas</h2>
-          <p className="text-gray-700">{lesson.notes ?? 'Sin notas.'}</p>
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-ink/70">Notas</h2>
+          <p className="text-ink/80">{lesson.notes ?? 'Sin notas.'}</p>
         </div>
 
         <PdfDownloadButton lessonId={lesson.id} filename={lesson.pdfFilename} downloadPdf={downloadPdf} openPdf={openPdf} />
@@ -97,7 +97,7 @@ export function LessonDetailPage({ lessonId, loadLesson, downloadPdf, openPdf, g
       {lesson.material ? (
         <MaterialSection material={lesson.material} />
       ) : (
-        <p className="rounded-xl bg-white p-6 text-sm text-gray-500 shadow-md">
+        <p className="rounded-xl bg-white p-6 text-sm text-ink/70 shadow-md">
           Aún no se ha generado material de refuerzo para esta clase.
         </p>
       )}
@@ -106,7 +106,7 @@ export function LessonDetailPage({ lessonId, loadLesson, downloadPdf, openPdf, g
         (lesson.submission ? (
           <SubmissionSection submission={lesson.submission} />
         ) : (
-          <p className="rounded-xl bg-white p-6 text-sm text-gray-500 shadow-md">
+          <p className="rounded-xl bg-white p-6 text-sm text-ink/70 shadow-md">
             El alumno aún no ha resuelto el material.
           </p>
         ))}
@@ -129,28 +129,28 @@ function MaterialSection({ material }: { material: TeacherMaterial }) {
 
   return (
     <section aria-label="Material de refuerzo" className="flex flex-col gap-4 rounded-xl bg-white p-6 shadow-md">
-      <p className="text-sm font-semibold uppercase tracking-wide text-gray-500">Material de refuerzo</p>
-      <h2 className="text-lg font-semibold text-gray-900">{material.title}</h2>
-      <p className="text-gray-700">{material.instructions}</p>
+      <p className="text-sm font-semibold uppercase tracking-wide text-ink/70">Material de refuerzo</p>
+      <h2 className="text-lg font-semibold text-ink">{material.title}</h2>
+      <p className="text-ink/80">{material.instructions}</p>
       <span id={correctAnswerId} hidden>
         Respuesta correcta
       </span>
       <ol className="flex list-decimal flex-col gap-3 pl-5">
         {material.exercises.map((exercise) => (
           <li key={exercise.id} className="flex flex-col gap-1">
-            <span className="text-gray-900">{exercise.sentence}</span>
+            <span className="text-ink">{exercise.sentence}</span>
             <span className="flex flex-wrap gap-2 text-sm">
               {exercise.options.map((option) =>
                 option === exercise.correctOption ? (
                   <span
                     key={option}
                     aria-describedby={correctAnswerId}
-                    className="rounded-md bg-green-100 px-2 py-0.5 font-medium text-green-800"
+                    className="rounded-md bg-mint px-2 py-0.5 font-medium text-ink"
                   >
                     {option}
                   </span>
                 ) : (
-                  <span key={option} className="rounded-md bg-gray-100 px-2 py-0.5 text-gray-700">
+                  <span key={option} className="rounded-md bg-mist px-2 py-0.5 text-ink/80">
                     {option}
                   </span>
                 ),
@@ -166,9 +166,9 @@ function MaterialSection({ material }: { material: TeacherMaterial }) {
 function SubmissionSection({ submission }: { submission: SubmissionSummary }) {
   return (
     <section aria-label="Resultado del alumno" className="flex flex-col gap-2 rounded-xl bg-white p-6 shadow-md">
-      <h2 className="text-lg font-semibold text-gray-900">Resultado del alumno</h2>
-      <p className="text-3xl font-semibold text-gray-900">{submission.score} %</p>
-      <p className="text-sm text-gray-500">
+      <h2 className="text-lg font-semibold text-ink">Resultado del alumno</h2>
+      <p className="text-3xl font-semibold text-ink">{submission.score} %</p>
+      <p className="text-sm text-ink/70">
         {submission.correctCount} correctas · {submission.incorrectCount} incorrectas · resuelto el{' '}
         {formatDate(submission.submittedAt)}
       </p>

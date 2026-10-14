@@ -115,8 +115,7 @@ describe('App', () => {
       await expectPath('/docente')
       expect(authService.login).toHaveBeenCalledWith({ email: TEACHER.email, password: PASSWORD })
 
-      await userEvent.setup().click(screen.getByRole('button', { name: /ver alumnos asignados/i }))
-      expect(teacherService.getAssignedStudents).toHaveBeenCalled()
+      await waitFor(() => expect(teacherService.getAssignedStudents).toHaveBeenCalled())
     })
 
     it('lleva al estudiante a su panel tras iniciar sesión', async () => {
@@ -192,7 +191,7 @@ describe('App', () => {
       renderApp('/docente', createAuthService({ current: STUDENT }))
 
       expect(await screen.findByRole('heading', { level: 1, name: /ana gómez/i })).toBeInTheDocument()
-      expect(screen.queryByRole('button', { name: /ver alumnos asignados/i })).not.toBeInTheDocument()
+      expect(screen.queryByRole('complementary', { name: 'Mis alumnos' })).not.toBeInTheDocument()
       await expectPath('/estudiante')
     })
 

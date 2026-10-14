@@ -60,7 +60,7 @@ export function LoginForm({ onSubmit }: LoginFormProps) {
           onChange={(e) => setEmail(e.target.value)}
           aria-invalid={Boolean(errors.email)}
           aria-describedby={errors.email ? 'email-error' : undefined}
-          className="rounded-md border border-gray-300 px-3 py-2"
+          className="rounded-md border border-ink/20 px-3 py-2"
         />
         {errors.email && (
           <p id="email-error" className="text-sm text-red-600">
@@ -81,7 +81,7 @@ export function LoginForm({ onSubmit }: LoginFormProps) {
           onChange={(e) => setPassword(e.target.value)}
           aria-invalid={Boolean(errors.password)}
           aria-describedby={errors.password ? 'password-error' : undefined}
-          className="rounded-md border border-gray-300 px-3 py-2"
+          className="rounded-md border border-ink/20 px-3 py-2"
         />
         {errors.password && (
           <p id="password-error" className="text-sm text-red-600">
@@ -99,7 +99,7 @@ export function LoginForm({ onSubmit }: LoginFormProps) {
       <button
         type="submit"
         disabled={isSubmitting}
-        className="rounded-md bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+        className="rounded-md bg-ocean px-4 py-2 font-medium text-white hover:bg-ink disabled:opacity-50"
       >
         Iniciar sesión
       </button>
