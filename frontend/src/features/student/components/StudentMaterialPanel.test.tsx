@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import type { Answer, StudentMaterial, StudentSubmission } from '@/domain/lesson'
 import { COMPLETED_MATERIAL, PENDING_MATERIAL } from '@/test/contracts/studentServiceContract'
-import { StudentMaterialPage } from './StudentMaterialPage'
+import { StudentMaterialPanel } from './StudentMaterialPanel'
 
 const SUBMISSION: StudentSubmission = {
   submittedAt: '2026-10-13T10:00:00Z',
@@ -24,24 +24,24 @@ function setup(
 ) {
   render(
     <MemoryRouter>
-      <StudentMaterialPage lessonId={PENDING_MATERIAL.lessonId} loadMaterial={loadMaterial} submitMaterial={submitMaterial} />
+      <StudentMaterialPanel lessonId={PENDING_MATERIAL.lessonId} loadMaterial={loadMaterial} submitMaterial={submitMaterial} />
     </MemoryRouter>,
   )
   return { loadMaterial, submitMaterial, user: userEvent.setup() }
 }
 
-describe('StudentMaterialPage', () => {
+describe('StudentMaterialPanel', () => {
   it('carga el material de la clase indicada', async () => {
     const { loadMaterial } = setup()
 
-    await screen.findByRole('heading', { level: 1, name: 'En el restaurante' })
+    await screen.findByRole('heading', { level: 2, name: 'En el restaurante' })
     expect(loadMaterial).toHaveBeenCalledWith(PENDING_MATERIAL.lessonId)
   })
 
   it('muestra la actividad pendiente para resolverla', async () => {
     setup()
 
-    await screen.findByRole('heading', { level: 1, name: 'En el restaurante' })
+    await screen.findByRole('heading', { level: 2, name: 'En el restaurante' })
     expect(screen.getByText('Completa cada frase con la opción correcta.')).toBeInTheDocument()
     expect(screen.getAllByRole('radiogroup')).toHaveLength(2)
     expect(screen.getByRole('button', { name: 'Enviar respuestas' })).toBeInTheDocument()
@@ -49,7 +49,7 @@ describe('StudentMaterialPage', () => {
 
   it('muestra el resultado al enviar las respuestas, sin recargar', async () => {
     const { user, submitMaterial, loadMaterial } = setup()
-    await screen.findByRole('heading', { level: 1, name: 'En el restaurante' })
+    await screen.findByRole('heading', { level: 2, name: 'En el restaurante' })
 
     const [first, second] = screen.getAllByRole('radiogroup')
     await user.click(within(first).getByRole('radio', { name: 'la carta' }))
@@ -77,7 +77,7 @@ describe('StudentMaterialPage', () => {
   it('no muestra resultado mientras el material está pendiente', async () => {
     setup()
 
-    await screen.findByRole('heading', { level: 1, name: 'En el restaurante' })
+    await screen.findByRole('heading', { level: 2, name: 'En el restaurante' })
     expect(screen.queryByRole('region', { name: 'Tu resultado' })).not.toBeInTheDocument()
     expect(screen.queryByText(/correcto|incorrecto/i)).not.toBeInTheDocument()
   })
@@ -109,12 +109,6 @@ describe('StudentMaterialPage', () => {
     expect(within(result).getByRole('list', { name: 'Recomendaciones' })).toHaveTextContent(
       'Después de «va a» va un verbo en infinitivo: «va a llover».',
     )
-  })
-
-  it('permite volver a sus clases', async () => {
-    setup()
-
-    expect(await screen.findByRole('link', { name: /volver a mis clases/i })).toHaveAttribute('href', '/estudiante')
   })
 
   it('indica que está cargando mientras obtiene el material', () => {

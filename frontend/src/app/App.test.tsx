@@ -49,6 +49,7 @@ function createTeacherLessonService(): TeacherLessonService {
 function createStudentService(): StudentService {
   return {
     getMyLessons: vi.fn().mockResolvedValue(MY_LESSONS),
+    getLesson: vi.fn().mockResolvedValue(MY_LESSONS[0]),
     downloadPdf: vi.fn(),
     getMaterial: vi.fn().mockResolvedValue(PENDING_MATERIAL),
     submitMaterial: vi.fn(),
@@ -173,7 +174,8 @@ describe('App', () => {
         studentService,
       )
 
-      expect(await screen.findByRole('list', { name: /mis clases/i })).toHaveTextContent('Pedir en un restaurante')
+      expect(await screen.findByRole('heading', { level: 4, name: 'Pedir en un restaurante' })).toBeInTheDocument()
+      expect(screen.getByRole('heading', { level: 1, name: 'Mis clases' })).toBeInTheDocument()
       expect(studentService.getMyLessons).toHaveBeenCalled()
     })
 
@@ -187,7 +189,9 @@ describe('App', () => {
         studentService,
       )
 
-      expect(await screen.findByRole('heading', { level: 1, name: 'En el restaurante' })).toBeInTheDocument()
+      expect(await screen.findByRole('heading', { level: 1, name: 'Pedir en un restaurante' })).toBeInTheDocument()
+      expect(await screen.findByRole('heading', { level: 2, name: 'En el restaurante' })).toBeInTheDocument()
+      expect(studentService.getLesson).toHaveBeenCalledWith(PENDING_MATERIAL.lessonId)
       expect(studentService.getMaterial).toHaveBeenCalledWith(PENDING_MATERIAL.lessonId)
     })
 

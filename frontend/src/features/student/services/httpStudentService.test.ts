@@ -1,4 +1,4 @@
-import type { Answer, StudentMaterial, StudentSubmission } from '@/domain/lesson'
+import type { Answer, StudentLessonSummary, StudentMaterial, StudentSubmission } from '@/domain/lesson'
 import { answersAreValid, gradeFakeSubmission, INVALID_ANSWERS_MESSAGE } from '@/dev/fakeGrading'
 import { ApiError } from '@/shared/http/errors'
 import { createHttpClient } from '@/shared/http/httpClient'
@@ -14,6 +14,21 @@ import { createHttpStudentService } from './httpStudentService'
 
 function json(status: number, body: unknown): Response {
   return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } })
+}
+
+// docs/openapi.yaml, schema StudentLessonSummary
+function toApiLesson({ id, date, durationMinutes, topic, context, materialStatus, pdfFilename, keywords, score }: StudentLessonSummary) {
+  return {
+    id,
+    date,
+    duration_minutes: durationMinutes,
+    topic,
+    context,
+    pdf: { filename: pdfFilename, url: `/students/me/lessons/${id}/pdf` },
+    material_status: materialStatus,
+    keywords,
+    score,
+  }
 }
 
 // docs/openapi.yaml, schema Submission
@@ -62,27 +77,16 @@ function createFakeBackend({ lessons, materials, answerKeys }: StudentFixtures):
     const path = new URL(String(input)).pathname
     const method = init?.method
 
-    if (path === '/students/me/lessons' && method === 'GET') {
-      return json(
-        200,
-        currentLessons.map(({ id, date, durationMinutes, topic, context, materialStatus, pdfFilename }) => ({
-          id,
-          date,
-          duration_minutes: durationMinutes,
-          topic,
-          context,
-          pdf: { filename: pdfFilename, url: `/students/me/lessons/${id}/pdf` },
-          material_status: materialStatus,
-        })),
-      )
-    }
+    if (path === '/students/me/lessons' && method === 'GET') return json(200, currentLessons.map(toApiLesson))
 
-    const lessonPath = /^\/students\/me\/lessons\/([^/]+)\/(pdf|material|material\/submission)$/.exec(path)
+    const lessonPath = /^\/students\/me\/lessons\/([^/]+)(?:\/(pdf|material|material\/submission))?$/.exec(path)
     if (!lessonPath) return json(404, { detail: 'Not Found' })
     const lessonId = decodeURIComponent(lessonPath[1])
     const lesson = currentLessons.find((l) => l.id === lessonId)
     if (!lesson) return json(404, { detail: 'Clase no encontrada' })
     const resource = lessonPath[2]
+
+    if (resource === undefined && method === 'GET') return json(200, toApiLesson(lesson))
 
     if (resource === 'pdf' && method === 'GET') {
       return new Response(PDF_CONTENT, {
@@ -105,7 +109,9 @@ function createFakeBackend({ lessons, materials, answerKeys }: StudentFixtures):
       if (!answersAreValid(material, answers)) return json(422, { detail: INVALID_ANSWERS_MESSAGE })
       const submission = gradeFakeSubmission(answers, answerKeys[lessonId])
       materialsById.set(lessonId, { ...material, submission })
-      currentLessons = currentLessons.map((l) => (l.id === lessonId ? { ...l, materialStatus: 'completed' } : l))
+      currentLessons = currentLessons.map((l) =>
+        l.id === lessonId ? { ...l, materialStatus: 'completed', score: submission.score } : l,
+      )
       return json(201, toApiSubmission(lessonId, submission))
     }
 

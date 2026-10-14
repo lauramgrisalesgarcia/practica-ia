@@ -4,6 +4,8 @@ import type { Answer, LessonPdf, StudentLessonSummary, StudentMaterial, StudentS
 export interface StudentService {
   // Clases ya realizadas, de la más reciente a la más antigua
   getMyLessons: () => Promise<StudentLessonSummary[]>
+  // Datos de una de sus clases (sin las notas del docente); falla con «Clase no encontrada»
+  getLesson: (lessonId: string) => Promise<StudentLessonSummary>
   // Falla con «Clase no encontrada» si no existe o es de otro estudiante
   downloadPdf: (lessonId: string) => Promise<LessonPdf>
   // Actividad sin las respuestas correctas, con el resultado si ya la resolvió.

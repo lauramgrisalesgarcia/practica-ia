@@ -13,6 +13,8 @@ export const MY_LESSONS: StudentLessonSummary[] = [
     context: 'Pedir comida y bebida en un restaurante y pedir la cuenta',
     materialStatus: 'pending',
     pdfFilename: 'restaurante-a2.pdf',
+    keywords: ['la carta', 'quisiera'],
+    score: null,
   },
   {
     id: '1e7d3b5a-8c2f-4a6e-9d0b-3f5a7c9e1b28',
@@ -22,6 +24,8 @@ export const MY_LESSONS: StudentLessonSummary[] = [
     context: 'Presentarse y hablar de la familia en una reunión',
     materialStatus: 'none',
     pdfFilename: 'presentarse-a2.pdf',
+    keywords: ['me llamo', 'mi familia'],
+    score: null,
   },
   {
     id: '6d8f0b2c-4e6a-4c8e-9f1b-3d5f7b9d1f24',
@@ -31,6 +35,8 @@ export const MY_LESSONS: StudentLessonSummary[] = [
     context: 'Comentar el tiempo que hace con un vecino',
     materialStatus: 'completed',
     pdfFilename: 'tiempo-a2.pdf',
+    keywords: ['hace calor', 'llover'],
+    score: 50,
   },
 ]
 
@@ -104,6 +110,14 @@ export function describeStudentServiceContract(createService: (fixtures: Student
       await expect(createService(DEFAULT_STUDENT_FIXTURES).getMyLessons()).resolves.toEqual(MY_LESSONS)
     })
 
+    it('devuelve una de sus clases', async () => {
+      await expect(createService(DEFAULT_STUDENT_FIXTURES).getLesson(MY_LESSONS[2].id)).resolves.toEqual(MY_LESSONS[2])
+    })
+
+    it('rechaza una clase inexistente o de otro estudiante', async () => {
+      await expect(createService(DEFAULT_STUDENT_FIXTURES).getLesson(UNKNOWN_LESSON_ID)).rejects.toThrow('Clase no encontrada')
+    })
+
     it('devuelve una lista vacía si el estudiante aún no tiene clases', async () => {
       await expect(createService({ lessons: [], materials: {}, answerKeys: {} }).getMyLessons()).resolves.toEqual([])
     })
@@ -174,7 +188,11 @@ export function describeStudentServiceContract(createService: (fixtures: Student
 
         await expect(service.getMaterial(LESSON_ID)).resolves.toMatchObject({ submission })
         const lessons = await service.getMyLessons()
-        expect(lessons.find((lesson) => lesson.id === LESSON_ID)?.materialStatus).toBe('completed')
+        expect(lessons.find((lesson) => lesson.id === LESSON_ID)).toMatchObject({
+          materialStatus: 'completed',
+          score: submission.score,
+        })
+        await expect(service.getLesson(LESSON_ID)).resolves.toMatchObject({ score: submission.score })
       })
 
       it('no permite resolverlo dos veces', async () => {
