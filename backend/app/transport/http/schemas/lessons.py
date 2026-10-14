@@ -39,6 +39,8 @@ class PdfRefOut(BaseModel):
 
 class StudentLessonSummaryOut(LessonSummaryOut):
     pdf: PdfRefOut
+    keywords: list[str] = Field(min_length=1)
+    score: float | None = Field(ge=0, le=100, description="Porcentaje de aciertos, o null si no está resuelto")
 
     @classmethod
     def from_entity(cls, summary: LessonSummary, *, pdf_url: str) -> "StudentLessonSummaryOut":
@@ -50,6 +52,8 @@ class StudentLessonSummaryOut(LessonSummaryOut):
             context=summary.context,
             material_status=summary.material_status,
             pdf=PdfRefOut(filename=summary.pdf_filename, url=pdf_url),
+            keywords=list(summary.keywords),
+            score=float(summary.score) if summary.score is not None else None,
         )
 
 

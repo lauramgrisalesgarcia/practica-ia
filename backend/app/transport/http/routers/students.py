@@ -4,6 +4,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, Response, status
 
 from app.composition import (
+    get_get_my_lesson,
     get_get_my_lesson_pdf,
     get_get_student_insights,
     get_get_my_material,
@@ -12,6 +13,7 @@ from app.composition import (
     get_submit_material,
 )
 from app.domain.entities import Answer
+from app.domain.use_cases.get_my_lesson import GetMyLesson
 from app.domain.use_cases.get_my_lesson_pdf import GetMyLessonPdf
 from app.domain.use_cases.get_my_material import GetMyMaterial
 from app.domain.use_cases.get_my_submission import GetMySubmission
@@ -44,6 +46,16 @@ def list_my_lessons(
         StudentLessonSummaryOut.from_entity(lesson, pdf_url=f"{router.prefix}/lessons/{lesson.id}/pdf")
         for lesson in list_lessons.execute(user)
     ]
+
+
+@router.get("/lessons/{lesson_id}", response_model=StudentLessonSummaryOut)
+def get_my_lesson(
+    user: CurrentUser,
+    get_lesson: Annotated[GetMyLesson, Depends(get_get_my_lesson)],
+    lesson_id: UUID,
+) -> StudentLessonSummaryOut:
+    lesson = get_lesson.execute(user, lesson_id)
+    return StudentLessonSummaryOut.from_entity(lesson, pdf_url=f"{router.prefix}/lessons/{lesson.id}/pdf")
 
 
 @router.get("/lessons/{lesson_id}/pdf", response_class=Response, responses=PDF_RESPONSES)

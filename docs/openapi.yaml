@@ -514,10 +514,46 @@ paths:
                     filename: restaurante-a2.pdf
                     url: /students/me/lessons/c4a9e2d7-5f1b-4c8e-a3d6-7b2e9f0c1d45/pdf
                   material_status: pending
+                  keywords: [la carta, quisiera, la cuenta]
+                  score: null
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Forbidden'
+
+  /students/me/lessons/{lesson_id}:
+    parameters:
+      - $ref: '#/components/parameters/LessonId'
+    get:
+      tags: [Estudiante]
+      operationId: getStudentLesson
+      summary: Detalle de una clase del estudiante
+      description: Tema, fecha, contexto, palabras clave, PDF, estado del material y nota. No incluye las notas del docente.
+      responses:
+        '200':
+          description: Detalle de la clase.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudentLessonDetail'
+              example:
+                id: 'c4a9e2d7-5f1b-4c8e-a3d6-7b2e9f0c1d45'
+                date: '2026-10-08T16:00:00Z'
+                duration_minutes: 60
+                topic: Pedir en un restaurante
+                context: Pedir comida y bebida en un restaurante y pedir la cuenta
+                material_status: completed
+                keywords: [la carta, quisiera, la cuenta]
+                score: 66.67
+                pdf:
+                  filename: restaurante-a2.pdf
+                  url: /students/me/lessons/c4a9e2d7-5f1b-4c8e-a3d6-7b2e9f0c1d45/pdf
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/LessonNotFound'
 
   /students/me/lessons/{lesson_id}/pdf:
     parameters:
@@ -1231,10 +1267,26 @@ components:
       allOf:
         - $ref: '#/components/schemas/LessonBase'
         - type: object
-          required: [pdf]
+          required: [pdf, keywords, score]
           properties:
             pdf:
               $ref: '#/components/schemas/PdfRef'
+            keywords:
+              type: array
+              minItems: 1
+              items:
+                type: string
+            score:
+              description: Porcentaje de aciertos del estudiante, o `null` si no ha resuelto el material.
+              anyOf:
+                - type: number
+                  minimum: 0
+                  maximum: 100
+                - type: 'null'
+
+    # Datos de la clase que ve el estudiante (sin las notas del docente): los mismos del historial
+    StudentLessonDetail:
+      $ref: '#/components/schemas/StudentLessonSummary'
 
     TeacherLessonDetail:
       allOf:

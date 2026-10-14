@@ -142,6 +142,9 @@ class InMemoryLessonRepository(LessonRepository):
     def exists_for_student(self, student_id: UUID, lesson_id: UUID) -> bool:
         return lesson_id in self._lessons_by_student.get(student_id, set())
 
+    def get_summary_for_student(self, student_id: UUID, lesson_id: UUID) -> LessonSummary | None:
+        return next((lesson for owner, lesson in self._lessons if owner == student_id and lesson.id == lesson_id), None)
+
     def get_pdf_for_student(self, student_id: UUID, lesson_id: UUID) -> LessonPdfLocation | None:
         location = self._pdfs_by_student.get(student_id, {}).get(lesson_id)
         return LessonPdfLocation(*location) if location else None

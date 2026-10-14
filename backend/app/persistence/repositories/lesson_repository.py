@@ -119,6 +119,19 @@ class SqlAlchemyLessonRepository(LessonRepository):
             native_language=profile.native_language,
         )
 
+    def get_summary_for_student(self, student_id: UUID, lesson_id: UUID) -> LessonSummary | None:
+        row = self._session.execute(
+            select(LessonModel, _MATERIAL_STATUS, MaterialSubmissionModel.score)
+            .join(UserModel, UserModel.id == LessonModel.student_id)
+            .outerjoin(ReinforcementMaterialModel, ReinforcementMaterialModel.lesson_id == LessonModel.id)
+            .outerjoin(MaterialSubmissionModel, MaterialSubmissionModel.material_id == ReinforcementMaterialModel.id)
+            .where(UserModel.public_id == student_id, LessonModel.public_id == lesson_id)
+        ).one_or_none()
+        if row is None:
+            return None
+        lesson, status, score = row
+        return to_lesson_summary(lesson, status, score)
+
     def exists_for_student(self, student_id: UUID, lesson_id: UUID) -> bool:
         found = self._session.scalar(
             select(LessonModel.id)

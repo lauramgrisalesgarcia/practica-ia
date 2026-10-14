@@ -72,6 +72,10 @@ class LessonRepository(Protocol):
         """True si la clase existe y es de ese estudiante."""
         ...
 
+    def get_summary_for_student(self, student_id: UUID, lesson_id: UUID) -> LessonSummary | None:
+        """Datos de la clase con su estado del material y nota, solo si es de ese estudiante."""
+        ...
+
     def get_pdf_for_student(self, student_id: UUID, lesson_id: UUID) -> LessonPdfLocation | None:
         """Ubicación del PDF de la clase, solo si es una clase de ese estudiante."""
         ...
