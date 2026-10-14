@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react'
+import { act, fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { Answer, StudentSubmission } from '@/domain/lesson'
 import { COMPLETED_MATERIAL, PENDING_MATERIAL } from '@/test/contracts/studentServiceContract'
@@ -31,7 +31,10 @@ describe('ExerciseStepper', () => {
 
     expect(screen.getByText('Pregunta 1 de 2')).toBeInTheDocument()
     expect(screen.getByRole('progressbar', { name: 'Progreso' })).toHaveAttribute('aria-valuenow', '1')
-    expect(screen.getByRole('region', { name: 'Pregunta 1' })).toHaveTextContent('Camarero, ¿nos trae ___, por favor?')
+    const question = screen.getByRole('region', { name: 'Pregunta 1' })
+    // El hueco se dibuja con una línea, sin «___» (quedarían dobles), y se anuncia a los lectores de pantalla
+    expect(question).not.toHaveTextContent('___')
+    expect(question).toHaveTextContent('Camarero, ¿nos trae espacio en blanco, por favor?')
     expect(within(options()).getAllByRole('option').map((option) => option.textContent)).toEqual([
       'la carta',
       'la cuenta',
@@ -58,6 +61,34 @@ describe('ExerciseStepper', () => {
     expect(screen.getByRole('button', { name: 'Siguiente' })).toBeEnabled()
   })
 
+  describe('rueda de opciones', () => {
+    beforeEach(() => vi.useFakeTimers())
+    afterEach(() => vi.useRealTimers())
+
+    it('un desplazamiento que no hace el estudiante (centrado inicial o ajuste) no elige opción', () => {
+      setup()
+      act(() => vi.advanceTimersByTime(1000))
+
+      fireEvent.scroll(options())
+      act(() => vi.advanceTimersByTime(500))
+
+      expect(within(options()).queryByRole('option', { selected: true })).not.toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'Siguiente' })).toBeDisabled()
+    })
+
+    it('al deslizar la rueda elige la opción que queda centrada', () => {
+      setup()
+      act(() => vi.advanceTimersByTime(1000))
+
+      fireEvent.wheel(options())
+      fireEvent.scroll(options())
+      act(() => vi.advanceTimersByTime(500))
+
+      expect(within(options()).getByRole('option', { selected: true })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'Siguiente' })).toBeEnabled()
+    })
+  })
+
   it('permite elegir con las flechas del teclado', async () => {
     const { user } = setup()
 
@@ -76,7 +107,7 @@ describe('ExerciseStepper', () => {
     await user.click(screen.getByRole('button', { name: 'Siguiente' }))
 
     expect(screen.getByText('Pregunta 2 de 2')).toBeInTheDocument()
-    expect(screen.getByRole('region', { name: 'Pregunta 2' })).toHaveTextContent('Buenas noches. ___ una mesa')
+    expect(screen.getByRole('region', { name: 'Pregunta 2' })).toHaveTextContent('Buenas noches. espacio en blanco una mesa')
     await user.click(screen.getByRole('button', { name: 'Anterior' }))
     expect(within(options()).getByRole('option', { name: 'la carta' })).toHaveAttribute('aria-selected', 'true')
   })

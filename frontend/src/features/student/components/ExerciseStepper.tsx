@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState, type KeyboardEvent } from 'react'
+import { useEffect, useId, useRef, useState, type KeyboardEvent, type PointerEvent } from 'react'
 import type { Answer, ExerciseForStudent, StudentSubmission } from '@/domain/lesson'
 
 interface ExerciseStepperProps {
@@ -108,10 +108,9 @@ function Sentence({ text, choice }: { text: string; choice: string | undefined }
   return (
     <>
       {before}
-      <span
-        className={`mx-1 inline-block min-w-20 border-b-2 border-ink/30 px-2 font-semibold ${choice ? 'text-ocean' : 'text-ink/30'}`}
-      >
-        {choice ?? BLANK}
+      {/* El hueco es la línea: sin «___», que se vería doble */}
+      <span className="mx-1 inline-block h-[1.4em] min-w-20 border-b-2 border-ink/30 px-2 align-bottom font-semibold text-ocean">
+        {choice ?? <span className="sr-only">espacio en blanco</span>}
       </span>
       {rest.join(BLANK)}
     </>
@@ -154,11 +153,12 @@ function OptionWheel({ options, value, onChange }: OptionWheelProps) {
     }, 600)
   }
 
-  // Al volver a una pregunta respondida, centra su respuesta (solo al montar la rueda de cada pregunta)
-  const initialIndex = useRef(selectedIndex)
+  // Al montar la rueda de cada pregunta centra su respuesta o, si aún no tiene, la opción del medio,
+  // para que se vean todas las opciones (sin elegir ninguna)
+  const initialIndex = useRef(selectedIndex >= 0 ? selectedIndex : Math.floor((options.length - 1) / 2))
   useEffect(() => {
     const list = listRef.current
-    if (list && initialIndex.current >= 0) {
+    if (list && initialIndex.current > 0) {
       markScrollingByCode()
       list.scrollTop = initialIndex.current * ITEM_HEIGHT
     }
@@ -166,7 +166,48 @@ function OptionWheel({ options, value, onChange }: OptionWheelProps) {
     return () => window.clearTimeout(timer.current)
   }, [])
 
+  // Arrastre con el ratón (en pantallas táctiles la rueda se desliza de forma nativa)
+  const drag = useRef<{ startY: number; startTop: number; moved: boolean } | null>(null)
+  const [isDragging, setIsDragging] = useState(false)
+  // La animación que invita a arrastrar se detiene en cuanto el estudiante usa la rueda.
+  // Solo un desplazamiento suyo elige opción: el centrado inicial y los ajustes del snap no.
+  const [hasInteracted, setHasInteracted] = useState(selectedIndex >= 0)
+  const userMovedWheel = useRef(false)
+
+  function markUserInteraction() {
+    userMovedWheel.current = true
+    setHasInteracted(true)
+  }
+
+  function handlePointerDown(event: PointerEvent<HTMLUListElement>) {
+    markUserInteraction()
+    const list = listRef.current
+    if (event.pointerType !== 'mouse' || !list) return
+    drag.current = { startY: event.clientY, startTop: list.scrollTop, moved: false }
+    setIsDragging(true)
+  }
+
+  function handlePointerMove(event: PointerEvent<HTMLUListElement>) {
+    const list = listRef.current
+    if (!drag.current || !list) return
+    const deltaY = event.clientY - drag.current.startY
+    if (Math.abs(deltaY) > 3) drag.current.moved = true
+    list.scrollTop = drag.current.startTop - deltaY
+  }
+
+  function endDrag() {
+    if (!drag.current) return
+    setIsDragging(false)
+    // Al soltar vuelve el ajuste a la opción centrada, que queda elegida al terminar el desplazamiento
+    window.setTimeout(() => {
+      drag.current = null
+    })
+  }
+
   function select(index: number) {
+    // Un arrastre no es un clic sobre la opción
+    if (drag.current?.moved) return
+    markUserInteraction()
     onChange(options[index])
     scrollToIndex(index, 'smooth')
   }
@@ -176,7 +217,7 @@ function OptionWheel({ options, value, onChange }: OptionWheelProps) {
     settleTimer.current = window.setTimeout(() => {
       const list = listRef.current
       // Al terminar un desplazamiento hecho por código, la respuesta ya está elegida
-      if (isScrollingByCode.current || !list) {
+      if (isScrollingByCode.current || !list || !userMovedWheel.current) {
         isScrollingByCode.current = false
         return
       }
@@ -189,6 +230,7 @@ function OptionWheel({ options, value, onChange }: OptionWheelProps) {
     if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return
     event.preventDefault()
     const step = event.key === 'ArrowDown' ? 1 : -1
+    markUserInteraction()
     const next = selectedIndex === -1 ? 0 : Math.min(options.length - 1, Math.max(0, selectedIndex + step))
     select(next)
   }
@@ -203,7 +245,15 @@ function OptionWheel({ options, value, onChange }: OptionWheelProps) {
         aria-activedescendant={selectedIndex >= 0 ? `${id}-option-${selectedIndex}` : undefined}
         onKeyDown={handleKeyDown}
         onScroll={handleScroll}
-        className="h-[168px] snap-y snap-mandatory overflow-y-auto overscroll-contain rounded-2xl py-14 outline-none [scrollbar-width:none] focus-visible:ring-2 focus-visible:ring-teal"
+        onPointerDown={handlePointerDown}
+        onWheel={markUserInteraction}
+        onTouchStart={markUserInteraction}
+        onPointerMove={handlePointerMove}
+        onPointerUp={endDrag}
+        onPointerLeave={endDrag}
+        className={`h-[168px] select-none overflow-y-auto overscroll-contain rounded-2xl py-14 outline-none [scrollbar-width:none] focus-visible:ring-2 focus-visible:ring-teal ${
+          isDragging ? 'cursor-grabbing' : 'snap-y snap-mandatory cursor-grab'
+        } ${hasInteracted ? '' : 'motion-safe:[&>li]:animate-[wheel-hint_1.8s_ease-in-out_0.4s_2]'}`}
       >
         {options.map((option, index) => {
           const isSelected = index === selectedIndex
@@ -217,7 +267,7 @@ function OptionWheel({ options, value, onChange }: OptionWheelProps) {
               className={`mx-1 flex h-14 cursor-pointer snap-center items-center justify-center rounded-2xl border-2 text-xl transition-colors ${
                 isSelected
                   ? 'border-teal bg-mist font-semibold text-ocean'
-                  : 'border-transparent text-ocean/50 hover:text-ocean'
+                  : 'border-transparent text-ocean/60 hover:text-ocean'
               }`}
             >
               {option}
@@ -225,11 +275,16 @@ function OptionWheel({ options, value, onChange }: OptionWheelProps) {
           )
         })}
       </ul>
-      {/* Degradados que dan sensación de rueda */}
-      <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-10 rounded-t-2xl bg-gradient-to-b from-white to-transparent" />
-      <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 h-10 rounded-b-2xl bg-gradient-to-t from-white to-transparent" />
+      {/* Degradados suaves que dan sensación de rueda sin ocultar las opciones de los extremos */}
+      <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-5 rounded-t-2xl bg-gradient-to-b from-white/80 to-transparent" />
+      <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 h-5 rounded-b-2xl bg-gradient-to-t from-white/80 to-transparent" />
       {selectedIndex === -1 && (
-        <p className="mt-2 text-center text-xs text-ink/70">Desliza o toca una opción para elegirla</p>
+        <p className="mt-2 flex items-center justify-center gap-1.5 text-xs text-ink/70">
+          <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 3v18M8 7l4-4 4 4M8 17l4 4 4-4" />
+          </svg>
+          Arrastra la rueda o toca una opción para elegirla
+        </p>
       )}
     </div>
   )
