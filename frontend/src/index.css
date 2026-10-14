@@ -12,3 +12,22 @@
 body {
   @apply bg-mist text-ink antialiased;
 }
+
+/* Todo lo que se puede pulsar muestra la mano (Tailwind v4 deja el cursor por defecto en los botones) */
+@layer base {
+  button:not(:disabled),
+  [role='button']:not([aria-disabled='true']) {
+    cursor: pointer;
+  }
+}
+
+/* Icono de mano que invita a arrastrar la rueda de opciones (la rueda no se mueve sola) */
+@keyframes drag-hint {
+  0%,
+  100% {
+    transform: translateY(3px);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}

@@ -38,22 +38,31 @@ describe('StudentMaterialPanel', () => {
     expect(loadMaterial).toHaveBeenCalledWith(PENDING_MATERIAL.lessonId)
   })
 
-  it('muestra la actividad pendiente para resolverla', async () => {
-    setup()
+  it('presenta la actividad pendiente y la muestra solo al pulsar «Resolver refuerzo»', async () => {
+    const { user } = setup()
 
     await screen.findByRole('heading', { level: 2, name: 'En el restaurante' })
     expect(screen.getByText('Completa cada frase con la opción correcta.')).toBeInTheDocument()
-    expect(screen.getAllByRole('radiogroup')).toHaveLength(2)
-    expect(screen.getByRole('button', { name: 'Enviar respuestas' })).toBeInTheDocument()
+    expect(screen.getByText('2 preguntas')).toBeInTheDocument()
+    const start = screen.getByRole('button', { name: 'Resolver refuerzo' })
+    expect(start).toHaveAttribute('aria-expanded', 'false')
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument()
+
+    await user.click(start)
+
+    expect(screen.getByText('Pregunta 1 de 2')).toBeInTheDocument()
+    expect(screen.getByRole('listbox', { name: 'Opciones' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Resolver refuerzo' })).not.toBeInTheDocument()
   })
 
   it('muestra el resultado al enviar las respuestas, sin recargar', async () => {
     const { user, submitMaterial, loadMaterial } = setup()
     await screen.findByRole('heading', { level: 2, name: 'En el restaurante' })
 
-    const [first, second] = screen.getAllByRole('radiogroup')
-    await user.click(within(first).getByRole('radio', { name: 'la carta' }))
-    await user.click(within(second).getByRole('radio', { name: 'Quiero que' }))
+    await user.click(screen.getByRole('button', { name: 'Resolver refuerzo' }))
+    await user.click(screen.getByRole('option', { name: 'la carta' }))
+    await user.click(screen.getByRole('button', { name: 'Siguiente' }))
+    await user.click(screen.getByRole('option', { name: 'Quiero que' }))
     await user.click(screen.getByRole('button', { name: 'Enviar respuestas' }))
 
     const result = await screen.findByRole('region', { name: 'Tu resultado' })
@@ -70,8 +79,8 @@ describe('StudentMaterialPanel', () => {
     setup(vi.fn().mockResolvedValue(COMPLETED_MATERIAL))
 
     await screen.findByRole('region', { name: 'Tu resultado' })
-    expect(screen.queryByRole('radiogroup')).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Enviar respuestas' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Resolver refuerzo' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument()
   })
 
   it('no muestra resultado mientras el material está pendiente', async () => {
