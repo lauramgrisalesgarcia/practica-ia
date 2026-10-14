@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, Response, status
 
 from app.composition import (
     get_generate_material,
+    get_get_teacher_insights,
     get_get_teacher_lesson,
     get_get_teacher_lesson_pdf,
     get_get_teacher_student,
@@ -13,6 +14,7 @@ from app.composition import (
 )
 from app.domain.entities import LessonSummary, Student
 from app.domain.use_cases.generate_material import GenerateMaterial
+from app.domain.use_cases.get_teacher_insights import GetTeacherInsights
 from app.domain.use_cases.get_teacher_lesson import GetTeacherLesson
 from app.domain.use_cases.get_teacher_lesson_pdf import GetTeacherLessonPdf
 from app.domain.use_cases.get_teacher_student import GetTeacherStudent
@@ -20,11 +22,20 @@ from app.domain.use_cases.list_student_lessons import ListStudentLessons
 from app.domain.use_cases.list_teacher_students import ListTeacherStudents
 from app.transport.http.dependencies import CurrentUser
 from app.transport.http.files import PDF_RESPONSES, pdf_response
+from app.transport.http.schemas.insights import TeacherInsightsOut
 from app.transport.http.schemas.lessons import LessonSummaryOut, TeacherLessonDetailOut
 from app.transport.http.schemas.materials import GeneratedMaterialOut, GenerateMaterialIn
 from app.transport.http.schemas.students import StudentDetailOut, StudentOut
 
 router = APIRouter(prefix="/teachers/me", tags=["Docente"])
+
+
+@router.get("/insights", response_model=TeacherInsightsOut)
+def get_my_insights(
+    user: CurrentUser,
+    get_insights: Annotated[GetTeacherInsights, Depends(get_get_teacher_insights)],
+) -> TeacherInsightsOut:
+    return TeacherInsightsOut.from_entity(get_insights.execute(user))
 
 
 @router.get("/students", response_model=list[StudentOut])

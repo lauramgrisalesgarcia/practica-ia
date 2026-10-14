@@ -7,6 +7,7 @@ from uuid import UUID
 
 from app.domain.entities import (
     GenerationContext,
+    InsightLesson,
     LessonContext,
     LessonDetail,
     LessonPdfLocation,
@@ -76,6 +77,12 @@ class LessonRepository(Protocol):
 
     def get_generation_context_for_teacher(self, teacher_id: UUID, lesson_id: UUID) -> GenerationContext | None:
         """Datos para generar material, solo si la clase es de un estudiante asignado a ese docente."""
+        ...
+
+
+class TeacherInsightsRepository(Protocol):
+    def list_completed_by_teacher(self, teacher_id: UUID, until: datetime) -> list[InsightLesson]:
+        """Clases de los estudiantes del docente con fecha anterior o igual a `until`."""
         ...
 
 

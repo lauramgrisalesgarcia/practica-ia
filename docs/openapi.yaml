@@ -302,6 +302,57 @@ paths:
         '404':
           $ref: '#/components/responses/LessonNotFound'
 
+  /teachers/me/insights:
+    get:
+      tags: [Docente]
+      operationId: getTeacherInsights
+      summary: Indicadores del panel del docente
+      description: |
+        Resumen de la actividad del docente con sus estudiantes. Solo cuenta clases ya realizadas.
+        Meses y semanas se calculan en UTC; las semanas empiezan en lunes.
+      responses:
+        '200':
+          description: Indicadores del docente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TeacherInsights'
+              example:
+                lessons_this_month: 3
+                pending_materials: 1
+                material_status: { completed: 2, pending: 1, none: 1 }
+                weekly_lessons:
+                  - { week_start: '2026-08-24', count: 0 }
+                  - { week_start: '2026-08-31', count: 1 }
+                  - { week_start: '2026-09-07', count: 0 }
+                  - { week_start: '2026-09-14', count: 0 }
+                  - { week_start: '2026-09-21', count: 0 }
+                  - { week_start: '2026-09-28', count: 1 }
+                  - { week_start: '2026-10-05', count: 1 }
+                  - { week_start: '2026-10-12', count: 1 }
+                recent_activity:
+                  - type: submission
+                    date: '2026-10-12T18:05:00Z'
+                    lesson_id: 'c4a9e2d7-5f1b-4c8e-a3d6-7b2e9f0c1d45'
+                    student_name: Emma Schmidt
+                    topic: Pedir en un restaurante
+                    score: 66.67
+                  - type: lesson
+                    date: '2026-10-08T16:00:00Z'
+                    lesson_id: 'c4a9e2d7-5f1b-4c8e-a3d6-7b2e9f0c1d45'
+                    student_name: Emma Schmidt
+                    topic: Pedir en un restaurante
+                    score: null
+                calendar:
+                  - lesson_id: 'c4a9e2d7-5f1b-4c8e-a3d6-7b2e9f0c1d45'
+                    start: '2026-10-08T16:00:00Z'
+                    student_name: Emma Schmidt
+                    topic: Pedir en un restaurante
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
   /teachers/me/lessons/{lesson_id}/material:
     parameters:
       - $ref: '#/components/parameters/LessonId'
@@ -761,6 +812,114 @@ components:
       type: string
       description: Tipo de actividad. En el alcance del proyecto solo existe *completar la frase*.
       enum: [complete_sentence]
+
+    InsightActivityType:
+      type: string
+      description: |
+        - `lesson`: se realizó una clase.
+        - `material`: se generó material de refuerzo.
+        - `submission`: el estudiante resolvió el material.
+      enum: [lesson, material, submission]
+
+    WeeklyCount:
+      type: object
+      required: [week_start, count]
+      properties:
+        week_start:
+          type: string
+          format: date
+          description: Lunes de la semana (UTC).
+        count:
+          type: integer
+          minimum: 0
+
+    MaterialStatusCounts:
+      type: object
+      required: [completed, pending, none]
+      properties:
+        completed:
+          type: integer
+          minimum: 0
+        pending:
+          type: integer
+          minimum: 0
+        none:
+          type: integer
+          minimum: 0
+
+    RecentActivity:
+      type: object
+      required: [type, date, lesson_id, student_name, topic, score]
+      properties:
+        type:
+          $ref: '#/components/schemas/InsightActivityType'
+        date:
+          type: string
+          format: date-time
+        lesson_id:
+          type: string
+          format: uuid
+        student_name:
+          type: string
+          examples: [Emma Schmidt]
+        topic:
+          type: string
+        score:
+          anyOf:
+            - type: number
+              minimum: 0
+              maximum: 100
+            - type: 'null'
+          description: Porcentaje de aciertos; solo en las actividades `submission`.
+
+    CalendarLesson:
+      type: object
+      required: [lesson_id, start, student_name, topic]
+      properties:
+        lesson_id:
+          type: string
+          format: uuid
+        start:
+          type: string
+          format: date-time
+        student_name:
+          type: string
+        topic:
+          type: string
+
+    TeacherInsights:
+      type: object
+      required:
+        [lessons_this_month, pending_materials, material_status, weekly_lessons, recent_activity, calendar]
+      properties:
+        lessons_this_month:
+          type: integer
+          minimum: 0
+          description: Clases realizadas en el mes actual (UTC).
+        pending_materials:
+          type: integer
+          minimum: 0
+          description: Clases con material generado y sin resolver.
+        material_status:
+          $ref: '#/components/schemas/MaterialStatusCounts'
+        weekly_lessons:
+          type: array
+          description: Clases por semana de las últimas 8 semanas (incluida la actual), en orden cronológico.
+          minItems: 8
+          maxItems: 8
+          items:
+            $ref: '#/components/schemas/WeeklyCount'
+        recent_activity:
+          type: array
+          description: Las 10 actividades más recientes, de la más reciente a la más antigua.
+          maxItems: 10
+          items:
+            $ref: '#/components/schemas/RecentActivity'
+        calendar:
+          type: array
+          description: Clases realizadas en los últimos 6 meses (incluido el actual), en orden cronológico.
+          items:
+            $ref: '#/components/schemas/CalendarLesson'
 
     LoginRequest:
       type: object

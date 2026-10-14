@@ -2,11 +2,13 @@
 
 from collections.abc import Mapping
 from datetime import UTC, datetime
+from decimal import Decimal
 from typing import Any
 from uuid import UUID, uuid4
 
 from app.domain.entities import (
     GenerationContext,
+    InsightLesson,
     LessonContext,
     LessonDetail,
     LessonPdfLocation,
@@ -28,6 +30,7 @@ from app.domain.ports import (
     MaterialRepository,
     PasswordHasher,
     StudentRepository,
+    TeacherInsightsRepository,
     UserRepository,
 )
 
@@ -254,3 +257,34 @@ def make_lesson_detail(*, student: Student, date: datetime, lesson_id: UUID | No
         material=None,
         submission=None,
     )
+
+
+def make_insight_lesson(
+    *,
+    date: datetime,
+    lesson_id: UUID | None = None,
+    student_name: str = "Emma Schmidt",
+    topic: str = "Pedir en un restaurante",
+    material_generated_at: datetime | None = None,
+    submitted_at: datetime | None = None,
+    score: Decimal | None = None,
+) -> InsightLesson:
+    return InsightLesson(
+        id=lesson_id or uuid4(),
+        date=date,
+        student_name=student_name,
+        topic=topic,
+        material_generated_at=material_generated_at,
+        submitted_at=submitted_at,
+        score=score,
+    )
+
+
+class InMemoryTeacherInsightsRepository(TeacherInsightsRepository):
+    def __init__(self, lessons_by_teacher: dict[UUID, list[InsightLesson]] | None = None) -> None:
+        self._lessons = lessons_by_teacher or {}
+        self.requested: list[tuple[UUID, datetime]] = []
+
+    def list_completed_by_teacher(self, teacher_id: UUID, until: datetime) -> list[InsightLesson]:
+        self.requested.append((teacher_id, until))
+        return [lesson for lesson in self._lessons.get(teacher_id, []) if lesson.date <= until]
