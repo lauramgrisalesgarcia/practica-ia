@@ -53,7 +53,7 @@ describe('StudentInsightsPanel', () => {
   it('muestra la actividad reciente con una etiqueta de tipo', async () => {
     setup()
 
-    const items = within(await findRegion('Actividad reciente')).getAllByRole('listitem')
+    const items = within(await screen.findByRole('complementary', { name: 'Actividad reciente' })).getAllByRole('listitem')
     expect(items[0]).toHaveTextContent('Refuerzo resuelto')
     expect(items[0]).toHaveTextContent('Resolviste «Pedir en un restaurante» con un 67 %')
     expect(items[1]).toHaveTextContent('Clase')
@@ -78,10 +78,12 @@ describe('StudentInsightsPanel', () => {
     expect(rows.map((row) => row.textContent)).toEqual(['12 oct67 %'])
   })
 
-  it('enlaza con el historial de clases', async () => {
+  it('muestra la actividad reciente en una columna lateral, como «Mis alumnos» del docente', async () => {
     setup()
 
-    expect(await screen.findByRole('link', { name: 'Ver historial de clases' })).toHaveAttribute('href', '/estudiante/clases')
+    const aside = await screen.findByRole('complementary', { name: 'Actividad reciente' })
+    expect(within(aside).getAllByRole('listitem')).toHaveLength(STUDENT_INSIGHTS.recentActivity.length)
+    expect(screen.queryByRole('link', { name: /historial de clases/i })).not.toBeInTheDocument()
   })
 
   it('explica cada sección vacía si el estudiante aún no tiene actividad', async () => {
@@ -89,7 +91,7 @@ describe('StudentInsightsPanel', () => {
 
     expect(await findRegion('Nota media')).toHaveTextContent('Sin refuerzos resueltos')
     expect(await findRegion('Refuerzos pendientes')).toHaveTextContent('No tienes refuerzos pendientes.')
-    expect(await findRegion('Actividad reciente')).toHaveTextContent('Aún no hay actividad.')
+    expect(await screen.findByRole('complementary', { name: 'Actividad reciente' })).toHaveTextContent('Aún no hay actividad.')
     expect(await findRegion('Evolución de tu nota')).toHaveTextContent('Aún no has resuelto ningún refuerzo.')
   })
 
