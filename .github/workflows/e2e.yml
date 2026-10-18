@@ -1,0 +1,82 @@
+name: E2E
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  e2e:
+    name: Flujos completos con Playwright
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    services:
+      # BD efímera con autenticación "trust": no hace falta ninguna contraseña (ni escrita ni como secreto).
+      # prepare_db.py crea practica_ia_e2e, migra y carga el seed.
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: practica
+          POSTGRES_DB: practica_ia
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U practica -d practica_ia"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 20
+
+    env:
+      E2E_DATABASE_URL: postgresql+psycopg://practica@127.0.0.1:5432/practica_ia_e2e
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          cache-dependency-glob: backend/uv.lock
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: |
+            frontend/package-lock.json
+            e2e/package-lock.json
+
+      - name: Instalar dependencias
+        run: |
+          (cd backend && uv sync --locked)
+          (cd frontend && npm ci)
+          (cd e2e && npm ci && npx playwright install --with-deps chromium)
+
+      - name: Comprobar tipos de los tests E2E
+        working-directory: e2e
+        run: npm run typecheck
+
+      - name: Tests E2E
+        working-directory: e2e
+        run: |
+          # Contraseña de los usuarios del seed solo para esta ejecución: aleatoria y nunca impresa
+          SEED_USER_PASSWORD="$(openssl rand -base64 24)"
+          echo "::add-mask::$SEED_USER_PASSWORD"
+          export SEED_USER_PASSWORD
+          npx playwright test
+
+      - name: Publicar el informe si fallan
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: e2e/playwright-report
+          retention-days: 7

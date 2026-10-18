@@ -17,7 +17,7 @@ Guía para Claude Code al trabajar en este repositorio.
 - **pytest** + `TestClient` para tests del backend
 
 ### End-to-end
-- **Playwright** para tests E2E que cubren flujos completos frontend ↔ backend
+- **Playwright** para tests E2E que cubren flujos completos frontend ↔ backend (`e2e/`, con su propio `package.json`)
 
 ## Metodología: TDD obligatorio
 
@@ -132,7 +132,8 @@ Todo el código, frontend y backend, respeta SOLID. Antes de dar un cambio por t
 - Las páginas terminan en `Page` (`LessonDetailPage`) y viven en la raíz de su feature con su test.
 - Textos de la interfaz en español; fechas y números con `Intl` en `es` (`shared/i18n`).
 - Python con type hints y modelos Pydantic para request/response.
-- Los tests viven junto al código (`*.test.ts(x)`) en frontend y en `tests/` en backend; E2E en `e2e/`.
+- Los tests viven junto al código (`*.test.ts(x)`) en frontend y en `tests/` en backend; E2E en `e2e/tests/`.
+- **E2E**: `playwright.config.ts` arranca su propia API (puerto 8011) y su propio front (5180) sobre la BD `practica_ia_e2e`, que `e2e/scripts/prepare_db.py` vacía, migra y llena con el seed en cada ejecución (solo actúa sobre una BD cuyo nombre termina en `_e2e`). Inician sesión con los usuarios del seed: la contraseña sale de `SEED_USER_PASSWORD` (entorno o `backend/.env`) y nunca se escribe en los tests; `JWT_SECRET` es aleatorio en cada ejecución. Los flujos que dependen entre sí van en `test.describe.serial`. En CI se ejecutan en `.github/workflows/e2e.yml`.
 - La BD de tests es independiente de la de desarrollo.
 
 ## Comandos
@@ -166,6 +167,8 @@ uv run python -m app.persistence.seed   # datos de prueba (contraseña: SEED_USE
 uv run alembic revision --autogenerate -m "descripción"
 uv run python -m migrations.export_schema   # regenera migrations/001-esquema-base-de-datos.sql tras cada migración
 
-# E2E
+# E2E (desde e2e/; necesita la BD de Docker en marcha)
+npm install
+npx playwright install chromium   # una vez
 npx playwright test
 ```
