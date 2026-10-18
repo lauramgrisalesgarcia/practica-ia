@@ -2,6 +2,8 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { LoginForm } from './LoginForm'
 
+const TEACHER_EMAIL = 'docente@colegio.edu'
+
 const VALID_PASSWORD = 'Secreto#123'
 
 function setup(onSubmit = vi.fn().mockResolvedValue(undefined)) {
@@ -55,12 +57,12 @@ describe('LoginForm', () => {
   it('envía el correo y la contraseña cuando los datos son válidos', async () => {
     const { user, onSubmit, emailInput, passwordInput, submitButton } = setup()
 
-    await user.type(emailInput, 'docente@colegio.edu')
+    await user.type(emailInput, TEACHER_EMAIL)
     await user.type(passwordInput, VALID_PASSWORD)
     await user.click(submitButton)
 
     expect(onSubmit).toHaveBeenCalledOnce()
-    expect(onSubmit).toHaveBeenCalledWith({ email: 'docente@colegio.edu', password: VALID_PASSWORD })
+    expect(onSubmit).toHaveBeenCalledWith({ email: TEACHER_EMAIL, password: VALID_PASSWORD })
   })
 
   it('deshabilita el botón mientras se procesa el inicio de sesión', async () => {
@@ -91,10 +93,10 @@ describe('LoginForm', () => {
   it('no aplica reglas de complejidad a la contraseña al iniciar sesión', async () => {
     const { user, onSubmit, emailInput, passwordInput, submitButton } = setup()
 
-    await user.type(emailInput, 'docente@colegio.edu')
+    await user.type(emailInput, TEACHER_EMAIL)
     await user.type(passwordInput, 'abc')
     await user.click(submitButton)
 
-    expect(onSubmit).toHaveBeenCalledWith({ email: 'docente@colegio.edu', password: 'abc' })
+    expect(onSubmit).toHaveBeenCalledWith({ email: TEACHER_EMAIL, password: 'abc' })
   })
 })

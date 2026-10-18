@@ -8,6 +8,8 @@ import { createMockStudentService } from '@/features/student/services/mockStuden
 import { createMockTeacherService } from '@/features/teacher/services/mockTeacherService'
 import { TEACHER_INSIGHTS } from './devTeacherInsights'
 
+const COMPLETE_SENTENCE_INSTRUCTIONS = 'Completa cada frase con la opción correcta.'
+
 // Datos de prueba para desarrollo local (no son credenciales reales)
 export const devAuthService = createMockAuthService({
   users: [
@@ -73,7 +75,7 @@ const devLessons: LessonDetail[] = [
       generatedAt: '2026-10-09T10:30:00Z',
       activityType: 'complete_sentence',
       title: 'En el restaurante',
-      instructions: 'Completa cada frase con la opción correcta.',
+      instructions: COMPLETE_SENTENCE_INSTRUCTIONS,
       exercises: [
         {
           id: 1,
@@ -120,7 +122,7 @@ const devLessons: LessonDetail[] = [
       generatedAt: '2026-10-07T09:00:00Z',
       activityType: 'complete_sentence',
       title: 'Mi fin de semana',
-      instructions: 'Completa cada frase con la opción correcta.',
+      instructions: COMPLETE_SENTENCE_INSTRUCTIONS,
       exercises: [
         {
           id: 1,
@@ -147,7 +149,7 @@ const devLessons: LessonDetail[] = [
       generatedAt: '2026-10-11T09:00:00Z',
       activityType: 'complete_sentence',
       title: 'En la tienda',
-      instructions: 'Completa cada frase con la opción correcta.',
+      instructions: COMPLETE_SENTENCE_INSTRUCTIONS,
       exercises: [
         { id: 1, sentence: 'Perdone, ¿___ cuesta esta camisa?', options: ['cuánto', 'cuánta', 'cuántos'], correctOption: 'cuánto' },
         { id: 2, sentence: '¿Puedo ___ estos pantalones?', options: ['probarme', 'probar me', 'pruebo'], correctOption: 'probarme' },

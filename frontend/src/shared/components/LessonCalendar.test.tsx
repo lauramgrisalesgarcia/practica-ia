@@ -2,6 +2,8 @@ import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { LessonCalendar, type CalendarEntry } from './LessonCalendar'
 
+const OCTOBER_8 = '8 de octubre, 1 clase'
+
 const LESSONS: CalendarEntry[] = [
   { id: 'c1', start: '2026-10-08T16:00:00Z', label: 'Emma Schmidt · Pedir en un restaurante' },
   { id: 'c2', start: '2026-10-13T15:00:00Z', label: 'John Miller · Hablar del tiempo' },
@@ -36,7 +38,7 @@ describe('LessonCalendar', () => {
     setup()
 
     expect(screen.getByRole('button', { name: '13 de octubre, 2 clases' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: '8 de octubre, 1 clase' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: OCTOBER_8 })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: '9 de octubre' })).toBeInTheDocument()
   })
 
@@ -53,9 +55,9 @@ describe('LessonCalendar', () => {
   it('muestra las clases del día elegido', async () => {
     const user = setup()
 
-    await user.click(screen.getByRole('button', { name: '8 de octubre, 1 clase' }))
+    await user.click(screen.getByRole('button', { name: OCTOBER_8 }))
 
-    expect(screen.getByRole('button', { name: '8 de octubre, 1 clase' })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('button', { name: OCTOBER_8 })).toHaveAttribute('aria-pressed', 'true')
     const day = screen.getByRole('region', { name: 'Clases del 8 de octubre' })
     expect(within(day).getByRole('listitem')).toHaveTextContent('Emma Schmidt · Pedir en un restaurante')
   })

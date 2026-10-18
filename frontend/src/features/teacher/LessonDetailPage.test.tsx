@@ -5,6 +5,12 @@ import type { LessonDetail, LessonPdf, MaterialRequest, TeacherMaterial } from '
 import { INTRODUCTIONS_LESSON, RESTAURANT_LESSON } from '@/test/contracts/teacherLessonServiceContract'
 import { LessonDetailPage } from './LessonDetailPage'
 
+const MATERIAL_SECTION = 'Material de refuerzo'
+const STUDENT_RESULT = 'Resultado del alumno'
+const OPEN_MATERIAL_FORM = 'Generar material de refuerzo'
+const GENERATE_MATERIAL = 'Generar material'
+const ARIA_EXPANDED = 'aria-expanded'
+
 const PDF: LessonPdf = { blob: new Blob(['%PDF']), filename: 'restaurante-a2.pdf' }
 
 interface SetupOptions {
@@ -87,7 +93,7 @@ describe('LessonDetailPage', () => {
   it('muestra el material con la respuesta correcta de cada ejercicio', async () => {
     setup()
 
-    const material = await screen.findByRole('region', { name: 'Material de refuerzo' })
+    const material = await screen.findByRole('region', { name: MATERIAL_SECTION })
     expect(within(material).getByRole('heading', { name: 'En el restaurante' })).toBeInTheDocument()
     expect(material).toHaveTextContent('Completa cada frase con la opción correcta.')
     const [exercise] = within(material).getAllByRole('listitem')
@@ -100,7 +106,7 @@ describe('LessonDetailPage', () => {
   it('presenta cada pregunta en su propia tarjeta numerada', async () => {
     setup()
 
-    const material = await screen.findByRole('region', { name: 'Material de refuerzo' })
+    const material = await screen.findByRole('region', { name: MATERIAL_SECTION })
     const questions = within(material).getAllByRole('heading', { level: 3 })
     expect(questions.map((heading) => heading.textContent)).toEqual(
       (RESTAURANT_LESSON.material as TeacherMaterial).exercises.map((_, index) => `Pregunta ${index + 1}`),
@@ -110,7 +116,7 @@ describe('LessonDetailPage', () => {
   it('marca la opción correcta con un texto, no solo con el color', async () => {
     setup()
 
-    const material = await screen.findByRole('region', { name: 'Material de refuerzo' })
+    const material = await screen.findByRole('region', { name: MATERIAL_SECTION })
     const [exercise] = within(material).getAllByRole('listitem')
     expect(within(exercise).getAllByText('Correcta')).toHaveLength(1)
   })
@@ -118,7 +124,7 @@ describe('LessonDetailPage', () => {
   it('muestra el resultado del alumno si ya resolvió el material', async () => {
     setup()
 
-    const result = await screen.findByRole('region', { name: 'Resultado del alumno' })
+    const result = await screen.findByRole('region', { name: STUDENT_RESULT })
     expect(result).toHaveTextContent('100 %')
     expect(result).toHaveTextContent('1 correctas')
     expect(result).toHaveTextContent('0 incorrectas')
@@ -127,7 +133,7 @@ describe('LessonDetailPage', () => {
   it('muestra el resultado del alumno al principio, antes de los datos de la clase', async () => {
     setup()
 
-    const result = await screen.findByRole('region', { name: 'Resultado del alumno' })
+    const result = await screen.findByRole('region', { name: STUDENT_RESULT })
     const heading = screen.getByRole('heading', { level: 1 })
     expect(result.compareDocumentPosition(heading) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   })
@@ -135,14 +141,14 @@ describe('LessonDetailPage', () => {
   it('muestra la nota del alumno con formato español', async () => {
     setup({ lesson: { ...RESTAURANT_LESSON, submission: { submittedAt: '2026-10-12T18:05:00Z', correctCount: 2, incorrectCount: 1, score: 66.67 } } })
 
-    expect(await screen.findByRole('region', { name: 'Resultado del alumno' })).toHaveTextContent('66,67 %')
+    expect(await screen.findByRole('region', { name: STUDENT_RESULT })).toHaveTextContent('66,67 %')
   })
 
   it('indica que el alumno aún no ha resuelto el material', async () => {
     setup({ lesson: { ...RESTAURANT_LESSON, materialStatus: 'pending', submission: null } })
 
     expect(await screen.findByText(/aún no ha resuelto el material/i)).toBeInTheDocument()
-    expect(screen.queryByRole('region', { name: 'Resultado del alumno' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('region', { name: STUDENT_RESULT })).not.toBeInTheDocument()
   })
 
   it('indica que aún no hay material de refuerzo', async () => {
@@ -206,7 +212,7 @@ describe('LessonDetailPage', () => {
     it('lleva al formulario de generar material si se llega con su ancla', async () => {
       setup({ lesson: INTRODUCTIONS_LESSON, path: '/docente/clases/x#generar-material' })
 
-      const form = await screen.findByRole('form', { name: 'Generar material' })
+      const form = await screen.findByRole('form', { name: GENERATE_MATERIAL })
       expect(form).toHaveAttribute('id', 'generar-material')
       // El desplazamiento ocurre en un efecto tras pintar el formulario: se espera a que suceda
       await waitFor(() => expect(scrollIntoView).toHaveBeenCalled())
@@ -216,34 +222,34 @@ describe('LessonDetailPage', () => {
     it('no se desplaza al formulario si se llega sin ancla', async () => {
       setup({ lesson: INTRODUCTIONS_LESSON })
 
-      await screen.findByRole('button', { name: 'Generar material de refuerzo' })
+      await screen.findByRole('button', { name: OPEN_MATERIAL_FORM })
       expect(scrollIntoView).not.toHaveBeenCalled()
     })
 
     it('muestra la configuración del material solo al pulsar «Generar material de refuerzo»', async () => {
       const { user } = setup({ lesson: INTRODUCTIONS_LESSON })
 
-      const open = await screen.findByRole('button', { name: 'Generar material de refuerzo' })
-      expect(open).toHaveAttribute('aria-expanded', 'false')
+      const open = await screen.findByRole('button', { name: OPEN_MATERIAL_FORM })
+      expect(open).toHaveAttribute(ARIA_EXPANDED, 'false')
       expect(screen.getByText(/aún no se ha generado material/i)).toBeInTheDocument()
-      expect(screen.queryByRole('form', { name: 'Generar material' })).not.toBeInTheDocument()
+      expect(screen.queryByRole('form', { name: GENERATE_MATERIAL })).not.toBeInTheDocument()
 
       await user.click(open)
 
-      const form = screen.getByRole('form', { name: 'Generar material' })
-      expect(open).toHaveAttribute('aria-expanded', 'true')
+      const form = screen.getByRole('form', { name: GENERATE_MATERIAL })
+      expect(open).toHaveAttribute(ARIA_EXPANDED, 'true')
       const heading = screen.getByRole('heading', { level: 1 })
       expect(heading.compareDocumentPosition(form) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
     })
 
     it('oculta la configuración al cancelar', async () => {
       const { user } = setup({ lesson: INTRODUCTIONS_LESSON })
-      await user.click(await screen.findByRole('button', { name: 'Generar material de refuerzo' }))
+      await user.click(await screen.findByRole('button', { name: OPEN_MATERIAL_FORM }))
 
       await user.click(screen.getByRole('button', { name: 'Cancelar' }))
 
-      expect(screen.queryByRole('form', { name: 'Generar material' })).not.toBeInTheDocument()
-      expect(screen.getByRole('button', { name: 'Generar material de refuerzo' })).toHaveAttribute('aria-expanded', 'false')
+      expect(screen.queryByRole('form', { name: GENERATE_MATERIAL })).not.toBeInTheDocument()
+      expect(screen.getByRole('button', { name: OPEN_MATERIAL_FORM })).toHaveAttribute(ARIA_EXPANDED, 'false')
     })
 
     it('no permite volver a generar el material aunque el alumno aún no lo haya resuelto', async () => {
@@ -264,10 +270,10 @@ describe('LessonDetailPage', () => {
     it('muestra el material recién generado pendiente de resolver', async () => {
       const { user, generateMaterial } = setup({ lesson: INTRODUCTIONS_LESSON })
 
-      await user.click(await screen.findByRole('button', { name: 'Generar material de refuerzo' }))
-      await user.click(screen.getByRole('button', { name: 'Generar material' }))
+      await user.click(await screen.findByRole('button', { name: OPEN_MATERIAL_FORM }))
+      await user.click(screen.getByRole('button', { name: GENERATE_MATERIAL }))
 
-      const material = await screen.findByRole('region', { name: 'Material de refuerzo' })
+      const material = await screen.findByRole('region', { name: MATERIAL_SECTION })
       expect(within(material).getByRole('heading', { name: 'Presentaciones' })).toBeInTheDocument()
       expect(screen.getByText(/aún no ha resuelto el material/i)).toBeInTheDocument()
       expect(screen.queryByRole('form', { name: /generar material/i })).not.toBeInTheDocument()

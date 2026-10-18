@@ -3,6 +3,10 @@ import { createHttpClient } from '@/shared/http/httpClient'
 import { describeTeacherInsightsServiceContract } from '@/test/contracts/teacherInsightsServiceContract'
 import { createHttpTeacherInsightsService } from './httpTeacherInsightsService'
 
+const EMMA = 'Emma Schmidt'
+const RESTAURANT_TOPIC = 'Pedir en un restaurante'
+const RESTAURANT_DATE = '2026-10-08T16:00:00Z'
+
 function json(status: number, body: unknown): Response {
   return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } })
 }
@@ -29,21 +33,21 @@ const API_INSIGHTS = {
       type: 'submission',
       date: '2026-10-12T18:05:00Z',
       lesson_id: LESSON_ID,
-      student_name: 'Emma Schmidt',
-      topic: 'Pedir en un restaurante',
+      student_name: EMMA,
+      topic: RESTAURANT_TOPIC,
       score: 66.67,
     },
     {
       type: 'lesson',
-      date: '2026-10-08T16:00:00Z',
+      date: RESTAURANT_DATE,
       lesson_id: LESSON_ID,
-      student_name: 'Emma Schmidt',
-      topic: 'Pedir en un restaurante',
+      student_name: EMMA,
+      topic: RESTAURANT_TOPIC,
       score: null,
     },
   ],
   calendar: [
-    { lesson_id: LESSON_ID, start: '2026-10-08T16:00:00Z', student_name: 'Emma Schmidt', topic: 'Pedir en un restaurante' },
+    { lesson_id: LESSON_ID, start: RESTAURANT_DATE, student_name: EMMA, topic: RESTAURANT_TOPIC },
   ],
 }
 
@@ -86,21 +90,21 @@ describe('httpTeacherInsightsService', () => {
           type: 'submission',
           date: '2026-10-12T18:05:00Z',
           lessonId: LESSON_ID,
-          studentName: 'Emma Schmidt',
-          topic: 'Pedir en un restaurante',
+          studentName: EMMA,
+          topic: RESTAURANT_TOPIC,
           score: 66.67,
         },
         {
           id: `lesson-${LESSON_ID}`,
           type: 'lesson',
-          date: '2026-10-08T16:00:00Z',
+          date: RESTAURANT_DATE,
           lessonId: LESSON_ID,
-          studentName: 'Emma Schmidt',
-          topic: 'Pedir en un restaurante',
+          studentName: EMMA,
+          topic: RESTAURANT_TOPIC,
           score: null,
         },
       ],
-      calendar: [{ id: LESSON_ID, start: '2026-10-08T16:00:00Z', studentName: 'Emma Schmidt', topic: 'Pedir en un restaurante' }],
+      calendar: [{ id: LESSON_ID, start: RESTAURANT_DATE, studentName: EMMA, topic: RESTAURANT_TOPIC }],
     })
   })
 

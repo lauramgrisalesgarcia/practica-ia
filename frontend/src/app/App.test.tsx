@@ -14,6 +14,9 @@ import { MY_LESSONS, PENDING_MATERIAL } from '@/test/contracts/studentServiceCon
 import { STUDENT_INSIGHTS } from '@/test/contracts/studentInsightsServiceContract'
 import { renderWithServices } from '@/test/renderWithServices'
 
+const STUDENT_HOME = '/estudiante'
+const RESTAURANT_TOPIC = 'Pedir en un restaurante'
+
 const TEACHER: User = { name: 'María López', email: 'docente@colegio.edu', role: 'docente' }
 const STUDENT: User = { name: 'Ana Gómez', email: 'estudiante@colegio.edu', role: 'estudiante' }
 const PASSWORD = 'Secreto#123'
@@ -101,7 +104,7 @@ describe('App', () => {
   })
 
   describe('sin sesión', () => {
-    it.each(['/', '/docente', '/estudiante', '/no-existe'])('%s lleva al inicio de sesión', async (path) => {
+    it.each(['/', '/docente', STUDENT_HOME, '/no-existe'])('%s lleva al inicio de sesión', async (path) => {
       renderApp(path, createAuthService())
 
       expect(await screen.findByRole('heading', { level: 1, name: /iniciar sesión/i })).toBeInTheDocument()
@@ -128,7 +131,7 @@ describe('App', () => {
       await login(STUDENT.email)
 
       expect(await screen.findByRole('heading', { level: 1, name: /ana gómez/i })).toBeInTheDocument()
-      await expectPath('/estudiante')
+      await expectPath(STUDENT_HOME)
     })
 
     it('se queda en el login si las credenciales son incorrectas', async () => {
@@ -152,7 +155,7 @@ describe('App', () => {
     it('muestra al estudiante su panel con el resumen', async () => {
       const studentInsightsService = { getInsights: vi.fn().mockResolvedValue(STUDENT_INSIGHTS) }
       renderApp(
-        '/estudiante',
+        STUDENT_HOME,
         createAuthService({ current: STUDENT }),
         createTeacherService(),
         createTeacherLessonService(),
@@ -174,7 +177,7 @@ describe('App', () => {
         studentService,
       )
 
-      expect(await screen.findByRole('heading', { level: 4, name: 'Pedir en un restaurante' })).toBeInTheDocument()
+      expect(await screen.findByRole('heading', { level: 4, name: RESTAURANT_TOPIC })).toBeInTheDocument()
       expect(screen.getByRole('heading', { level: 1, name: 'Mis clases' })).toBeInTheDocument()
       expect(studentService.getMyLessons).toHaveBeenCalled()
     })
@@ -189,7 +192,7 @@ describe('App', () => {
         studentService,
       )
 
-      expect(await screen.findByRole('heading', { level: 1, name: 'Pedir en un restaurante' })).toBeInTheDocument()
+      expect(await screen.findByRole('heading', { level: 1, name: RESTAURANT_TOPIC })).toBeInTheDocument()
       expect(await screen.findByRole('heading', { level: 2, name: 'En el restaurante' })).toBeInTheDocument()
       expect(studentService.getLesson).toHaveBeenCalledWith(PENDING_MATERIAL.lessonId)
       expect(studentService.getMaterial).toHaveBeenCalledWith(PENDING_MATERIAL.lessonId)
@@ -214,11 +217,11 @@ describe('App', () => {
 
       expect(await screen.findByRole('heading', { level: 1, name: /ana gómez/i })).toBeInTheDocument()
       expect(screen.queryByRole('complementary', { name: 'Mis alumnos' })).not.toBeInTheDocument()
-      await expectPath('/estudiante')
+      await expectPath(STUDENT_HOME)
     })
 
     it('no deja a un docente entrar al panel del estudiante', async () => {
-      renderApp('/estudiante', createAuthService({ current: TEACHER }))
+      renderApp(STUDENT_HOME, createAuthService({ current: TEACHER }))
 
       await expectPath('/docente')
     })
@@ -235,7 +238,7 @@ describe('App', () => {
       const teacherLessonService = createTeacherLessonService()
       renderApp(`/docente/alumnos/${EMMA.id}`, createAuthService({ current: TEACHER }), createTeacherService(), teacherLessonService)
 
-      expect(await screen.findByRole('heading', { level: 4, name: 'Pedir en un restaurante' })).toBeInTheDocument()
+      expect(await screen.findByRole('heading', { level: 4, name: RESTAURANT_TOPIC })).toBeInTheDocument()
       expect(screen.getByRole('region', { name: 'Historial de clases' })).toBeInTheDocument()
       expect(teacherLessonService.getStudentLessons).toHaveBeenCalledWith(EMMA.id)
     })
@@ -244,7 +247,7 @@ describe('App', () => {
       const teacherService = createTeacherService()
       renderApp(`/docente/alumnos/${EMMA.id}`, createAuthService({ current: STUDENT }), teacherService)
 
-      await expectPath('/estudiante')
+      await expectPath(STUDENT_HOME)
       expect(teacherService.getStudent).not.toHaveBeenCalled()
     })
 
@@ -257,7 +260,7 @@ describe('App', () => {
         teacherLessonService,
       )
 
-      expect(await screen.findByRole('heading', { level: 1, name: 'Pedir en un restaurante' })).toBeInTheDocument()
+      expect(await screen.findByRole('heading', { level: 1, name: RESTAURANT_TOPIC })).toBeInTheDocument()
       expect(teacherLessonService.getLesson).toHaveBeenCalledWith(RESTAURANT_LESSON.id)
     })
 
@@ -270,7 +273,7 @@ describe('App', () => {
         teacherLessonService,
       )
 
-      await expectPath('/estudiante')
+      await expectPath(STUDENT_HOME)
       expect(teacherLessonService.getLesson).not.toHaveBeenCalled()
     })
 

@@ -1,6 +1,9 @@
 import type { Answer, StudentLessonSummary, StudentMaterial } from '@/domain/lesson'
 import type { StudentService } from '@/features/student/services/studentService'
 
+const MISSING_KEYWORD = 'Quiero que'
+const LESSON_NOT_FOUND = 'Clase no encontrada'
+
 export const UNKNOWN_LESSON_ID = '00000000-0000-4000-8000-000000000001'
 export const PDF_CONTENT = '%PDF-1.4 contenido de prueba'
 
@@ -48,7 +51,7 @@ export const PENDING_MATERIAL: StudentMaterial = {
   instructions: 'Completa cada frase con la opción correcta.',
   exercises: [
     { id: 1, sentence: 'Camarero, ¿nos trae ___, por favor?', options: ['la carta', 'la cuenta', 'la mesa'] },
-    { id: 2, sentence: 'Buenas noches. ___ una mesa para dos personas.', options: ['Quisiera', 'Quiero que', 'Quería que'] },
+    { id: 2, sentence: 'Buenas noches. ___ una mesa para dos personas.', options: ['Quisiera', MISSING_KEYWORD, 'Quería que'] },
   ],
   submission: null,
 }
@@ -100,7 +103,7 @@ export const DEFAULT_STUDENT_FIXTURES: StudentFixtures = {
 // Una respuesta correcta y una incorrecta para el material pendiente
 export const HALF_RIGHT_ANSWERS: Answer[] = [
   { exerciseId: 1, selectedOption: 'la carta' },
-  { exerciseId: 2, selectedOption: 'Quiero que' },
+  { exerciseId: 2, selectedOption: MISSING_KEYWORD },
 ]
 
 // Comportamiento que toda implementación de StudentService debe cumplir
@@ -115,7 +118,7 @@ export function describeStudentServiceContract(createService: (fixtures: Student
     })
 
     it('rechaza una clase inexistente o de otro estudiante', async () => {
-      await expect(createService(DEFAULT_STUDENT_FIXTURES).getLesson(UNKNOWN_LESSON_ID)).rejects.toThrow('Clase no encontrada')
+      await expect(createService(DEFAULT_STUDENT_FIXTURES).getLesson(UNKNOWN_LESSON_ID)).rejects.toThrow(LESSON_NOT_FOUND)
     })
 
     it('devuelve una lista vacía si el estudiante aún no tiene clases', async () => {
@@ -131,7 +134,7 @@ export function describeStudentServiceContract(createService: (fixtures: Student
 
     it('rechaza el PDF de una clase inexistente o de otro estudiante', async () => {
       await expect(createService(DEFAULT_STUDENT_FIXTURES).downloadPdf(UNKNOWN_LESSON_ID)).rejects.toThrow(
-        'Clase no encontrada',
+        LESSON_NOT_FOUND,
       )
     })
 
@@ -156,7 +159,7 @@ export function describeStudentServiceContract(createService: (fixtures: Student
 
     it('rechaza el material de una clase inexistente o de otro estudiante', async () => {
       await expect(createService(DEFAULT_STUDENT_FIXTURES).getMaterial(UNKNOWN_LESSON_ID)).rejects.toThrow(
-        'Clase no encontrada',
+        LESSON_NOT_FOUND,
       )
     })
 
@@ -169,7 +172,7 @@ export function describeStudentServiceContract(createService: (fixtures: Student
 
         expect(submission.results).toEqual([
           { exerciseId: 1, selectedOption: 'la carta', correctOption: 'la carta', isCorrect: true },
-          { exerciseId: 2, selectedOption: 'Quiero que', correctOption: 'Quisiera', isCorrect: false },
+          { exerciseId: 2, selectedOption: MISSING_KEYWORD, correctOption: 'Quisiera', isCorrect: false },
         ])
         expect(submission).toMatchObject({ correctCount: 1, incorrectCount: 1, score: 50 })
       })
@@ -241,7 +244,7 @@ export function describeStudentServiceContract(createService: (fixtures: Student
       it('rechaza resolver una clase inexistente o de otro estudiante', async () => {
         await expect(
           createService(DEFAULT_STUDENT_FIXTURES).submitMaterial(UNKNOWN_LESSON_ID, HALF_RIGHT_ANSWERS),
-        ).rejects.toThrow('Clase no encontrada')
+        ).rejects.toThrow(LESSON_NOT_FOUND)
       })
     })
   })

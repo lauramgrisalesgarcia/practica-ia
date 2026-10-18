@@ -94,9 +94,8 @@ export function LessonCalendar({ lessons, today, timeZone }: LessonCalendarProps
                 const count = lessonsByDay.get(key)?.length ?? 0
                 const isToday = key === todayKey
                 const isSelected = key === selectedKey
-                const label = `${dayFormat.format(utcDay(visible.year, visible.month, day))}${
-                  count ? `, ${count} ${count === 1 ? 'clase' : 'clases'}` : ''
-                }`
+                const lessonsLabel = count === 1 ? '1 clase' : `${count} clases`
+                const label = `${dayFormat.format(utcDay(visible.year, visible.month, day))}${count ? `, ${lessonsLabel}` : ''}`
                 return (
                   <td key={key} className="p-0.5">
                     <button

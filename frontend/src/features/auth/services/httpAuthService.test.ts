@@ -6,6 +6,8 @@ import { createHttpAuthService } from './httpAuthService'
 import { createSessionExpiry } from './sessionExpiry'
 import type { TokenStorage } from './tokenStorage'
 
+const NOT_AUTHENTICATED = 'No autenticado'
+
 const VALID_TOKEN = 'token-valido'
 
 function json(status: number, body: unknown): Response {
@@ -34,7 +36,7 @@ function createFakeBackend({ user, password }: TestAccount): typeof fetch {
     }
     if (path === '/auth/me' && init?.method === 'GET') {
       const authorization = new Headers(init.headers).get('Authorization')
-      if (authorization !== `Bearer ${VALID_TOKEN}`) return json(401, { detail: 'No autenticado' })
+      if (authorization !== `Bearer ${VALID_TOKEN}`) return json(401, { detail: NOT_AUTHENTICATED })
       return json(200, apiUser)
     }
     return json(404, { detail: 'Not Found' })
@@ -111,7 +113,7 @@ describe('httpAuthService', () => {
   describe('sesión caducada', () => {
     it('avisa y borra el token cuando la API rechaza el token en cualquier petición', async () => {
       const tokenStorage = createMemoryTokenStorage(VALID_TOKEN)
-      const fetchFn = vi.fn<typeof fetch>().mockResolvedValue(json(401, { detail: 'No autenticado' }))
+      const fetchFn = vi.fn<typeof fetch>().mockResolvedValue(json(401, { detail: NOT_AUTHENTICATED }))
       const service = createService(fetchFn, tokenStorage)
       const listener = vi.fn()
       service.onSessionExpired(listener)
@@ -123,7 +125,7 @@ describe('httpAuthService', () => {
     })
 
     it('deja de avisar a quien se da de baja', async () => {
-      const fetchFn = vi.fn<typeof fetch>().mockResolvedValue(json(401, { detail: 'No autenticado' }))
+      const fetchFn = vi.fn<typeof fetch>().mockResolvedValue(json(401, { detail: NOT_AUTHENTICATED }))
       const service = createService(fetchFn, createMemoryTokenStorage(VALID_TOKEN))
       const listener = vi.fn()
       const unsubscribe = service.onSessionExpired(listener)

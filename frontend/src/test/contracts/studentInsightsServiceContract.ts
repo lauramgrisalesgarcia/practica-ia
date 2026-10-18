@@ -1,6 +1,8 @@
 import type { StudentInsights } from '@/domain/studentInsights'
 import type { StudentInsightsService } from '@/features/student/services/studentInsightsService'
 
+const RESTAURANT_TOPIC = 'Pedir en un restaurante'
+
 const RESTAURANT_ID = 'c4a9e2d7-5f1b-4c8e-a3d6-7b2e9f0c1d45'
 const INTRODUCTIONS_ID = '1e7d3b5a-8c2f-4a6e-9d0b-3f5a7c9e1b28'
 
@@ -16,7 +18,7 @@ export const STUDENT_INSIGHTS: StudentInsights = {
       type: 'submission',
       date: '2026-10-12T18:05:00Z',
       lessonId: RESTAURANT_ID,
-      topic: 'Pedir en un restaurante',
+      topic: RESTAURANT_TOPIC,
       score: 66.67,
     },
     {
@@ -24,16 +26,16 @@ export const STUDENT_INSIGHTS: StudentInsights = {
       type: 'lesson',
       date: '2026-10-08T16:00:00Z',
       lessonId: RESTAURANT_ID,
-      topic: 'Pedir en un restaurante',
+      topic: RESTAURANT_TOPIC,
       score: null,
     },
   ],
   calendar: [
     { id: INTRODUCTIONS_ID, start: '2026-10-01T16:00:00Z', topic: 'Presentarse' },
-    { id: RESTAURANT_ID, start: '2026-10-08T16:00:00Z', topic: 'Pedir en un restaurante' },
+    { id: RESTAURANT_ID, start: '2026-10-08T16:00:00Z', topic: RESTAURANT_TOPIC },
   ],
   scoreHistory: [
-    { lessonId: RESTAURANT_ID, topic: 'Pedir en un restaurante', submittedAt: '2026-10-12T18:05:00Z', score: 66.67 },
+    { lessonId: RESTAURANT_ID, topic: RESTAURANT_TOPIC, submittedAt: '2026-10-12T18:05:00Z', score: 66.67 },
   ],
 }
 

@@ -5,6 +5,10 @@ import type { AuthService } from '@/features/auth/services/authService'
 import { SessionProvider } from './SessionProvider'
 import { useSession } from './sessionContext'
 
+const TEACHER_SIGNED_IN = 'usuario: María López'
+const ANONYMOUS = 'estado: anonymous'
+const SESSION_EXPIRED = 'sesión caducada'
+
 const TEACHER: User = { name: 'María López', email: 'docente@colegio.edu', role: 'docente' }
 
 function createAuthService(overrides: Partial<AuthService> = {}): AuthService {
@@ -48,45 +52,45 @@ describe('SessionProvider', () => {
   it('recupera la sesión existente al arrancar', async () => {
     renderSession(createAuthService({ getCurrentUser: vi.fn().mockResolvedValue(TEACHER) }))
 
-    expect(await screen.findByText('usuario: María López')).toBeInTheDocument()
+    expect(await screen.findByText(TEACHER_SIGNED_IN)).toBeInTheDocument()
     expect(screen.getByText('estado: authenticated')).toBeInTheDocument()
   })
 
   it('queda sin sesión si no hay usuario actual', async () => {
     renderSession(createAuthService())
 
-    expect(await screen.findByText('estado: anonymous')).toBeInTheDocument()
+    expect(await screen.findByText(ANONYMOUS)).toBeInTheDocument()
   })
 
   it('queda sin sesión si no se puede comprobar (p. ej. sin conexión)', async () => {
     renderSession(createAuthService({ getCurrentUser: vi.fn().mockRejectedValue(new Error('sin red')) }))
 
-    expect(await screen.findByText('estado: anonymous')).toBeInTheDocument()
+    expect(await screen.findByText(ANONYMOUS)).toBeInTheDocument()
   })
 
   it('inicia sesión con el servicio y guarda el usuario', async () => {
     const authService = createAuthService()
     renderSession(authService)
-    await screen.findByText('estado: anonymous')
+    await screen.findByText(ANONYMOUS)
 
     await userEvent.setup().click(screen.getByRole('button', { name: 'entrar' }))
 
-    expect(await screen.findByText('usuario: María López')).toBeInTheDocument()
+    expect(await screen.findByText(TEACHER_SIGNED_IN)).toBeInTheDocument()
     expect(authService.login).toHaveBeenCalledWith({ email: TEACHER.email, password: 'x' })
   })
 
   it('cierra la sesión con el servicio y olvida al usuario', async () => {
     const authService = createAuthService({ getCurrentUser: vi.fn().mockResolvedValue(TEACHER) })
     renderSession(authService)
-    await screen.findByText('usuario: María López')
+    await screen.findByText(TEACHER_SIGNED_IN)
 
     await userEvent.setup().click(screen.getByRole('button', { name: 'salir' }))
 
-    await waitFor(() => expect(screen.getByText('estado: anonymous')).toBeInTheDocument())
+    await waitFor(() => expect(screen.getByText(ANONYMOUS)).toBeInTheDocument())
     expect(authService.logout).toHaveBeenCalled()
   })
 
-  describe('sesión caducada', () => {
+  describe(SESSION_EXPIRED, () => {
     function createExpiringAuthService() {
       let expire = () => {}
       const unsubscribe = vi.fn()
@@ -103,29 +107,29 @@ describe('SessionProvider', () => {
     it('cierra la sesión e indica que ha caducado cuando el servicio avisa', async () => {
       const { authService, expire } = createExpiringAuthService()
       renderSession(authService)
-      await screen.findByText('usuario: María López')
+      await screen.findByText(TEACHER_SIGNED_IN)
 
       await expire()
 
-      expect(screen.getByText('estado: anonymous')).toBeInTheDocument()
-      expect(screen.getByText('sesión caducada')).toBeInTheDocument()
+      expect(screen.getByText(ANONYMOUS)).toBeInTheDocument()
+      expect(screen.getByText(SESSION_EXPIRED)).toBeInTheDocument()
     })
 
     it('un cierre de sesión voluntario no se marca como caducado', async () => {
       const authService = createAuthService({ getCurrentUser: vi.fn().mockResolvedValue(TEACHER) })
       renderSession(authService)
-      await screen.findByText('usuario: María López')
+      await screen.findByText(TEACHER_SIGNED_IN)
 
       await userEvent.setup().click(screen.getByRole('button', { name: 'salir' }))
 
-      await waitFor(() => expect(screen.getByText('estado: anonymous')).toBeInTheDocument())
-      expect(screen.queryByText('sesión caducada')).not.toBeInTheDocument()
+      await waitFor(() => expect(screen.getByText(ANONYMOUS)).toBeInTheDocument())
+      expect(screen.queryByText(SESSION_EXPIRED)).not.toBeInTheDocument()
     })
 
     it('deja de escuchar al desmontarse', async () => {
       const { authService, unsubscribe } = createExpiringAuthService()
       const { unmount } = renderSession(authService)
-      await screen.findByText('usuario: María López')
+      await screen.findByText(TEACHER_SIGNED_IN)
 
       unmount()
 

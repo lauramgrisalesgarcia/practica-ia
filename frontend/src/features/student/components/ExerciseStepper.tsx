@@ -23,6 +23,7 @@ export function ExerciseStepper({ lessonId, exercises, submitMaterial, onSubmitt
   const exercise = exercises[current]
   const choice = selected[exercise.id]
   const isLast = current === exercises.length - 1
+  const nextLabel = isLast ? 'Enviar respuestas' : 'Siguiente'
 
   async function handleSubmit() {
     setSubmitError(null)
@@ -97,7 +98,7 @@ export function ExerciseStepper({ lessonId, exercises, submitMaterial, onSubmitt
           disabled={choice === undefined || isSubmitting}
           className="flex-1 rounded-xl bg-ocean px-5 py-3 font-semibold uppercase tracking-wide text-white shadow-[0_4px_0_0] shadow-ink hover:bg-ink disabled:bg-ink/20 disabled:text-ink/50 disabled:shadow-none"
         >
-          {isSubmitting ? 'Enviando…' : isLast ? 'Enviar respuestas' : 'Siguiente'}
+          {isSubmitting ? 'Enviando…' : nextLabel}
         </button>
       </div>
     </div>

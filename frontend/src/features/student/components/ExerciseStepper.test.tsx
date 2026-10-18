@@ -4,6 +4,9 @@ import type { Answer, StudentSubmission } from '@/domain/lesson'
 import { COMPLETED_MATERIAL, PENDING_MATERIAL } from '@/test/contracts/studentServiceContract'
 import { ExerciseStepper } from './ExerciseStepper'
 
+const ARIA_SELECTED = 'aria-selected'
+const SUBMIT_ANSWERS = 'Enviar respuestas'
+
 const SUBMISSION = COMPLETED_MATERIAL.submission as StudentSubmission
 
 function setup(
@@ -46,7 +49,7 @@ describe('ExerciseStepper', () => {
     setup()
 
     expect(screen.getByRole('button', { name: 'Siguiente' })).toBeDisabled()
-    expect(within(options()).getAllByRole('option').every((option) => option.getAttribute('aria-selected') === 'false')).toBe(
+    expect(within(options()).getAllByRole('option').every((option) => option.getAttribute(ARIA_SELECTED) === 'false')).toBe(
       true,
     )
   })
@@ -56,7 +59,7 @@ describe('ExerciseStepper', () => {
 
     await user.click(within(options()).getByRole('option', { name: 'la carta' }))
 
-    expect(within(options()).getByRole('option', { name: 'la carta' })).toHaveAttribute('aria-selected', 'true')
+    expect(within(options()).getByRole('option', { name: 'la carta' })).toHaveAttribute(ARIA_SELECTED, 'true')
     expect(screen.getByRole('region', { name: 'Pregunta 1' })).toHaveTextContent('Camarero, ¿nos trae la carta, por favor?')
     expect(screen.getByRole('button', { name: 'Siguiente' })).toBeEnabled()
   })
@@ -95,9 +98,9 @@ describe('ExerciseStepper', () => {
     options().focus()
     await user.keyboard('{ArrowDown}{ArrowDown}')
 
-    expect(within(options()).getByRole('option', { name: 'la cuenta' })).toHaveAttribute('aria-selected', 'true')
+    expect(within(options()).getByRole('option', { name: 'la cuenta' })).toHaveAttribute(ARIA_SELECTED, 'true')
     await user.keyboard('{ArrowUp}')
-    expect(within(options()).getByRole('option', { name: 'la carta' })).toHaveAttribute('aria-selected', 'true')
+    expect(within(options()).getByRole('option', { name: 'la carta' })).toHaveAttribute(ARIA_SELECTED, 'true')
   })
 
   it('pasa a la siguiente pregunta y permite volver sin perder la respuesta', async () => {
@@ -109,7 +112,7 @@ describe('ExerciseStepper', () => {
     expect(screen.getByText('Pregunta 2 de 2')).toBeInTheDocument()
     expect(screen.getByRole('region', { name: 'Pregunta 2' })).toHaveTextContent('Buenas noches. espacio en blanco una mesa')
     await user.click(screen.getByRole('button', { name: 'Anterior' }))
-    expect(within(options()).getByRole('option', { name: 'la carta' })).toHaveAttribute('aria-selected', 'true')
+    expect(within(options()).getByRole('option', { name: 'la carta' })).toHaveAttribute(ARIA_SELECTED, 'true')
   })
 
   it('en la última pregunta envía todas las respuestas y entrega el resultado', async () => {
@@ -118,7 +121,7 @@ describe('ExerciseStepper', () => {
     await user.click(screen.getByRole('button', { name: 'Siguiente' }))
     await user.click(within(options()).getByRole('option', { name: 'Quiero que' }))
 
-    await user.click(screen.getByRole('button', { name: 'Enviar respuestas' }))
+    await user.click(screen.getByRole('button', { name: SUBMIT_ANSWERS }))
 
     expect(submitMaterial).toHaveBeenCalledWith(PENDING_MATERIAL.lessonId, [
       { exerciseId: 1, selectedOption: 'la carta' },
@@ -133,7 +136,7 @@ describe('ExerciseStepper', () => {
     await user.click(screen.getByRole('button', { name: 'Siguiente' }))
     await user.click(within(options()).getByRole('option', { name: 'Quisiera' }))
 
-    await user.click(screen.getByRole('button', { name: 'Enviar respuestas' }))
+    await user.click(screen.getByRole('button', { name: SUBMIT_ANSWERS }))
 
     expect(screen.getByRole('button', { name: 'Enviando…' })).toBeDisabled()
   })
@@ -144,7 +147,7 @@ describe('ExerciseStepper', () => {
     await user.click(screen.getByRole('button', { name: 'Siguiente' }))
     await user.click(within(options()).getByRole('option', { name: 'Quisiera' }))
 
-    await user.click(screen.getByRole('button', { name: 'Enviar respuestas' }))
+    await user.click(screen.getByRole('button', { name: SUBMIT_ANSWERS }))
 
     expect(await screen.findByRole('alert')).toHaveTextContent('El material ya fue resuelto')
     expect(onSubmitted).not.toHaveBeenCalled()
