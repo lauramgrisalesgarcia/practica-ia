@@ -33,7 +33,7 @@ Docente                                         Estudiante
 | Base de datos | PostgreSQL 16 (Docker Compose) |
 | Seguridad | JWT (60 min) · argon2 · identificadores públicos UUID · Gitleaks |
 | Calidad | TDD · mypy estricto · test de contrato OpenAPI · test de arquitectura · GitHub Actions |
-| E2E | Playwright (pendiente) |
+| E2E | Playwright |
 
 ## Estructura
 
@@ -213,4 +213,4 @@ Las normas completas están en [`CLAUDE.md`](CLAUDE.md) y los requerimientos en 
 
 - ✅ Backend: los 14 endpoints del contrato.
 - 🚧 Frontend: login y panel del docente con datos en memoria; falta conectarlo a la API y construir las pantallas del estudiante.
-- ⏳ Tests E2E con Playwright.
+- ✅ Tests E2E con Playwright: inicio de sesión por rol y material de refuerzo de principio a fin (`e2e/`).

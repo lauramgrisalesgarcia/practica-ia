@@ -12,9 +12,10 @@ export default defineConfig({
   },
   server: {
     proxy: {
-      // En desarrollo, /api se reenvía al backend: mismo origen, sin CORS
+      // En desarrollo, /api se reenvía al backend: mismo origen, sin CORS.
+      // Los E2E usan otra API (API_PROXY_TARGET; sin prefijo VITE_, no llega al navegador)
       '/api': {
-        target: 'http://localhost:8001',
+        target: process.env.API_PROXY_TARGET ?? 'http://localhost:8001',
         rewrite: (path) => path.replace(/^\/api/, ''),
       },
     },
