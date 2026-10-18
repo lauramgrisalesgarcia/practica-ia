@@ -133,7 +133,7 @@ Todo el código, frontend y backend, respeta SOLID. Antes de dar un cambio por t
 - Textos de la interfaz en español; fechas y números con `Intl` en `es` (`shared/i18n`).
 - Python con type hints y modelos Pydantic para request/response.
 - Los tests viven junto al código (`*.test.ts(x)`) en frontend y en `tests/` en backend; E2E en `e2e/tests/`.
-- **E2E**: `playwright.config.ts` arranca su propia API (puerto 8011) y su propio front (5180) sobre la BD `practica_ia_e2e`, que `e2e/scripts/prepare_db.py` vacía, migra y llena con el seed en cada ejecución (solo actúa sobre una BD cuyo nombre termina en `_e2e`). Inician sesión con los usuarios del seed: la contraseña sale de `SEED_USER_PASSWORD` (entorno o `backend/.env`) y nunca se escribe en los tests; `JWT_SECRET` es aleatorio en cada ejecución. Los flujos que dependen entre sí van en `test.describe.serial`. En CI se ejecutan en `.github/workflows/e2e.yml`.
+- **E2E**: `playwright.config.ts` arranca su propia API (puerto 8011) y su propio front (5180) sobre la BD `practica_ia_e2e`, que `e2e/scripts/prepare_db.py` vacía, migra y llena con el seed en cada ejecución (solo actúa sobre una BD cuyo nombre termina en `_e2e`). Inician sesión con los usuarios del seed: la contraseña sale de `SEED_USER_PASSWORD` (entorno o `backend/.env`) y nunca se escribe en los tests; `JWT_SECRET` es aleatorio en cada ejecución. Los flujos que dependen entre sí van en `test.describe.serial`. Guarda capturas solo de los tests que fallan (`test-results/`) y siempre un informe HTML (`playwright-report/`). Vitest (`frontend/vitest.config.ts`) excluye `e2e/`. En CI se ejecutan en `.github/workflows/e2e.yml`.
 - La BD de tests es independiente de la de desarrollo.
 
 ## Comandos
@@ -170,5 +170,6 @@ uv run python -m migrations.export_schema   # regenera migrations/001-esquema-ba
 # E2E (desde e2e/; necesita la BD de Docker en marcha)
 npm install
 npx playwright install chromium   # una vez
-npx playwright test
+npm run test:e2e                  # también desde frontend/ con el mismo script
+npm run report                    # abre el informe HTML (playwright-report/)
 ```
