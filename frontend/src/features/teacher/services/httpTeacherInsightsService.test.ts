@@ -76,7 +76,6 @@ describe('httpTeacherInsightsService', () => {
     const insights = await createService().getInsights()
 
     expect(insights).toEqual({
-      isSample: false,
       lessonsThisMonth: 3,
       pendingMaterials: 1,
       materialStatus: { completed: 2, pending: 1, none: 1 },

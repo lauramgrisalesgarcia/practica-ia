@@ -2,6 +2,7 @@ import {
   devAuthService,
   devStudentInsightsService,
   devStudentService,
+  devTeacherInsightsService,
   devTeacherLessonService,
   devTeacherService,
 } from '@/dev/devServices'
@@ -12,7 +13,6 @@ import { createHttpTeacherInsightsService } from '@/features/teacher/services/ht
 import { createHttpTeacherLessonService } from '@/features/teacher/services/httpTeacherLessonService'
 import { createHttpStudentInsightsService } from '@/features/student/services/httpStudentInsightsService'
 import { createHttpStudentService } from '@/features/student/services/httpStudentService'
-import { createSampleTeacherInsightsService } from '@/features/teacher/services/sampleTeacherInsightsService'
 import { createHttpTeacherService } from '@/features/teacher/services/httpTeacherService'
 import { createHttpClient } from '@/shared/http/httpClient'
 import type { Services } from './services/servicesContext'
@@ -30,7 +30,7 @@ export function createServices({ apiUrl, fetchFn }: CompositionOptions): Service
       teacherService: devTeacherService,
       teacherLessonService: devTeacherLessonService,
       studentService: devStudentService,
-      teacherInsightsService: createSampleTeacherInsightsService(),
+      teacherInsightsService: devTeacherInsightsService,
       studentInsightsService: devStudentInsightsService,
     }
   }

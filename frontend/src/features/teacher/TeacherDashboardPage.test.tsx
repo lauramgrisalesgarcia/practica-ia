@@ -3,7 +3,8 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import type { TeacherInsights } from '@/domain/insights'
 import type { Student } from '@/domain/student'
-import { createSampleTeacherInsightsService } from './services/sampleTeacherInsightsService'
+import { TEACHER_INSIGHTS } from '@/dev/devTeacherInsights'
+import { createMockTeacherInsightsService } from './services/mockTeacherInsightsService'
 import { TeacherDashboardPage } from './TeacherDashboardPage'
 
 const STUDENTS: Student[] = [
@@ -12,12 +13,15 @@ const STUDENTS: Student[] = [
   { id: '5c8d2e7f-1a3b-4c9d-8e6f-2b4a7c9d1e3f', name: 'Sofía Ramírez', email: 'sofia@colegio.edu', nativeLanguage: 'en', level: 'B1' },
 ]
 
-const loadSampleInsights: () => Promise<TeacherInsights> = createSampleTeacherInsightsService({ delayMs: 0 }).getInsights
+const loadInsights: () => Promise<TeacherInsights> = createMockTeacherInsightsService({
+  insights: TEACHER_INSIGHTS,
+  delayMs: 0,
+}).getInsights
 
 function setup(loadStudents: () => Promise<Student[]> = vi.fn().mockResolvedValue(STUDENTS)) {
   render(
     <MemoryRouter>
-      <TeacherDashboardPage teacherName="María López" loadStudents={loadStudents} loadInsights={loadSampleInsights} />
+      <TeacherDashboardPage teacherName="María López" loadStudents={loadStudents} loadInsights={loadInsights} />
     </MemoryRouter>,
   )
   return { loadStudents, user: userEvent.setup() }

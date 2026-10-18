@@ -76,17 +76,17 @@ src/
 │   ├── auth/       LoginPage + components/ + services/ + session/ (SessionProvider)
 │   ├── teacher/    Páginas del docente + components/ + services/
 │   └── student/    Páginas del estudiante + components/ + services/
-├── shared/         Lo que usan varias features: components/ (Brand, PdfDownloadButton, charts/),
-│                   http/ (cliente y formas de la API), i18n/, files/, routes/paths
-├── dev/            Datos y simulaciones para desarrollar sin back (mocks, LLM y corrección simulados)
+├── shared/         Lo que usan varias features: components/ (Brand, PdfDownloadButton, LessonCalendar, charts/),
+│                   lessonHistory/ (línea de tiempo de clases), http/ (cliente y formas de la API), i18n/, files/, routes/paths
+├── dev/            Datos y simulaciones para desarrollar sin back (devServices, LLM y corrección simulados)
 └── test/           Helpers de test, contracts/ (contratos compartidos) y fakes/
 ```
 
 - **Dependencias**: `app/` compone todo y nada importa de `app/`. Las features no importan de otras features; lo compartido va en `shared/`. `domain/` no depende de nada del resto.
 - **Imports**: el alias `@/` apunta a `src/` (configurado en `tsconfig.app.json` y `vite.config.ts`). Los imports que salen de la carpeta actual usan `@/…`; los de la misma carpeta, rutas relativas (`./components/LoginForm`).
-- **Servicios**: cada servicio es una `interface` en `features/<feature>/services/` con sus implementaciones: HTTP (`http*`), en memoria (`mock*`) o con datos de ejemplo (`sample*`). Todas cumplen el mismo **test de contrato** (`src/test/contracts/`), de modo que son intercambiables.
+- **Servicios**: cada servicio es una `interface` en `features/<feature>/services/` con sus implementaciones: HTTP (`http*`) y en memoria (`mock*`, que reciben sus datos de `src/dev` a través de `dev/devServices.ts`). Todas cumplen el mismo **test de contrato** (`src/test/contracts/`), de modo que son intercambiables.
 - **Composición (`app/composition.ts`)**: único lugar que elige implementaciones. Con `VITE_API_URL` usa las HTTP; sin ella, las de `src/dev`. `App` obtiene los servicios del contexto y se los pasa a las páginas **por props**; las features nunca usan el contexto de `app/`.
-- **Datos de ejemplo**: una sección sin endpoint en el back usa una implementación `sample*` que marca sus datos con `isSample: true`, y la interfaz muestra el aviso «Datos de ejemplo». Para pasar a datos reales basta con una implementación HTTP en `composition.ts`.
+- **Secciones sin endpoint**: si una sección aún no tiene endpoint en el back, se desarrolla con su implementación `mock*` y la interfaz avisa de que los datos son de ejemplo; al crear el endpoint se añade la implementación HTTP en `composition.ts` y se retira el aviso. Hoy todas las secciones usan datos reales.
 - **Cliente HTTP (`shared/http`)**: traduce los errores del back a `ApiError` (con el `detail` como mensaje) y los fallos de red a `NetworkError`. Las formas de la API (snake_case) se convierten al dominio (camelCase) en los servicios HTTP; los componentes no ven la API.
 - **Desarrollo**: en local, Vite reenvía `/api` al backend (`localhost:8001`), así que no hace falta CORS. La plantilla `frontend/.env.example` define `VITE_API_URL=/api`.
 - **Diseño**: la paleta de PractIcA son tokens de Tailwind en `src/index.css` (`ink`, `ocean`, `teal`, `mint`, `mist`); no se usan los colores por defecto de Tailwind salvo el rojo para errores. El texto pequeño sobre blanco usa `ink` u `ocean` (`teal` y `mint` no tienen contraste suficiente). El logo es el componente `Brand`.

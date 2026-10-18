@@ -67,14 +67,7 @@ export function InsightsPanel({ loadInsights, today = new Date(), timeZone }: In
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-center gap-3">
-        <h2 className="text-xl font-semibold text-ink">Resumen de actividad</h2>
-        {insights.isSample && (
-          <span className="rounded-full border border-dashed border-ocean px-2.5 py-0.5 text-xs font-medium text-ocean">
-            Datos de ejemplo
-          </span>
-        )}
-      </div>
+      <h2 className="text-xl font-semibold text-ink">Resumen de actividad</h2>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Card title="Clases este mes">

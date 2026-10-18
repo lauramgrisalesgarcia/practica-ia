@@ -1,10 +1,12 @@
 import type { LessonDetail, StudentMaterial, StudentSubmission, TeacherLessonSummary } from '@/domain/lesson'
 import type { StudentActivity, StudentInsights } from '@/domain/studentInsights'
 import { createMockAuthService } from '@/features/auth/services/mockAuthService'
+import { createMockTeacherInsightsService } from '@/features/teacher/services/mockTeacherInsightsService'
 import { createMockTeacherLessonService } from '@/features/teacher/services/mockTeacherLessonService'
 import { createMockStudentInsightsService } from '@/features/student/services/mockStudentInsightsService'
 import { createMockStudentService } from '@/features/student/services/mockStudentService'
 import { createMockTeacherService } from '@/features/teacher/services/mockTeacherService'
+import { TEACHER_INSIGHTS } from './devTeacherInsights'
 
 // Datos de prueba para desarrollo local (no son credenciales reales)
 export const devAuthService = createMockAuthService({
@@ -287,3 +289,5 @@ function buildStudentInsights(lessons: LessonDetail[]): StudentInsights {
 }
 
 export const devStudentInsightsService = createMockStudentInsightsService({ insights: buildStudentInsights(anaLessons) })
+
+export const devTeacherInsightsService = createMockTeacherInsightsService({ insights: TEACHER_INSIGHTS })
