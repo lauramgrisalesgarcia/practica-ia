@@ -10,6 +10,10 @@ interface OptionWheelProps {
 const ITEM_HEIGHT = 56
 // Tiempo sin desplazarse para dar por elegida la opción centrada
 const SCROLL_SETTLE_MS = 120
+// Margen para que termine un desplazamiento hecho por código (incluido el suave)
+const CODE_SCROLL_MS = 600
+// Movimiento mínimo del ratón para considerar que se arrastra y no que se hace clic
+const DRAG_THRESHOLD_PX = 3
 
 // Selector de rueda: se elige deslizando (la opción centrada), tocando una opción o con las flechas
 export function OptionWheel({ options, value, onChange }: OptionWheelProps) {
@@ -34,7 +38,7 @@ export function OptionWheel({ options, value, onChange }: OptionWheelProps) {
     window.clearTimeout(settleTimer.current)
     settleTimer.current = window.setTimeout(() => {
       isScrollingByCode.current = false
-    }, 600)
+    }, CODE_SCROLL_MS)
   }
 
   // Al montar la rueda de cada pregunta centra su respuesta o, si aún no tiene, la opción del medio,
@@ -75,7 +79,7 @@ export function OptionWheel({ options, value, onChange }: OptionWheelProps) {
     const list = listRef.current
     if (!drag.current || !list) return
     const deltaY = event.clientY - drag.current.startY
-    if (Math.abs(deltaY) > 3) drag.current.moved = true
+    if (Math.abs(deltaY) > DRAG_THRESHOLD_PX) drag.current.moved = true
     list.scrollTop = drag.current.startTop - deltaY
   }
 

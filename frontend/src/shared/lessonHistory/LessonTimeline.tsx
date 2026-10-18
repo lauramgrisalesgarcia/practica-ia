@@ -11,6 +11,7 @@ import {
 } from './lessonHistory'
 import { errorMessage } from '@/shared/errors/errorMessage'
 import { formatScore } from '@/shared/i18n/formatScore'
+import { PERCENT } from '@/shared/units'
 
 interface LessonTimelineProps<T extends LessonWithResult> {
   // Debe ser una referencia estable: cada cambio vuelve a cargar el historial
@@ -124,7 +125,7 @@ export function LessonTimeline<T extends LessonWithResult>({
           >
             <div
               className="h-full rounded-full bg-ocean"
-              style={{ width: `${summary.withMaterial ? (summary.completedMaterial / summary.withMaterial) * 100 : 0}%` }}
+              style={{ width: `${summary.withMaterial ? (summary.completedMaterial / summary.withMaterial) * PERCENT : 0}%` }}
             />
           </div>
         </StatCard>

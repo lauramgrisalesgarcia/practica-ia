@@ -1,4 +1,5 @@
 import type { Answer, StudentMaterial, StudentSubmission } from '@/domain/lesson'
+import { scorePercentage } from '@/domain/businessRules'
 
 export const INVALID_ANSWERS_MESSAGE = 'Debes responder todos los ejercicios con una opción válida'
 
@@ -26,8 +27,7 @@ export function gradeFakeSubmission(answers: Answer[], answerKey: Record<number,
     submittedAt: new Date().toISOString(),
     correctCount,
     incorrectCount: results.length - correctCount,
-    // Porcentaje con 2 decimales, como el back
-    score: Math.round((correctCount * 10000) / results.length) / 100,
+    score: scorePercentage(correctCount, results.length),
     results,
     feedback: 'Buen trabajo. Repasa las frases que fallaste.',
     recommendations: ['Vuelve a leer las frases que fallaste en voz alta.'],

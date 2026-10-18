@@ -4,6 +4,7 @@ import type { HttpClient } from '@/shared/http/httpClient'
 import type { AuthService } from './authService'
 import type { SessionExpiry } from './sessionExpiry'
 import type { TokenStorage } from './tokenStorage'
+import { HTTP_UNAUTHORIZED } from '@/shared/http/httpStatus'
 
 // Forma del usuario en la API (docs/openapi.yaml, schema User)
 interface ApiUser {
@@ -49,7 +50,7 @@ export function createHttpAuthService({ http, tokenStorage, sessionExpiry }: Htt
       try {
         return toUser(await http.get<ApiUser>('/auth/me'))
       } catch (error) {
-        if (error instanceof ApiError && error.status === 401) {
+        if (error instanceof ApiError && error.status === HTTP_UNAUTHORIZED) {
           tokenStorage.clear()
           return null
         }

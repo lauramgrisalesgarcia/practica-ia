@@ -1,6 +1,6 @@
 import type { StudentLessonSummary, StudentMaterial } from '@/domain/lesson'
 import { answersAreValid, gradeFakeSubmission, INVALID_ANSWERS_MESSAGE } from '@/dev/fakeGrading'
-import { wait } from '@/dev/wait'
+import { DEV_DELAY_MS, wait } from '@/dev/wait'
 import type { StudentService } from './studentService'
 
 interface MockStudentServiceOptions {
@@ -21,7 +21,7 @@ export function createMockStudentService({
   materials,
   answerKeys,
   pdfContent,
-  delayMs = 500,
+  delayMs = DEV_DELAY_MS,
 }: MockStudentServiceOptions): StudentService {
   let currentLessons = lessons
   const materialsById = new Map(Object.entries(materials))

@@ -1,5 +1,5 @@
 import { toStudentSummary, type StudentDetail } from '@/domain/student'
-import { wait } from '@/dev/wait'
+import { DEV_DELAY_MS, wait } from '@/dev/wait'
 import type { TeacherService } from './teacherService'
 
 interface MockTeacherServiceOptions {
@@ -8,7 +8,7 @@ interface MockTeacherServiceOptions {
 }
 
 // Servicio en memoria para desarrollar sin backend
-export function createMockTeacherService({ students, delayMs = 500 }: MockTeacherServiceOptions): TeacherService {
+export function createMockTeacherService({ students, delayMs = DEV_DELAY_MS }: MockTeacherServiceOptions): TeacherService {
   return {
     async getAssignedStudents() {
       await wait(delayMs)

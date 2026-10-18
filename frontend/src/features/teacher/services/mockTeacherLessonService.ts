@@ -1,6 +1,6 @@
 import type { LessonDetail, TeacherLessonSummary } from '@/domain/lesson'
 import { buildFakeMaterial, materialGenerationError } from '@/dev/fakeMaterial'
-import { wait } from '@/dev/wait'
+import { DEV_DELAY_MS, wait } from '@/dev/wait'
 import type { TeacherLessonService } from './teacherLessonService'
 
 interface MockTeacherLessonServiceOptions {
@@ -18,7 +18,7 @@ export function createMockTeacherLessonService({
   lessonsByStudent,
   lessons,
   pdfContent,
-  delayMs = 500,
+  delayMs = DEV_DELAY_MS,
 }: MockTeacherLessonServiceOptions): TeacherLessonService {
   const lessonsById = new Map(lessons.map((lesson) => [lesson.id, lesson]))
 

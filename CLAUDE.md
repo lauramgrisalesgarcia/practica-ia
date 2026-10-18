@@ -71,7 +71,7 @@ El código vive en `frontend/src/`, organizado por **features**. Cada feature ti
 src/
 ├── app/            Arranque y composición: App (solo rutas), main, composition.ts, AuthenticatedLayout,
 │                   routes/RequireRole y services/ (contexto de servicios)
-├── domain/         Tipos del dominio (sin dependencias de componentes ni de la API)
+├── domain/         Tipos del dominio y reglas de negocio (businessRules.ts), sin dependencias de componentes ni de la API
 ├── features/
 │   ├── auth/       LoginPage + components/ + services/ + session/ (SessionProvider)
 │   ├── teacher/    Páginas del docente + components/ + services/
@@ -129,6 +129,7 @@ Todo el código, frontend y backend, respeta SOLID. Antes de dar un cambio por t
 ## Convenciones
 
 - TypeScript sin `any` implícito; tipar props y respuestas de la API.
+- **Sin números mágicos**: los límites y cálculos de negocio (ejercicios, palabras clave, nota, límites de los paneles) viven en `src/domain/businessRules.ts` con los mismos nombres y valores que el back; los números técnicos (códigos HTTP en `shared/http/httpStatus.ts`, unidades en `shared/units.ts`, medidas de la interfaz) se nombran como constantes donde se usan.
 - **SonarJS** (`frontend/eslint.config.js`), también en tests y datos de prueba: complejidad cognitiva máxima 15 (extraer funciones), un literal repetido 3 o más veces va en una constante, sin funciones idénticas y sin ternarios anidados (aviso).
 - Las páginas terminan en `Page` (`LessonDetailPage`) y viven en la raíz de su feature con su test.
 - Textos de la interfaz en español; fechas y números con `Intl` en `es` (`shared/i18n`).

@@ -1,5 +1,5 @@
 import type { TeacherInsights } from '@/domain/insights'
-import { wait } from '@/dev/wait'
+import { DEV_DELAY_MS, wait } from '@/dev/wait'
 import type { TeacherInsightsService } from './teacherInsightsService'
 
 interface MockTeacherInsightsServiceOptions {
@@ -10,7 +10,7 @@ interface MockTeacherInsightsServiceOptions {
 // Servicio en memoria para desarrollar sin backend
 export function createMockTeacherInsightsService({
   insights,
-  delayMs = 500,
+  delayMs = DEV_DELAY_MS,
 }: MockTeacherInsightsServiceOptions): TeacherInsightsService {
   return {
     async getInsights() {

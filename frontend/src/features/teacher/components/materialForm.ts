@@ -1,8 +1,7 @@
-import { MAX_EXERCISES, MIN_EXERCISES, type MaterialRequest } from '@/domain/lesson'
+import { MAX_EXERCISES, MAX_KEYWORD_LENGTH, MAX_KEYWORDS, MIN_EXERCISES } from '@/domain/businessRules'
+import type { MaterialRequest } from '@/domain/lesson'
 
 // Límites de GenerateMaterialRequest en docs/openapi.yaml
-const MAX_KEYWORDS = 20
-const MAX_KEYWORD_LENGTH = 50
 
 export interface MaterialFormValues {
   exerciseCount: string

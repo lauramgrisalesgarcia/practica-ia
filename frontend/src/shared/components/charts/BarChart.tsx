@@ -19,15 +19,23 @@ interface BarChartProps {
 
 const WIDTH = 320
 const HEIGHT = 140
-const BASELINE = HEIGHT - 20
+// Espacio inferior para las etiquetas del eje
+const AXIS_LABELS_HEIGHT = 20
+const BASELINE = HEIGHT - AXIS_LABELS_HEIGHT
 const TOP = 16
 const CORNER = 4
+const MAX_BAR_WIDTH = 24
+// Proporción del hueco de cada dato que ocupa su barra
+const BAR_FILL = 0.5
+// Separación del valor sobre la barra y de la etiqueta sobre el borde inferior
+const VALUE_GAP = 4
+const LABEL_GAP = 6
 
 // Barras verticales de una sola serie con tabla de datos accesible
 export function BarChart({ title, labelHeader, valueHeader, data, formatValue = String, maxValue }: BarChartProps) {
   const max = maxValue ?? Math.max(1, ...data.map((d) => d.value))
   const slot = WIDTH / Math.max(1, data.length)
-  const barWidth = Math.min(24, slot * 0.5)
+  const barWidth = Math.min(MAX_BAR_WIDTH, slot * BAR_FILL)
   const last = data.length - 1
 
   return (
@@ -62,11 +70,11 @@ export function BarChart({ title, labelHeader, valueHeader, data, formatValue = 
                 </>
               )}
               {i === last && (
-                <text x={x + barWidth / 2} y={y - 4} textAnchor="middle" className="fill-ink text-[10px] font-semibold">
+                <text x={x + barWidth / 2} y={y - VALUE_GAP} textAnchor="middle" className="fill-ink text-[10px] font-semibold">
                   {formatValue(d.value)}
                 </text>
               )}
-              <text x={i * slot + slot / 2} y={HEIGHT - 6} textAnchor="middle" className="fill-ink/70 text-[9px]">
+              <text x={i * slot + slot / 2} y={HEIGHT - LABEL_GAP} textAnchor="middle" className="fill-ink/70 text-[9px]">
                 {d.label}
               </text>
             </g>

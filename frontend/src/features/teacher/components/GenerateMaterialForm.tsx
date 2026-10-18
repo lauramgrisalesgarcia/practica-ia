@@ -1,5 +1,6 @@
 import { useId, useState, type FormEvent } from 'react'
-import { MAX_EXERCISES, MIN_EXERCISES, type MaterialRequest, type TeacherMaterial } from '@/domain/lesson'
+import { DEFAULT_EXERCISE_COUNT, MAX_EXERCISES, MIN_EXERCISES } from '@/domain/businessRules'
+import type { MaterialRequest, TeacherMaterial } from '@/domain/lesson'
 import { GENERATE_MATERIAL_ANCHOR } from '@/shared/routes/paths'
 import { validateMaterialForm, type MaterialFormErrors } from './materialForm'
 import { errorMessage } from '@/shared/errors/errorMessage'
@@ -13,7 +14,6 @@ interface GenerateMaterialFormProps {
   onCancel?: () => void
 }
 
-const DEFAULT_EXERCISE_COUNT = '5'
 
 export function GenerateMaterialForm({
   lessonId,
@@ -23,7 +23,7 @@ export function GenerateMaterialForm({
   onCancel,
 }: GenerateMaterialFormProps) {
   const id = useId()
-  const [exerciseCount, setExerciseCount] = useState(DEFAULT_EXERCISE_COUNT)
+  const [exerciseCount, setExerciseCount] = useState(String(DEFAULT_EXERCISE_COUNT))
   const [keywords, setKeywords] = useState(initialKeywords.join(', '))
   const [errors, setErrors] = useState<MaterialFormErrors>({})
   const [submitError, setSubmitError] = useState<string | null>(null)
