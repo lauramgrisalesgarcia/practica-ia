@@ -73,6 +73,23 @@ function createFakeBackend({ lessons, materials, answerKeys }: StudentFixtures):
   let currentLessons = lessons
   const materialsById = new Map(Object.entries(materials))
 
+  // Corrige y guarda el intento (POST …/material/submission)
+  function submit(lessonId: string, material: StudentMaterial, init: RequestInit | undefined): Response {
+    if (material.submission) return json(409, { detail: 'El material ya fue resuelto' })
+    const body = JSON.parse(String(init?.body)) as ApiSubmissionRequest
+    const answers: Answer[] = body.answers.map(({ exercise_id, selected_option }) => ({
+      exerciseId: exercise_id,
+      selectedOption: selected_option,
+    }))
+    if (!answersAreValid(material, answers)) return json(422, { detail: INVALID_ANSWERS_MESSAGE })
+    const submission = gradeFakeSubmission(answers, answerKeys[lessonId])
+    materialsById.set(lessonId, { ...material, submission })
+    currentLessons = currentLessons.map((l) =>
+      l.id === lessonId ? { ...l, materialStatus: 'completed', score: submission.score } : l,
+    )
+    return json(201, toApiSubmission(lessonId, submission))
+  }
+
   return async (input, init) => {
     const path = new URL(String(input)).pathname
     const method = init?.method
@@ -99,21 +116,7 @@ function createFakeBackend({ lessons, materials, answerKeys }: StudentFixtures):
     if (!material) return json(404, { detail: 'La clase no tiene material de refuerzo' })
     if (resource === 'material' && method === 'GET') return json(200, toApiMaterial(material))
 
-    if (resource === 'material/submission' && method === 'POST') {
-      if (material.submission) return json(409, { detail: 'El material ya fue resuelto' })
-      const body = JSON.parse(String(init?.body)) as ApiSubmissionRequest
-      const answers: Answer[] = body.answers.map(({ exercise_id, selected_option }) => ({
-        exerciseId: exercise_id,
-        selectedOption: selected_option,
-      }))
-      if (!answersAreValid(material, answers)) return json(422, { detail: INVALID_ANSWERS_MESSAGE })
-      const submission = gradeFakeSubmission(answers, answerKeys[lessonId])
-      materialsById.set(lessonId, { ...material, submission })
-      currentLessons = currentLessons.map((l) =>
-        l.id === lessonId ? { ...l, materialStatus: 'completed', score: submission.score } : l,
-      )
-      return json(201, toApiSubmission(lessonId, submission))
-    }
+    if (resource === 'material/submission' && method === 'POST') return submit(lessonId, material, init)
 
     return json(405, { detail: 'Method Not Allowed' })
   }

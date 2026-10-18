@@ -78,22 +78,38 @@ interface ApiMaterialRequest {
 function createFakeBackend({ lessonsByStudent, lessons }: TeacherLessonFixtures): typeof fetch {
   const lessonsById = new Map(lessons.map((lesson) => [lesson.id, lesson]))
 
+  // Historial de un estudiante con el estado actual del material de cada clase
+  function history(studentId: string): Response {
+    if (!Object.hasOwn(lessonsByStudent, studentId)) return json(404, { detail: 'Estudiante no encontrado' })
+    return json(
+      200,
+      lessonsByStudent[studentId].map((summary) => {
+        const lesson = lessonsById.get(summary.id)
+        return toApiTeacherSummary(lesson ? { ...summary, materialStatus: lesson.materialStatus } : summary)
+      }),
+    )
+  }
+
+  // Genera y guarda el material (POST …/material)
+  function generate(lesson: LessonDetail, init: RequestInit | undefined): Response {
+    const error = materialGenerationError(lesson)
+    if (error) return json(409, { detail: error })
+    const body = JSON.parse(String(init?.body)) as ApiMaterialRequest
+    const material = buildFakeMaterial(lesson, {
+      activityType: body.activity_type,
+      exerciseCount: body.exercise_count,
+      keywords: body.keywords,
+    })
+    lessonsById.set(lesson.id, { ...lesson, material, materialStatus: 'pending' })
+    return json(201, { lesson_id: lesson.id, ...toApiMaterial(material) })
+  }
+
   return async (input, init) => {
     const path = new URL(String(input)).pathname
     const method = init?.method
 
-    const history = /^\/teachers\/me\/students\/([^/]+)\/lessons$/.exec(path)
-    if (history && method === 'GET') {
-      const studentId = decodeURIComponent(history[1])
-      if (!Object.hasOwn(lessonsByStudent, studentId)) return json(404, { detail: 'Estudiante no encontrado' })
-      return json(
-        200,
-        lessonsByStudent[studentId].map((summary) => {
-          const lesson = lessonsById.get(summary.id)
-          return toApiTeacherSummary(lesson ? { ...summary, materialStatus: lesson.materialStatus } : summary)
-        }),
-      )
-    }
+    const historyPath = /^\/teachers\/me\/students\/([^/]+)\/lessons$/.exec(path)
+    if (historyPath && method === 'GET') return history(decodeURIComponent(historyPath[1]))
 
     const lessonPath = /^\/teachers\/me\/lessons\/([^/]+)(\/pdf|\/material)?$/.exec(path)
     if (lessonPath) {
@@ -109,18 +125,7 @@ function createFakeBackend({ lessonsByStudent, lessons }: TeacherLessonFixtures)
           headers: { 'Content-Type': 'application/pdf', 'Content-Disposition': `inline; filename="${lesson.pdfFilename}"` },
         })
       }
-      if (resource === '/material' && method === 'POST') {
-        const error = materialGenerationError(lesson)
-        if (error) return json(409, { detail: error })
-        const body = JSON.parse(String(init?.body)) as ApiMaterialRequest
-        const material = buildFakeMaterial(lesson, {
-          activityType: body.activity_type,
-          exerciseCount: body.exercise_count,
-          keywords: body.keywords,
-        })
-        lessonsById.set(lessonId, { ...lesson, material, materialStatus: 'pending' })
-        return json(201, { lesson_id: lessonId, ...toApiMaterial(material) })
-      }
+      if (resource === '/material' && method === 'POST') return generate(lesson, init)
     }
 
     return json(404, { detail: 'Not Found' })

@@ -5,6 +5,10 @@ import type { Answer, StudentMaterial, StudentSubmission } from '@/domain/lesson
 import { COMPLETED_MATERIAL, PENDING_MATERIAL } from '@/test/contracts/studentServiceContract'
 import { StudentMaterialPanel } from './StudentMaterialPanel'
 
+const MATERIAL_TITLE = 'En el restaurante'
+const SOLVE_MATERIAL = 'Resolver refuerzo'
+const RESULT_SUMMARY = 'Resumen del resultado'
+
 const SUBMISSION: StudentSubmission = {
   submittedAt: '2026-10-13T10:00:00Z',
   correctCount: 1,
@@ -41,17 +45,17 @@ describe('StudentMaterialPanel', () => {
   it('carga el material de la clase indicada', async () => {
     const { loadMaterial } = setup()
 
-    await screen.findByRole('heading', { level: 2, name: 'En el restaurante' })
+    await screen.findByRole('heading', { level: 2, name: MATERIAL_TITLE })
     expect(loadMaterial).toHaveBeenCalledWith(PENDING_MATERIAL.lessonId)
   })
 
   it('presenta la actividad pendiente y la muestra solo al pulsar «Resolver refuerzo»', async () => {
     const { user } = setup()
 
-    await screen.findByRole('heading', { level: 2, name: 'En el restaurante' })
+    await screen.findByRole('heading', { level: 2, name: MATERIAL_TITLE })
     expect(screen.getByText('Completa cada frase con la opción correcta.')).toBeInTheDocument()
     expect(screen.getByText('2 preguntas')).toBeInTheDocument()
-    const start = screen.getByRole('button', { name: 'Resolver refuerzo' })
+    const start = screen.getByRole('button', { name: SOLVE_MATERIAL })
     expect(start).toHaveAttribute('aria-expanded', 'false')
     expect(screen.queryByRole('listbox')).not.toBeInTheDocument()
 
@@ -59,20 +63,20 @@ describe('StudentMaterialPanel', () => {
 
     expect(screen.getByText('Pregunta 1 de 2')).toBeInTheDocument()
     expect(screen.getByRole('listbox', { name: 'Opciones' })).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Resolver refuerzo' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: SOLVE_MATERIAL })).not.toBeInTheDocument()
   })
 
   it('muestra el resultado al enviar las respuestas, sin recargar', async () => {
     const { user, submitMaterial, loadMaterial } = setup()
-    await screen.findByRole('heading', { level: 2, name: 'En el restaurante' })
+    await screen.findByRole('heading', { level: 2, name: MATERIAL_TITLE })
 
-    await user.click(screen.getByRole('button', { name: 'Resolver refuerzo' }))
+    await user.click(screen.getByRole('button', { name: SOLVE_MATERIAL }))
     await user.click(screen.getByRole('option', { name: 'la carta' }))
     await user.click(screen.getByRole('button', { name: 'Siguiente' }))
     await user.click(screen.getByRole('option', { name: 'Quiero que' }))
     await user.click(screen.getByRole('button', { name: 'Enviar respuestas' }))
 
-    const summary = await screen.findByRole('region', { name: 'Resumen del resultado' })
+    const summary = await screen.findByRole('region', { name: RESULT_SUMMARY })
     expect(summary).toHaveTextContent('1 correctas · 1 incorrectas')
     expect(within(summary).getByRole('list', { name: 'Recomendaciones' })).toHaveTextContent('Usa «quisiera»')
     const [, second] = questionItems()
@@ -95,30 +99,30 @@ describe('StudentMaterialPanel', () => {
       </MemoryRouter>,
     )
 
-    await screen.findByRole('region', { name: 'Resumen del resultado' })
+    await screen.findByRole('region', { name: RESULT_SUMMARY })
     expect(onResult).toHaveBeenCalledWith(COMPLETED_MATERIAL.submission)
   })
 
   it('no permite volver a resolver un material ya resuelto', async () => {
     setup(vi.fn().mockResolvedValue(COMPLETED_MATERIAL))
 
-    await screen.findByRole('region', { name: 'Resumen del resultado' })
-    expect(screen.queryByRole('button', { name: 'Resolver refuerzo' })).not.toBeInTheDocument()
+    await screen.findByRole('region', { name: RESULT_SUMMARY })
+    expect(screen.queryByRole('button', { name: SOLVE_MATERIAL })).not.toBeInTheDocument()
     expect(screen.queryByRole('listbox')).not.toBeInTheDocument()
   })
 
   it('no muestra resultado mientras el material está pendiente', async () => {
     setup()
 
-    await screen.findByRole('heading', { level: 2, name: 'En el restaurante' })
-    expect(screen.queryByRole('region', { name: 'Resumen del resultado' })).not.toBeInTheDocument()
+    await screen.findByRole('heading', { level: 2, name: MATERIAL_TITLE })
+    expect(screen.queryByRole('region', { name: RESULT_SUMMARY })).not.toBeInTheDocument()
     expect(screen.queryByText(/incorrecta/i)).not.toBeInTheDocument()
   })
 
   it('muestra el resumen del resultado antes de las preguntas, sin una sección «Tu resultado» aparte', async () => {
     setup(vi.fn().mockResolvedValue(COMPLETED_MATERIAL))
 
-    const summary = await screen.findByRole('region', { name: 'Resumen del resultado' })
+    const summary = await screen.findByRole('region', { name: RESULT_SUMMARY })
     expect(summary).toHaveTextContent('1 correctas · 1 incorrectas')
     expect(summary).toHaveTextContent('Bien con «hace calor». Repasa el verbo llover.')
     expect(within(summary).getByRole('list', { name: 'Recomendaciones' })).toHaveTextContent(

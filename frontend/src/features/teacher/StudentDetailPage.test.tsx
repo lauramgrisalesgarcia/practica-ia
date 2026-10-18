@@ -3,9 +3,11 @@ import { MemoryRouter } from 'react-router'
 import type { StudentDetail } from '@/domain/student'
 import { StudentDetailPage } from './StudentDetailPage'
 
+const EMMA_NAME = 'Emma Schmidt'
+
 const EMMA: StudentDetail = {
   id: '3f2b8c1e-9a4d-4e7b-b6a2-1c9d0e5f7a83',
-  name: 'Emma Schmidt',
+  name: EMMA_NAME,
   email: 'emma@correo.com',
   nativeLanguage: 'de',
   level: 'A2',
@@ -25,14 +27,14 @@ describe('StudentDetailPage', () => {
   it('carga el alumno indicado', async () => {
     const { loadStudent } = setup()
 
-    await screen.findByRole('heading', { level: 1, name: 'Emma Schmidt' })
+    await screen.findByRole('heading', { level: 1, name: EMMA_NAME })
     expect(loadStudent).toHaveBeenCalledWith(EMMA.id)
   })
 
   it('muestra los datos del alumno', async () => {
     setup()
 
-    expect(await screen.findByRole('heading', { level: 1, name: 'Emma Schmidt' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { level: 1, name: EMMA_NAME })).toBeInTheDocument()
     expect(screen.getByText('emma@correo.com')).toBeInTheDocument()
     expect(screen.getByText('A2')).toBeInTheDocument()
     expect(screen.getByText('alemán')).toBeInTheDocument()
@@ -43,7 +45,7 @@ describe('StudentDetailPage', () => {
   it('muestra el avatar con las iniciales del alumno', async () => {
     setup()
 
-    const header = (await screen.findByRole('heading', { level: 1, name: 'Emma Schmidt' })).closest('header') as HTMLElement
+    const header = (await screen.findByRole('heading', { level: 1, name: EMMA_NAME })).closest('header') as HTMLElement
     expect(within(header).getByText('ES')).toBeInTheDocument()
   })
 

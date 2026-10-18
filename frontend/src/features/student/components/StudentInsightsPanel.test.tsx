@@ -4,6 +4,8 @@ import type { StudentInsights } from '@/domain/studentInsights'
 import { STUDENT_INSIGHTS } from '@/test/contracts/studentInsightsServiceContract'
 import { StudentInsightsPanel } from './StudentInsightsPanel'
 
+const RECENT_ACTIVITY = 'Actividad reciente'
+
 const EMPTY: StudentInsights = {
   lessonsCount: 0,
   completedMaterials: 0,
@@ -53,7 +55,7 @@ describe('StudentInsightsPanel', () => {
   it('muestra la actividad reciente con una etiqueta de tipo', async () => {
     setup()
 
-    const items = within(await screen.findByRole('complementary', { name: 'Actividad reciente' })).getAllByRole('listitem')
+    const items = within(await screen.findByRole('complementary', { name: RECENT_ACTIVITY })).getAllByRole('listitem')
     expect(items[0]).toHaveTextContent('Refuerzo resuelto')
     expect(items[0]).toHaveTextContent('Resolviste «Pedir en un restaurante» con un 67 %')
     expect(items[1]).toHaveTextContent('Clase')
@@ -81,7 +83,7 @@ describe('StudentInsightsPanel', () => {
   it('muestra la actividad reciente en una columna lateral, como «Mis alumnos» del docente', async () => {
     setup()
 
-    const aside = await screen.findByRole('complementary', { name: 'Actividad reciente' })
+    const aside = await screen.findByRole('complementary', { name: RECENT_ACTIVITY })
     expect(within(aside).getAllByRole('listitem')).toHaveLength(STUDENT_INSIGHTS.recentActivity.length)
     expect(screen.queryByRole('link', { name: /historial de clases/i })).not.toBeInTheDocument()
   })
@@ -91,7 +93,7 @@ describe('StudentInsightsPanel', () => {
 
     expect(await findRegion('Nota media')).toHaveTextContent('Sin refuerzos resueltos')
     expect(await findRegion('Refuerzos pendientes')).toHaveTextContent('No tienes refuerzos pendientes.')
-    expect(await screen.findByRole('complementary', { name: 'Actividad reciente' })).toHaveTextContent('Aún no hay actividad.')
+    expect(await screen.findByRole('complementary', { name: RECENT_ACTIVITY })).toHaveTextContent('Aún no hay actividad.')
     expect(await findRegion('Evolución de tu nota')).toHaveTextContent('Aún no has resuelto ningún refuerzo.')
   })
 

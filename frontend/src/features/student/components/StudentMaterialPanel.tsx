@@ -87,19 +87,21 @@ function MaterialView({ material, submitMaterial, onSubmitted }: MaterialViewPro
           <h2 className="text-xl font-semibold text-ink">{material.title}</h2>
         </header>
         <p className="text-ink/80">{material.instructions}</p>
-        {submission ? (
+        {submission && (
           <>
             <ResultSummary submission={submission} />
             <CorrectedExercises material={material} submission={submission} />
           </>
-        ) : isSolving ? (
+        )}
+        {!submission && isSolving && (
           <ExerciseStepper
             lessonId={material.lessonId}
             exercises={material.exercises}
             submitMaterial={submitMaterial}
             onSubmitted={onSubmitted}
           />
-        ) : (
+        )}
+        {!submission && !isSolving && (
           <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl bg-mist px-4 py-3">
             <p className="text-sm font-medium text-ink">
               {count} {count === 1 ? 'pregunta' : 'preguntas'}

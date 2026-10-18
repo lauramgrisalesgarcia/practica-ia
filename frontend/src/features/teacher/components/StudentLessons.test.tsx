@@ -4,6 +4,9 @@ import { MemoryRouter } from 'react-router'
 import type { LessonPdf, TeacherLessonSummary } from '@/domain/lesson'
 import { StudentLessons } from './StudentLessons'
 
+const RESTAURANT_TOPIC = 'Pedir en un restaurante'
+const WEEKEND_TOPIC = 'Hablar del fin de semana'
+
 const STUDENT_ID = '3f2b8c1e-9a4d-4e7b-b6a2-1c9d0e5f7a83'
 const PDF: LessonPdf = { blob: new Blob(['%PDF']), filename: 'restaurante-a2.pdf' }
 
@@ -12,7 +15,7 @@ const LESSONS: TeacherLessonSummary[] = [
     id: 'l1',
     date: '2026-10-08T16:00:00Z',
     durationMinutes: 60,
-    topic: 'Pedir en un restaurante',
+    topic: RESTAURANT_TOPIC,
     context: 'Pedir comida y bebida y pedir la cuenta',
     materialStatus: 'completed',
     keywords: ['la carta', 'quisiera'],
@@ -22,7 +25,7 @@ const LESSONS: TeacherLessonSummary[] = [
     id: 'l2',
     date: '2026-10-06T15:00:00Z',
     durationMinutes: 45,
-    topic: 'Hablar del fin de semana',
+    topic: WEEKEND_TOPIC,
     context: 'Contar lo que hiciste a un compañero',
     materialStatus: 'pending',
     keywords: ['el sábado', 'fui'],
@@ -132,8 +135,8 @@ describe('StudentLessons', () => {
       setup()
 
       await findHistory()
-      expect(lessonItem('Pedir en un restaurante')).toHaveTextContent('Resuelto · 67 %')
-      expect(lessonItem('Hablar del fin de semana')).toHaveTextContent('Material pendiente')
+      expect(lessonItem(RESTAURANT_TOPIC)).toHaveTextContent('Resuelto · 67 %')
+      expect(lessonItem(WEEKEND_TOPIC)).toHaveTextContent('Material pendiente')
     })
   })
 
@@ -141,7 +144,7 @@ describe('StudentLessons', () => {
     setup()
 
     await findHistory()
-    const keywords = within(lessonItem('Pedir en un restaurante')).getByRole('list', { name: 'Palabras clave' })
+    const keywords = within(lessonItem(RESTAURANT_TOPIC)).getByRole('list', { name: 'Palabras clave' })
     expect(within(keywords).getAllByRole('listitem').map((item) => item.textContent)).toEqual(['la carta', 'quisiera'])
   })
 
@@ -163,7 +166,7 @@ describe('StudentLessons', () => {
       await user.click(screen.getByRole('button', { name: /^pendiente/i }))
 
       expect(screen.getByRole('button', { name: /^pendiente/i })).toHaveAttribute('aria-pressed', 'true')
-      expect(visibleTopics()).toEqual(['Hablar del fin de semana'])
+      expect(visibleTopics()).toEqual([WEEKEND_TOPIC])
     })
 
     it('busca por tema', async () => {
@@ -199,11 +202,11 @@ describe('StudentLessons', () => {
     setup()
     await findHistory()
 
-    const restaurante = lessonItem('Pedir en un restaurante')
+    const restaurante = lessonItem(RESTAURANT_TOPIC)
     expect(restaurante).toHaveTextContent('8 de octubre de 2026 · 60 min')
     expect(restaurante).toHaveTextContent('Pedir comida y bebida y pedir la cuenta')
     expect(restaurante).toHaveTextContent('Resuelto · 67 %')
-    expect(lessonItem('Hablar del fin de semana')).toHaveTextContent('Material pendiente')
+    expect(lessonItem(WEEKEND_TOPIC)).toHaveTextContent('Material pendiente')
     expect(lessonItem('Presentarse')).toHaveTextContent('Sin material')
   })
 
@@ -212,7 +215,7 @@ describe('StudentLessons', () => {
       setup()
       await findHistory()
 
-      const link = within(lessonItem('Pedir en un restaurante')).getByRole('link', { name: 'Ver clase' })
+      const link = within(lessonItem(RESTAURANT_TOPIC)).getByRole('link', { name: 'Ver clase' })
       expect(link).toHaveAttribute('href', '/docente/clases/l1')
     })
 
@@ -222,9 +225,9 @@ describe('StudentLessons', () => {
 
       const generate = within(lessonItem('Presentarse')).getByRole('link', { name: 'Generar material' })
       expect(generate).toHaveAttribute('href', '/docente/clases/l3#generar-material')
-      const pending = lessonItem('Hablar del fin de semana')
+      const pending = lessonItem(WEEKEND_TOPIC)
       expect(within(pending).queryByRole('link', { name: /generar material/i })).not.toBeInTheDocument()
-      const completed = lessonItem('Pedir en un restaurante')
+      const completed = lessonItem(RESTAURANT_TOPIC)
       expect(within(completed).queryByRole('link', { name: /generar material/i })).not.toBeInTheDocument()
     })
 
@@ -232,7 +235,7 @@ describe('StudentLessons', () => {
       const { user, downloadPdf, openPdf } = setup()
       await findHistory()
 
-      await user.click(within(lessonItem('Pedir en un restaurante')).getByRole('button', { name: /pdf/i }))
+      await user.click(within(lessonItem(RESTAURANT_TOPIC)).getByRole('button', { name: /pdf/i }))
 
       expect(downloadPdf).toHaveBeenCalledWith('l1')
       expect(openPdf).toHaveBeenCalledWith(PDF)

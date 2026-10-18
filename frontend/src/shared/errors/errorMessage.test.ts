@@ -1,11 +1,13 @@
 import { errorMessage } from './errorMessage'
 
+const FALLBACK = 'No se pudo cargar'
+
 describe('errorMessage', () => {
   it('usa el mensaje del error', () => {
-    expect(errorMessage(new Error('Sin conexión'), 'No se pudo cargar')).toBe('Sin conexión')
+    expect(errorMessage(new Error('Sin conexión'), FALLBACK)).toBe('Sin conexión')
   })
 
   it('usa el texto alternativo si lo lanzado no es un Error', () => {
-    expect(errorMessage('fallo', 'No se pudo cargar')).toBe('No se pudo cargar')
+    expect(errorMessage('fallo', FALLBACK)).toBe(FALLBACK)
   })
 })

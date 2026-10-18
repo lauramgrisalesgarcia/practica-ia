@@ -1,6 +1,8 @@
 import type { LessonDetail, LessonSummary, TeacherLessonSummary } from '@/domain/lesson'
 import type { TeacherLessonService } from '@/features/teacher/services/teacherLessonService'
 
+const LESSON_NOT_FOUND = 'Clase no encontrada'
+
 export const EMMA_ID = '3f2b8c1e-9a4d-4e7b-b6a2-1c9d0e5f7a83'
 export const UNKNOWN_STUDENT_ID = '00000000-0000-4000-8000-000000000000'
 export const UNKNOWN_LESSON_ID = '00000000-0000-4000-8000-000000000001'
@@ -122,7 +124,7 @@ export function describeTeacherLessonServiceContract(createService: (fixtures: T
     })
 
     it('rechaza el detalle de una clase inexistente o de otro docente', async () => {
-      await expect(createService(DEFAULT_FIXTURES).getLesson(UNKNOWN_LESSON_ID)).rejects.toThrow('Clase no encontrada')
+      await expect(createService(DEFAULT_FIXTURES).getLesson(UNKNOWN_LESSON_ID)).rejects.toThrow(LESSON_NOT_FOUND)
     })
 
     it('descarga el PDF de la clase con su nombre de archivo', async () => {
@@ -133,7 +135,7 @@ export function describeTeacherLessonServiceContract(createService: (fixtures: T
     })
 
     it('rechaza el PDF de una clase inexistente o de otro docente', async () => {
-      await expect(createService(DEFAULT_FIXTURES).downloadPdf(UNKNOWN_LESSON_ID)).rejects.toThrow('Clase no encontrada')
+      await expect(createService(DEFAULT_FIXTURES).downloadPdf(UNKNOWN_LESSON_ID)).rejects.toThrow(LESSON_NOT_FOUND)
     })
 
     describe('generar material', () => {
@@ -190,7 +192,7 @@ export function describeTeacherLessonServiceContract(createService: (fixtures: T
 
       it('rechaza una clase inexistente o de otro docente', async () => {
         await expect(createService(DEFAULT_FIXTURES).generateMaterial(UNKNOWN_LESSON_ID, REQUEST)).rejects.toThrow(
-          'Clase no encontrada',
+          LESSON_NOT_FOUND,
         )
       })
 

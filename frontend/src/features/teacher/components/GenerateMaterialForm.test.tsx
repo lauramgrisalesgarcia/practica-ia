@@ -4,6 +4,8 @@ import type { MaterialRequest, TeacherMaterial } from '@/domain/lesson'
 import { INTRODUCTIONS_LESSON, RESTAURANT_LESSON } from '@/test/contracts/teacherLessonServiceContract'
 import { GenerateMaterialForm } from './GenerateMaterialForm'
 
+const GENERATE_MATERIAL = 'Generar material'
+
 const MATERIAL = RESTAURANT_LESSON.material as TeacherMaterial
 
 interface SetupOptions {
@@ -46,7 +48,7 @@ describe('GenerateMaterialForm', () => {
     await user.clear(exerciseCount)
     await user.type(exerciseCount, '3')
     await user.type(keywords, ', mi hermano')
-    await user.click(screen.getByRole('button', { name: 'Generar material' }))
+    await user.click(screen.getByRole('button', { name: GENERATE_MATERIAL }))
 
     expect(generateMaterial).toHaveBeenCalledWith(INTRODUCTIONS_LESSON.id, {
       activityType: 'complete_sentence',
@@ -62,7 +64,7 @@ describe('GenerateMaterialForm', () => {
     await user.clear(exerciseCount)
     await user.type(exerciseCount, '20')
     await user.clear(keywords)
-    await user.click(screen.getByRole('button', { name: 'Generar material' }))
+    await user.click(screen.getByRole('button', { name: GENERATE_MATERIAL }))
 
     expect(screen.getByText('El número de ejercicios debe estar entre 1 y 15')).toBeInTheDocument()
     expect(screen.getByText('Indica al menos una palabra clave')).toBeInTheDocument()
@@ -74,14 +76,14 @@ describe('GenerateMaterialForm', () => {
   it('indica que está generando y desactiva el botón', async () => {
     let resolve!: (material: TeacherMaterial) => void
     const { user } = setup({ generateMaterial: () => new Promise((r) => (resolve = r)) })
-    const button = screen.getByRole('button', { name: 'Generar material' })
+    const button = screen.getByRole('button', { name: GENERATE_MATERIAL })
 
     await user.click(button)
 
     expect(button).toBeDisabled()
     expect(button).toHaveTextContent(/generando/i)
     resolve(MATERIAL)
-    expect(await screen.findByRole('button', { name: 'Generar material' })).toBeEnabled()
+    expect(await screen.findByRole('button', { name: GENERATE_MATERIAL })).toBeEnabled()
   })
 
   it.each([
@@ -90,7 +92,7 @@ describe('GenerateMaterialForm', () => {
   ])('muestra el error si %s', async (_, message) => {
     const { user, onGenerated } = setup({ generateMaterial: vi.fn().mockRejectedValue(new Error(message)) })
 
-    await user.click(screen.getByRole('button', { name: 'Generar material' }))
+    await user.click(screen.getByRole('button', { name: GENERATE_MATERIAL }))
 
     expect(await screen.findByRole('alert')).toHaveTextContent(message)
     expect(onGenerated).not.toHaveBeenCalled()
@@ -102,7 +104,7 @@ describe('GenerateMaterialForm', () => {
       .mockRejectedValueOnce(new Error('No se pudo generar el material de refuerzo'))
       .mockResolvedValueOnce(MATERIAL)
     const { user } = setup({ generateMaterial })
-    const button = screen.getByRole('button', { name: 'Generar material' })
+    const button = screen.getByRole('button', { name: GENERATE_MATERIAL })
 
     await user.click(button)
     await screen.findByRole('alert')
