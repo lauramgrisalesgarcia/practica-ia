@@ -115,9 +115,73 @@ def test_cada_llamada_devuelve_una_copia_independiente() -> None:
     assert second["title"] != "modificado"
 
 
-def test_devuelve_recomendaciones_validas() -> None:
-    response = SimulatedLLMClient().generate_recommendations({"task": "generate_recommendations"})
+def recommendations_request(failed: list[tuple[str, str, str]], total: int = 4) -> dict[str, Any]:
+    """Petición como la de submit_material; failed = (frase, elegida, correcta)."""
+    return {
+        "task": "generate_recommendations",
+        "student": {"level": "A2", "native_language": "de"},
+        "lesson": {
+            "topic": "La rutina diaria",
+            "context": "Contar lo que hace en un día normal",
+            "keywords": ["me levanto", "desayuno", "por la tarde", "me acuesto"],
+        },
+        "result": {
+            "correct_count": total - len(failed),
+            "incorrect_count": len(failed),
+            "score": round(10 * (total - len(failed)) / total, 2),
+            "failed_exercises": [
+                {"sentence": sentence, "selected_option": selected, "correct_option": correct}
+                for sentence, selected, correct in failed
+            ],
+        },
+        "output_language": "es",
+    }
+
+
+FAILED = [
+    ("Todos los días ___ a las siete y me ducho.", "desayuno", "me levanto"),
+    ("Estoy muy cansada, así que hoy ___ temprano.", "por la tarde", "me acuesto"),
+]
+
+
+@pytest.mark.parametrize("failed", [[], FAILED[:1], FAILED, FAILED * 3], ids=["todo bien", "uno", "dos", "muchos"])
+def test_devuelve_recomendaciones_validas(failed: list[tuple[str, str, str]]) -> None:
+    response = SimulatedLLMClient().generate_recommendations(recommendations_request(failed, total=max(4, len(failed))))
 
     feedback, recommendations = parse_recommendations(response)
     assert feedback
     assert 1 <= len(recommendations) <= 5
+
+
+def test_las_recomendaciones_hablan_de_la_clase_y_no_de_otra() -> None:
+    response = SimulatedLLMClient().generate_recommendations(recommendations_request(FAILED))
+
+    feedback, recommendations = parse_recommendations(response)
+    text = " ".join([feedback, *recommendations])
+    assert "La rutina diaria" in text
+    assert "restaurante" not in text.lower()
+    assert "quisiera" not in text
+
+
+def test_recomienda_repasar_cada_palabra_fallada_con_la_frase_corregida() -> None:
+    response = SimulatedLLMClient().generate_recommendations(recommendations_request(FAILED))
+
+    feedback, recommendations = parse_recommendations(response)
+    assert any("me levanto" in item and "Todos los días me levanto a las siete" in item for item in recommendations)
+    assert any("me acuesto" in item and "«por la tarde»" in item for item in recommendations)
+    assert "2 de 4" in feedback
+
+
+def test_sin_fallos_felicita_y_propone_seguir_practicando_las_palabras_clave() -> None:
+    response = SimulatedLLMClient().generate_recommendations(recommendations_request([]))
+
+    feedback, recommendations = parse_recommendations(response)
+    assert "4 de 4" in feedback
+    assert any("me levanto" in item for item in recommendations)
+
+
+def test_no_repite_la_recomendacion_de_una_misma_palabra_fallada_varias_veces() -> None:
+    response = SimulatedLLMClient().generate_recommendations(recommendations_request(FAILED * 3, total=6))
+
+    _, recommendations = parse_recommendations(response)
+    assert sum("Repasa «me levanto»" in item for item in recommendations) == 1
