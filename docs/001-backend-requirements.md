@@ -1,6 +1,6 @@
 # Requerimientos del backend
 
-Estado: **validado** · Última actualización: 2026-10-12
+Estado: **implementado** · Última actualización: 2026-10-18
 
 ## Alcance
 
@@ -11,11 +11,11 @@ Plataforma para **extranjeros que aprenden español**. API REST que da servicio 
 2. El estudiante **resuelve la actividad una única vez**.
 3. El backend **corrige** las respuestas, calcula el porcentaje de aciertos y devuelve **recomendaciones**.
 
-Tanto el material como las recomendaciones los generaría un LLM; en este proyecto se **simulan**: el material se construye a partir de las palabras clave de la clase y las recomendaciones salen de un JSON fijo que imita la respuesta del modelo.
+Tanto el material como las recomendaciones los generaría un LLM; en este proyecto se **simulan**: el material se construye con las palabras clave de la clase y frases de ejemplo para practicarlas, y las recomendaciones, con el tema de la clase y los ejercicios fallados.
 
 Roles:
-- **Docente**: consulta sus estudiantes, el detalle de cada uno, su historial de clases y el detalle de una clase; genera el material de refuerzo y ve el resultado del estudiante.
-- **Estudiante**: consulta su historial de clases, abre el material de una clase, lo resuelve una vez y ve su resultado con recomendaciones.
+- **Docente**: ve su panel de indicadores, sus estudiantes, el detalle de cada uno, su historial de clases y el detalle de una clase; genera el material de refuerzo y ve el resultado del estudiante.
+- **Estudiante**: ve su panel de indicadores, su historial de clases y el detalle de cada una; abre el material de una clase, lo resuelve una vez y ve su resultado con recomendaciones.
 
 ## Requerimientos funcionales
 
@@ -43,7 +43,7 @@ Roles:
 
 ### RF6 · Historial de clases de un estudiante (docente)
 - El docente ve las clases realizadas por ese estudiante, de la más reciente a la más antigua.
-- Datos por clase: `id`, `date`, `duration_minutes`, `topic`, `context`, `material_status`.
+- Datos por clase: `id`, `date`, `duration_minutes`, `topic`, `context`, `keywords`, `material_status` y `score` (nota si el material está resuelto; `null` si no).
 
 ### RF7 · Detalle de una clase (docente)
 - El docente entra a una clase concreta y ve: fecha, duración, tema, contexto, palabras clave, notas, PDF de la clase, datos básicos del estudiante, el material (con las respuestas correctas) si existe y el resultado del estudiante si ya lo resolvió.
@@ -69,7 +69,7 @@ Roles:
 
 ### RF9 · Historial de clases (estudiante)
 - El estudiante ve las clases tomadas con su docente, de la más reciente a la más antigua.
-- Datos por clase: `id`, `date`, `duration_minutes`, `topic`, `context`, `pdf` (nombre y URL de descarga), `material_status`.
+- Datos por clase: `id`, `date`, `duration_minutes`, `topic`, `context`, `keywords`, `pdf` (nombre y URL de descarga), `material_status` y `score`.
 - El estudiante puede **ver y descargar el PDF** de cada una de sus clases.
 
 ### RF10 · Ver el material (estudiante) — **CORE**
@@ -95,6 +95,29 @@ Roles:
 - El estudiante puede consultar su resultado y recomendaciones en cualquier momento después de resolver.
 - El docente ve ese mismo resultado en el detalle de la clase (RF7).
 
+### RF13 · Panel de indicadores (docente)
+- Resumen de la actividad del docente con todos sus estudiantes, calculado solo con clases ya realizadas:
+  - `lessons_this_month`: clases del mes en curso.
+  - `pending_materials`: materiales generados que el estudiante aún no ha resuelto.
+  - `material_status`: cuántas clases están `completed`, `pending` y `none`.
+  - `weekly_lessons`: clases por semana de las **últimas 8 semanas** (las semanas empiezan en lunes), en orden cronológico.
+  - `recent_activity`: las **10** actividades más recientes (clase realizada, material generado o material resuelto con su nota), con el estudiante y el tema.
+  - `calendar`: clases de los **últimos 6 meses**, ordenadas por fecha.
+- Meses y semanas se calculan en **UTC**.
+
+### RF14 · Panel de indicadores (estudiante)
+- Resumen de la actividad del estudiante, solo con sus clases ya realizadas:
+  - `lessons_count`, `completed_materials` y `average_score` (media de sus notas con 2 decimales; `null` si no ha resuelto ninguno).
+  - `pending_materials`: refuerzos generados que aún no ha resuelto, con su tema, fecha y número de ejercicios.
+  - `recent_activity`: sus **10** actividades más recientes.
+  - `calendar`: sus clases de los **últimos 6 meses**.
+  - `score_history`: sus **últimas 10** notas en orden cronológico (evolución de la nota).
+
+### RF15 · Detalle de una clase (estudiante)
+- El estudiante entra a una de sus clases y ve: fecha, duración, tema, contexto, palabras clave, PDF, estado del material y nota.
+- **No** incluye las notas del docente, que son solo para él.
+- Clase inexistente, futura o de otro estudiante → `404`.
+
 ## Reglas de negocio
 - Todos los recursos se identifican en la API con un **UUID v4 aleatorio** (`public_id`), no secuencial ni adivinable. Los ids numéricos internos de la BD nunca se exponen.
 - Los estudiantes son extranjeros que aprenden **español**; el idioma de aprendizaje no se almacena porque siempre es `es`.
@@ -106,6 +129,7 @@ Roles:
 - Una clase tiene como máximo **un** material vigente, y un material como máximo **un** intento de resolución.
 - El material de una clase se genera **una única vez**: si ya tiene material → `409`.
 - `material_status` de una clase: `none` (sin material), `pending` (generado, sin resolver), `completed` (resuelto).
+- Los paneles (RF13, RF14) solo cuentan clases realizadas y calculan meses y semanas en UTC; límites: 8 semanas, 10 actividades recientes, 6 meses de calendario y 10 notas en la evolución.
 - Los idiomas natales se guardan como códigos ISO 639-1 (`en`, `de`, `fr`, …).
 
 ## Modelo de datos
@@ -143,6 +167,7 @@ lessons
 
 reinforcement_materials
   id                 PK
+  public_id          UUID v4, único
   lesson_id          FK → lessons.id, único
   activity_type      'complete_sentence'
   exercise_count     entero 1–15
@@ -152,6 +177,7 @@ reinforcement_materials
 
 material_submissions
   id                 PK
+  public_id          UUID v4, único
   material_id        FK → reinforcement_materials.id, único (un intento por material)
   student_id         FK → users.id
   answers            JSONB  [{ exercise_id, selected_option }]
@@ -162,7 +188,7 @@ material_submissions
   submitted_at       timestamp
 ```
 
-Los PDF se guardan como archivos en el almacenamiento del backend (`backend/storage/lessons/`) y la base de datos solo guarda su ruta. El seed incluye PDF de ejemplo.
+Los PDF se guardan como archivos en el almacenamiento del backend (`backend/storage/lessons/<UUID del estudiante>/`) y la base de datos solo guarda su ruta, que nunca se expone en la API. El seed incluye PDF de ejemplo.
 
 ## Integración con el LLM (simulada)
 
@@ -186,7 +212,7 @@ Lo que el backend envía al `LLMClient` al generar material:
     "notes": "Confunde 'quiero' y 'quisiera'. Le cuesta el orden primero/segundo/postre.",
     "pdf": {
       "filename": "restaurante-a2.pdf",
-      "path": "storage/lessons/15/restaurante-a2.pdf"
+      "path": "lessons/3f2b8c1e-9a4d-4e7b-b6a2-1c9d0e5f7a83/restaurante-a2.pdf"
     }
   },
   "output_language": "es"
@@ -289,8 +315,11 @@ Reglas de validación:
 | GET | `/teachers/me/students/{student_id}/lessons` | Docente | Historial de clases del estudiante |
 | GET | `/teachers/me/lessons/{lesson_id}` | Docente | Detalle de una clase (material y resultado si existen) |
 | GET | `/teachers/me/lessons/{lesson_id}/pdf` | Docente | Descarga el PDF de la clase |
+| GET | `/teachers/me/insights` | Docente | Indicadores de su panel (RF13) |
 | POST | `/teachers/me/lessons/{lesson_id}/material` | Docente | Genera el material (una única vez) |
+| GET | `/students/me/insights` | Estudiante | Indicadores de su panel (RF14) |
 | GET | `/students/me/lessons` | Estudiante | Su historial de clases |
+| GET | `/students/me/lessons/{lesson_id}` | Estudiante | Detalle de su clase, sin las notas del docente (RF15) |
 | GET | `/students/me/lessons/{lesson_id}/pdf` | Estudiante | Descarga el PDF de su clase |
 | GET | `/students/me/lessons/{lesson_id}/material` | Estudiante | Material sin respuestas (y su resultado si ya lo resolvió) |
 | POST | `/students/me/lessons/{lesson_id}/material/submission` | Estudiante | Envía sus respuestas (una única vez) |
@@ -298,459 +327,29 @@ Reglas de validación:
 
 Todos los endpoints protegidos requieren la cabecera `Authorization: Bearer <token>`.
 
-## Ejemplos de la API
+## Ejemplos y errores
 
-### `GET /health`
+Los ejemplos de petición y respuesta de cada endpoint están en el contrato, [`openapi.yaml`](openapi.yaml), que es la fuente de verdad y se verifica con un test (`tests/contract/test_openapi_contract.py`). Swagger los muestra en <http://localhost:8001/docs> con el backend en marcha.
 
-```http
-GET /health
-```
-```json
-200 OK
-{ "status": "ok" }
-```
+Errores de negocio (todas las respuestas de error son JSON con `detail`):
 
-### `POST /auth/login`
-
-```http
-POST /auth/login
-Content-Type: application/json
-
-{ "email": "docente@colegio.edu", "password": "Docente#2026" }
-```
-```json
-200 OK
-{
-  "access_token": "<token JWT>",
-  "token_type": "bearer",
-  "expires_in": 3600,
-  "user": {
-    "id": 1,
-    "first_name": "María",
-    "last_name": "López",
-    "email": "docente@colegio.edu",
-    "role": "docente"
-  }
-}
-```
-
-Credenciales incorrectas:
-```json
-401 Unauthorized
-{ "detail": "Credenciales incorrectas" }
-```
-
-Datos mal formados (correo inválido, campos vacíos):
-```json
-422 Unprocessable Entity
-{ "detail": [ { "loc": ["body", "email"], "msg": "value is not a valid email address", "type": "value_error" } ] }
-```
-
-### `GET /auth/me`
-
-```http
-GET /auth/me
-Authorization: Bearer <token JWT>
-```
-```json
-200 OK
-{
-  "id": 1,
-  "first_name": "María",
-  "last_name": "López",
-  "email": "docente@colegio.edu",
-  "role": "docente"
-}
-```
-
-Sin token o token caducado:
-```json
-401 Unauthorized
-{ "detail": "No autenticado" }
-```
-
-### `GET /teachers/me/students`
-
-```http
-GET /teachers/me/students
-Authorization: Bearer <token de docente>
-```
-```json
-200 OK
-[
-  {
-    "id": 3,
-    "first_name": "John",
-    "last_name": "Miller",
-    "email": "john@correo.com",
-    "native_language": "en",
-    "level": "B1"
-  },
-  {
-    "id": 2,
-    "first_name": "Emma",
-    "last_name": "Schmidt",
-    "email": "emma@correo.com",
-    "native_language": "de",
-    "level": "A2"
-  }
-]
-```
-
-Con token de estudiante:
-```json
-403 Forbidden
-{ "detail": "No tienes permiso para acceder a este recurso" }
-```
-
-### `GET /teachers/me/students/{student_id}`
-
-```http
-GET /teachers/me/students/2
-Authorization: Bearer <token de docente>
-```
-```json
-200 OK
-{
-  "id": 2,
-  "first_name": "Emma",
-  "last_name": "Schmidt",
-  "email": "emma@correo.com",
-  "native_language": "de",
-  "level": "A2",
-  "lessons_count": 12
-}
-```
-
-Estudiante inexistente o de otro docente:
-```json
-404 Not Found
-{ "detail": "Estudiante no encontrado" }
-```
-
-### `GET /teachers/me/students/{student_id}/lessons`
-
-```http
-GET /teachers/me/students/2/lessons
-Authorization: Bearer <token de docente>
-```
-```json
-200 OK
-[
-  {
-    "id": 15,
-    "date": "2026-10-08T16:00:00Z",
-    "duration_minutes": 60,
-    "topic": "Pedir en un restaurante",
-    "context": "Pedir comida y bebida en un restaurante y pedir la cuenta",
-    "material_status": "completed"
-  },
-  {
-    "id": 11,
-    "date": "2026-10-01T16:00:00Z",
-    "duration_minutes": 60,
-    "topic": "Presentarse",
-    "context": "Presentarse y hablar de la familia en una reunión",
-    "material_status": "none"
-  }
-]
-```
-
-### `GET /teachers/me/lessons/{lesson_id}`
-
-El docente ve el material **con** las respuestas correctas y, si existe, el resultado del estudiante.
-
-```http
-GET /teachers/me/lessons/15
-Authorization: Bearer <token de docente>
-```
-```json
-200 OK
-{
-  "id": 15,
-  "date": "2026-10-08T16:00:00Z",
-  "duration_minutes": 60,
-  "topic": "Pedir en un restaurante",
-  "context": "Pedir comida y bebida en un restaurante y pedir la cuenta",
-  "keywords": ["la carta", "quisiera", "de primero", "la cuenta", "para beber"],
-  "notes": "Confunde 'quiero' y 'quisiera'. Le cuesta el orden primero/segundo/postre.",
-  "pdf": { "filename": "restaurante-a2.pdf", "url": "/teachers/me/lessons/15/pdf" },
-  "material_status": "completed",
-  "student": {
-    "id": 2,
-    "first_name": "Emma",
-    "last_name": "Schmidt",
-    "native_language": "de",
-    "level": "A2"
-  },
-  "material": {
-    "generated_at": "2026-10-12T10:30:00Z",
-    "activity_type": "complete_sentence",
-    "exercise_count": 3,
-    "title": "En el restaurante",
-    "instructions": "Completa cada frase con la opción correcta.",
-    "exercises": [
-      {
-        "id": 1,
-        "sentence": "Camarero, ¿nos trae ___, por favor? Queremos ver los platos.",
-        "options": ["la carta", "la cuenta", "la mesa"],
-        "correct_option": "la carta"
-      }
-    ]
-  },
-  "submission": {
-    "submitted_at": "2026-10-12T18:05:00Z",
-    "correct_count": 2,
-    "incorrect_count": 1,
-    "score": 66.67
-  }
-}
-```
-
-Clase inexistente o de un estudiante de otro docente:
-```json
-404 Not Found
-{ "detail": "Clase no encontrada" }
-```
-
-### `GET /teachers/me/lessons/{lesson_id}/pdf`
-
-```http
-GET /teachers/me/lessons/15/pdf
-Authorization: Bearer <token de docente>
-```
-```http
-200 OK
-Content-Type: application/pdf
-Content-Disposition: inline; filename="restaurante-a2.pdf"
-
-<contenido binario del PDF>
-```
-
-### `POST /teachers/me/lessons/{lesson_id}/material`
-
-```http
-POST /teachers/me/lessons/15/material
-Authorization: Bearer <token de docente>
-Content-Type: application/json
-
-{
-  "activity_type": "complete_sentence",
-  "exercise_count": 3,
-  "keywords": ["la carta", "quisiera", "de primero", "de segundo", "la cuenta"]
-}
-```
-
-En este ejemplo el docente quitó "para beber" y añadió "de segundo" respecto a las palabras clave de la clase. Si omite `keywords`, se usan las de la clase.
-```json
-201 Created
-{
-  "lesson_id": 15,
-  "generated_at": "2026-10-12T10:30:00Z",
-  "activity_type": "complete_sentence",
-  "exercise_count": 3,
-  "title": "En el restaurante",
-  "instructions": "Completa cada frase con la opción correcta.",
-  "exercises": [
-    {
-      "id": 1,
-      "sentence": "Camarero, ¿nos trae ___, por favor? Queremos ver los platos.",
-      "options": ["la carta", "la cuenta", "la mesa"],
-      "correct_option": "la carta"
-    },
-    {
-      "id": 2,
-      "sentence": "Buenas noches. ___ una mesa para dos personas.",
-      "options": ["Quisiera", "Quiero que", "Quería que"],
-      "correct_option": "Quisiera"
-    },
-    {
-      "id": 3,
-      "sentence": "___ voy a tomar una sopa de verduras y de segundo, pescado.",
-      "options": ["De primero", "Para primero", "En primero"],
-      "correct_option": "De primero"
-    }
-  ]
-}
-```
-
-Cantidad fuera de rango o tipo de actividad no soportado:
-```json
-422 Unprocessable Entity
-{ "detail": [ { "loc": ["body", "exercise_count"], "msg": "Input should be less than or equal to 15", "type": "less_than_equal" } ] }
-```
-
-Clase futura o material ya resuelto por el estudiante:
-```json
-409 Conflict
-{ "detail": "Solo se puede generar material para clases ya realizadas" }
-```
-```json
-409 Conflict
-{ "detail": "El material de refuerzo de esta clase ya se generó y no se puede volver a generar" }
-```
-
-Respuesta del LLM inválida:
-```json
-502 Bad Gateway
-{ "detail": "No se pudo generar el material de refuerzo" }
-```
-
-### `GET /students/me/lessons`
-
-```http
-GET /students/me/lessons
-Authorization: Bearer <token de estudiante>
-```
-```json
-200 OK
-[
-  {
-    "id": 15,
-    "date": "2026-10-08T16:00:00Z",
-    "duration_minutes": 60,
-    "topic": "Pedir en un restaurante",
-    "context": "Pedir comida y bebida en un restaurante y pedir la cuenta",
-    "pdf": { "filename": "restaurante-a2.pdf", "url": "/students/me/lessons/15/pdf" },
-    "material_status": "pending"
-  }
-]
-```
-
-### `GET /students/me/lessons/{lesson_id}/pdf`
-
-```http
-GET /students/me/lessons/15/pdf
-Authorization: Bearer <token de estudiante>
-```
-```http
-200 OK
-Content-Type: application/pdf
-Content-Disposition: inline; filename="restaurante-a2.pdf"
-
-<contenido binario del PDF>
-```
-
-Clase inexistente o de otro estudiante:
-```json
-404 Not Found
-{ "detail": "Clase no encontrada" }
-```
-
-### `GET /students/me/lessons/{lesson_id}/material`
-
-Antes de resolverlo (sin respuestas correctas):
-
-```http
-GET /students/me/lessons/15/material
-Authorization: Bearer <token de estudiante>
-```
-```json
-200 OK
-{
-  "lesson_id": 15,
-  "activity_type": "complete_sentence",
-  "title": "En el restaurante",
-  "instructions": "Completa cada frase con la opción correcta.",
-  "exercises": [
-    {
-      "id": 1,
-      "sentence": "Camarero, ¿nos trae ___, por favor? Queremos ver los platos.",
-      "options": ["la carta", "la cuenta", "la mesa"]
-    },
-    {
-      "id": 2,
-      "sentence": "Buenas noches. ___ una mesa para dos personas.",
-      "options": ["Quisiera", "Quiero que", "Quería que"]
-    },
-    {
-      "id": 3,
-      "sentence": "___ voy a tomar una sopa de verduras y de segundo, pescado.",
-      "options": ["De primero", "Para primero", "En primero"]
-    }
-  ],
-  "submission": null
-}
-```
-
-Después de resolverlo, `submission` contiene el mismo objeto que devuelve `GET .../submission`.
-
-Clase sin material:
-```json
-404 Not Found
-{ "detail": "La clase no tiene material de refuerzo" }
-```
-
-### `POST /students/me/lessons/{lesson_id}/material/submission`
-
-```http
-POST /students/me/lessons/15/material/submission
-Authorization: Bearer <token de estudiante>
-Content-Type: application/json
-
-{
-  "answers": [
-    { "exercise_id": 1, "selected_option": "la carta" },
-    { "exercise_id": 2, "selected_option": "Quisiera" },
-    { "exercise_id": 3, "selected_option": "Para primero" }
-  ]
-}
-```
-```json
-201 Created
-{
-  "lesson_id": 15,
-  "submitted_at": "2026-10-12T18:05:00Z",
-  "correct_count": 2,
-  "incorrect_count": 1,
-  "score": 66.67,
-  "results": [
-    { "exercise_id": 1, "selected_option": "la carta", "correct_option": "la carta", "is_correct": true },
-    { "exercise_id": 2, "selected_option": "Quisiera", "correct_option": "Quisiera", "is_correct": true },
-    { "exercise_id": 3, "selected_option": "Para primero", "correct_option": "De primero", "is_correct": false }
-  ],
-  "feedback": "¡Muy bien! Ya sabes pedir la carta y usar 'quisiera' para ser cortés.",
-  "recommendations": [
-    "Para ordenar los platos se dice 'de primero', 'de segundo' y 'de postre'.",
-    "Practica en voz alta un pedido completo: primero, segundo, bebida y postre."
-  ]
-}
-```
-
-Segundo intento:
-```json
-409 Conflict
-{ "detail": "El material ya fue resuelto" }
-```
-
-Faltan ejercicios, ejercicio repetido u opción inexistente:
-```json
-422 Unprocessable Entity
-{ "detail": "Debes responder todos los ejercicios con una opción válida" }
-```
-
-Respuesta de recomendaciones del LLM inválida (el intento no se guarda):
-```json
-502 Bad Gateway
-{ "detail": "No se pudieron generar las recomendaciones" }
-```
-
-### `GET /students/me/lessons/{lesson_id}/material/submission`
-
-```http
-GET /students/me/lessons/15/material/submission
-Authorization: Bearer <token de estudiante>
-```
-```json
-200 OK
-{ "lesson_id": 15, "submitted_at": "2026-10-12T18:05:00Z", "correct_count": 2, "...": "igual que la respuesta del POST" }
-```
-
-Aún no resuelto:
-```json
-404 Not Found
-{ "detail": "Aún no has resuelto este material" }
-```
+| Código | `detail` | Cuándo |
+|---|---|---|
+| 401 | `Credenciales incorrectas` | Login con correo o contraseña incorrectos |
+| 401 | — | Token ausente, inválido o caducado |
+| 403 | `No tienes permiso para acceder a este recurso` | Rol no permitido |
+| 404 | `Estudiante no encontrado` | Estudiante inexistente o de otro docente |
+| 404 | `Clase no encontrada` | Clase inexistente, futura o de otro usuario |
+| 404 | `El PDF de la clase no está disponible` | El archivo del PDF no existe |
+| 404 | `La clase no tiene material de refuerzo` | Ver o resolver material que no existe |
+| 404 | `Aún no has resuelto este material` | Ver el resultado antes de resolver |
+| 409 | `Solo se puede generar material para clases ya realizadas` | Generar material de una clase futura |
+| 409 | `El material de refuerzo de esta clase ya se generó y no se puede volver a generar` | Segundo intento de generar |
+| 409 | `El material ya fue resuelto` | Segundo intento de resolver |
+| 422 | `Debes responder todos los ejercicios con una opción válida` | Respuestas incompletas, repetidas o con opciones que no existen |
+| 422 | (validación) | Datos con formato o rango no válidos |
+| 502 | `No se pudo generar el material de refuerzo` | Respuesta del LLM no válida o fallo del proveedor (no se guarda nada) |
+| 502 | `No se pudieron generar las recomendaciones` | Respuesta de recomendaciones no válida (el intento no se consume) |
 
 ## Sesión (decisión)
 - **JWT de acceso** firmado (HS256), enviado como `Authorization: Bearer <token>`.
@@ -762,13 +361,14 @@ Motivo: sin creación de usuarios ni cambios de contraseña, una sesión sin est
 ## Requerimientos no funcionales
 - **Stack**: Python + FastAPI, SQLAlchemy 2, PostgreSQL 16, Pydantic para validar entrada y salida.
 - **Migraciones**: Alembic desde el primer modelo; el esquema nunca se crea con `create_all` en entornos reales.
-- **LLM desacoplado**: la generación de material y de recomendaciones depende de una interfaz (`LLMClient`) que recibe las peticiones descritas arriba. La implementación simulada lee los JSON de fixtures; en los tests se inyectan clientes falsos (respuesta válida, inválida, error) y se verifica la petición que se les envía.
+- **LLM desacoplado**: la generación de material y de recomendaciones depende de una interfaz (`LLMClient`) que recibe las peticiones descritas arriba. La implementación simulada construye las respuestas a partir de la petición (con un banco de frases de ejemplo en `fixtures/example_sentences.json`); en los tests se inyectan clientes falsos (respuesta válida, inválida, error) y se verifica la petición que se les envía.
 - **Corrección en el servidor**: la calificación se calcula siempre en el backend; las respuestas correctas nunca se envían al estudiante antes de resolver.
 - **Concurrencia**: la restricción de unicidad en `material_submissions.material_id` garantiza un único intento aunque lleguen dos envíos a la vez.
 - **Archivos**: los PDF se sirven solo a usuarios autorizados; nunca se exponen rutas del sistema de archivos.
-- **Seguridad**: contraseñas con hash argon2; CORS restringido al origen del frontend; secretos y configuración por variables de entorno.
+- **Seguridad**: contraseñas con hash argon2; sin CORS: en desarrollo el frontend llama a la API por el proxy de Vite (`/api`), desde el mismo origen; secretos y configuración por variables de entorno, sin valores por defecto (`SecretStr`).
 - **Testing**: TDD con pytest + `TestClient`, contra una base de datos PostgreSQL de test separada de la de desarrollo.
-- **Datos de prueba**: script de seed con al menos un docente, varios estudiantes de distintos niveles e idiomas natales, clases pasadas (con y sin material, con PDF de ejemplo) y una clase futura.
+- **Datos de prueba**: script de seed con 2 docentes y 4 estudiantes de distintos niveles (A1–B2) e idiomas natales, con 6–7 clases pasadas y alguna futura cada uno, y un PDF de ejemplo por clase. Es idempotente: al volver a ejecutarlo solo añade lo que falte.
+- **Tests E2E**: Playwright sobre una BD propia (`practica_ia_e2e`) que se reinicia en cada ejecución (ver `e2e/`).
 - **Errores**: respuestas JSON con `detail`, en español para los mensajes que ve el usuario.
 
 ## Fuera de alcance
