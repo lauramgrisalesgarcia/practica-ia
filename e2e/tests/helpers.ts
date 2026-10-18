@@ -4,6 +4,9 @@ import { expect, type Page } from '@playwright/test'
 export const TEACHER = { email: 'docente@colegio.edu', name: 'María López' }
 export const STUDENT = { email: 'emma@correo.com', name: 'Emma Schmidt', firstName: 'Emma' }
 
+// Donde el front guarda el token (features/auth/services/tokenStorage.ts)
+export const TOKEN_KEY = 'practica-ia.access-token'
+
 export async function login(page: Page, email: string) {
   const password = process.env.SEED_USER_PASSWORD
   if (!password) throw new Error('Falta SEED_USER_PASSWORD (la define playwright.config.ts)')

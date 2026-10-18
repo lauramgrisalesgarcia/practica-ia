@@ -217,7 +217,7 @@ El backend se prueba por capas: use cases con fakes en memoria (sin BD), reposit
 
 El frontend se prueba con React Testing Library y **tests de contrato** (`src/test/contracts/`): cada servicio cumple el mismo comportamiento en su versión HTTP (contra un back falso según `docs/openapi.yaml`) y en memoria.
 
-Los **tests E2E** (`e2e/`) arrancan su propia API (puerto 8011) y su propio front (5180) sobre `practica_ia_e2e`, que se vacía, migra y llena con el seed en cada ejecución. Cubren el inicio de sesión por rol y el material de refuerzo de principio a fin: el docente lo genera, el estudiante lo resuelve y el docente ve el resultado. Generan siempre un informe HTML (`e2e/playwright-report/`) y guardan capturas solo de los tests que fallan (`e2e/test-results/`). Los tests unitarios (Vitest, configurados en `frontend/vitest.config.ts`) excluyen `e2e/`.
+Los **tests E2E** (`e2e/`) arrancan su propia API (puerto 8011) y su propio front (5180) sobre `practica_ia_e2e`, que se vacía, migra y llena con el seed en cada ejecución. Cubren el inicio de sesión por rol y la sesión caducada, la descarga del PDF, la búsqueda y los filtros del historial, y el material de refuerzo de principio a fin: el docente lo genera (una sola vez), el estudiante lo resuelve (una sola vez, también comprobado contra la API) y el docente ve el resultado. Generan siempre un informe HTML (`e2e/playwright-report/`) y guardan capturas solo de los tests que fallan (`e2e/test-results/`). Los tests unitarios (Vitest, configurados en `frontend/vitest.config.ts`) excluyen `e2e/`.
 
 ### Integración continua
 
