@@ -62,3 +62,27 @@ def test_genera_un_pdf_valido_para_cada_clase(db_session: Session, tmp_path: Pat
     paths = db_session.scalars(select(LessonModel.pdf_path)).all()
     contents = [files.read(path) for path in paths]
     assert all(content is not None and content.startswith(b"%PDF-") for content in contents)
+
+
+def test_cada_estudiante_tiene_muchas_clases_pasadas_y_alguna_futura(db_session: Session, tmp_path: Path) -> None:
+    seed(db_session, password=PASSWORD, now=NOW, files=LocalFileStorage(tmp_path))
+
+    for student_id in db_session.scalars(select(StudentProfileModel.user_id)).all():
+        dates = db_session.scalars(select(LessonModel.date).where(LessonModel.student_id == student_id)).all()
+        assert sum(date <= NOW for date in dates) >= 6
+        assert sum(date > NOW for date in dates) >= 1
+
+
+def test_volver_a_ejecutarlo_añade_las_clases_que_faltan_sin_duplicar(db_session: Session, tmp_path: Path) -> None:
+    files = LocalFileStorage(tmp_path)
+    seed(db_session, password=PASSWORD, now=NOW, files=files)
+    lessons_before = count(db_session, LessonModel)
+    missing = db_session.scalars(select(LessonModel)).first()
+    assert missing is not None
+    db_session.delete(missing)
+    db_session.flush()
+
+    seed(db_session, password=PASSWORD, now=NOW, files=files)
+
+    assert count(db_session, LessonModel) == lessons_before
+    assert count(db_session, UserModel) == 6
