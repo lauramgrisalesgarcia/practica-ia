@@ -64,6 +64,7 @@ practica-ia/
 ├── .github/workflows/        CI: backend, frontend, E2E y detección de secretos
 ├── docs/
 │   ├── 001-backend-requirements.md   Requerimientos del backend
+│   ├── 002-frontend-requirements.md  Requerimientos del frontend
 │   └── openapi.yaml                  Contrato de la API (fuente de verdad)
 ├── infra/postgres/           Inicialización de PostgreSQL
 ├── docker-compose.yml        PostgreSQL y utilidades migrate / seed
@@ -235,7 +236,7 @@ Los **tests E2E** (`e2e/`) arrancan su propia API (puerto 8011) y su propio fron
 - **Contrato primero**: los cambios de la API empiezan en `docs/openapi.yaml`.
 - **Secretos**: nunca en el código, la documentación ni los commits.
 
-Las normas completas están en [`CLAUDE.md`](CLAUDE.md) y los requerimientos en [`docs/001-backend-requirements.md`](docs/001-backend-requirements.md).
+Las normas completas están en [`CLAUDE.md`](CLAUDE.md) y los requerimientos en [`docs/001-backend-requirements.md`](docs/001-backend-requirements.md) (backend) y [`docs/002-frontend-requirements.md`](docs/002-frontend-requirements.md) (frontend).
 
 ## Estado
 
