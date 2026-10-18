@@ -63,7 +63,7 @@ Roles:
   - Contexto de la clase (situación comunicativa, p. ej. *pedir comida en un restaurante*).
   - Tema y notas del docente.
   - Tipo de actividad y cantidad de ejercicios.
-- En este proyecto el cliente LLM es un **simulador** (`backend/app/llm/simulated.py`) que construye los ejercicios con las palabras clave de la petición: la respuesta correcta de cada ejercicio es una palabra clave, por turnos, con otras palabras clave o expresiones comunes como distractores. El cliente se define como una interfaz para poder sustituirlo por un LLM real sin tocar el resto del código.
+- En este proyecto el cliente LLM es un **simulador** (`backend/app/llm/simulated.py`) que construye los ejercicios con las palabras clave de la petición: la respuesta correcta de cada ejercicio es una palabra clave, por turnos, con otras palabras clave o expresiones comunes como distractores, y una frase de ejemplo por palabra clave de un banco (`backend/app/llm/fixtures/example_sentences.json`, que cubre las palabras clave del seed; para otras palabras usa una frase de reserva). El cliente se define como una interfaz para poder sustituirlo por un LLM real sin tocar el resto del código.
 - La respuesta del LLM **se valida** contra el esquema del material y contra la petición: mismo tipo de actividad, **exactamente** `exercise_count` ejercicios y **coherencia con las palabras clave** (ver reglas de validación). Si no es válida → `502` con `"No se pudo generar el material de refuerzo"`, y no se guarda nada.
 - El material válido se **guarda** asociado a la clase, junto con la petición enviada al LLM (para trazabilidad). El material se genera **una única vez**: si la clase ya tiene material → `409`.
 
