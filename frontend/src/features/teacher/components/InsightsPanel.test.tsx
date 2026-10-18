@@ -3,7 +3,6 @@ import type { TeacherInsights } from '@/domain/insights'
 import { InsightsPanel } from './InsightsPanel'
 
 const INSIGHTS: TeacherInsights = {
-  isSample: true,
   lessonsThisMonth: 14,
   pendingMaterials: 4,
   materialStatus: { completed: 9, pending: 4, none: 3 },
@@ -53,19 +52,6 @@ async function findRegion(name: string) {
 }
 
 describe('InsightsPanel', () => {
-  it('avisa de que los datos son de ejemplo', async () => {
-    setup()
-
-    expect(await screen.findByText('Datos de ejemplo')).toBeInTheDocument()
-  })
-
-  it('no muestra el aviso con datos reales', async () => {
-    setup(vi.fn().mockResolvedValue({ ...INSIGHTS, isSample: false }))
-
-    await findRegion('Clases este mes')
-    expect(screen.queryByText('Datos de ejemplo')).not.toBeInTheDocument()
-  })
-
   it('muestra los indicadores principales', async () => {
     setup()
 

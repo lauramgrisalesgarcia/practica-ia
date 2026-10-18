@@ -1,10 +1,7 @@
 import type { TeacherInsights } from '@/domain/insights'
-import { wait } from '@/dev/wait'
-import type { TeacherInsightsService } from './teacherInsightsService'
 
-// Datos de ejemplo fijos para desarrollar sin back (con back se usa httpTeacherInsightsService)
-const SAMPLE_INSIGHTS: TeacherInsights = {
-  isSample: true,
+// Indicadores del docente para desarrollar sin back (coherentes con docs/openapi.yaml, TeacherInsights)
+export const TEACHER_INSIGHTS: TeacherInsights = {
   lessonsThisMonth: 14,
   pendingMaterials: 4,
   materialStatus: { completed: 9, pending: 4, none: 3 },
@@ -68,13 +65,4 @@ const SAMPLE_INSIGHTS: TeacherInsights = {
     { id: 'c9', start: '2026-10-27T15:00:00Z', studentName: 'John Miller', topic: 'Contar una anécdota' },
     { id: 'c10', start: '2026-10-29T16:00:00Z', studentName: 'Emma Schmidt', topic: 'Reservar un hotel' },
   ],
-}
-
-export function createSampleTeacherInsightsService({ delayMs = 500 }: { delayMs?: number } = {}): TeacherInsightsService {
-  return {
-    async getInsights() {
-      await wait(delayMs)
-      return SAMPLE_INSIGHTS
-    },
-  }
 }

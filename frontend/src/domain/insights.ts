@@ -29,7 +29,6 @@ export interface CalendarLesson {
 
 export interface TeacherInsights {
   // true si los datos son de ejemplo (modo de desarrollo sin back)
-  isSample: boolean
   lessonsThisMonth: number
   pendingMaterials: number
   materialStatus: { completed: number; pending: number; none: number }

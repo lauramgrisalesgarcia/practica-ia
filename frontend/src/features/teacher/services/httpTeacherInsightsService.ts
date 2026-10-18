@@ -21,7 +21,6 @@ interface ApiTeacherInsights {
 
 function toInsights(api: ApiTeacherInsights): TeacherInsights {
   return {
-    isSample: false,
     lessonsThisMonth: api.lessons_this_month,
     pendingMaterials: api.pending_materials,
     materialStatus: api.material_status,
