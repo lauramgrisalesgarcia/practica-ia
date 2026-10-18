@@ -1,10 +1,12 @@
-import { Fragment, useEffect, useId, useState } from 'react'
+import { useEffect, useId, useState } from 'react'
 import { Link, useLocation } from 'react-router'
 import { formatDate } from '@/shared/i18n/formatDate'
 import type { LessonDetail, LessonPdf, MaterialRequest, SubmissionSummary, TeacherMaterial } from '@/domain/lesson'
 import { GENERATE_MATERIAL_ANCHOR, studentDetailPath } from '@/shared/routes/paths'
 import { GenerateMaterialForm } from './components/GenerateMaterialForm'
 import { PdfDownloadButton } from '@/shared/components/PdfDownloadButton'
+import { errorMessage } from '@/shared/errors/errorMessage'
+import { BlankSentence } from '@/shared/components/BlankSentence'
 
 interface LessonDetailPageProps {
   lessonId: string
@@ -22,10 +24,6 @@ type LessonState =
   | { status: 'error'; message: string }
 
 const scoreFormat = new Intl.NumberFormat('es', { maximumFractionDigits: 2 })
-
-function errorMessage(error: unknown, fallback: string): string {
-  return error instanceof Error ? error.message : fallback
-}
 
 export function LessonDetailPage({ lessonId, loadLesson, downloadPdf, openPdf, generateMaterial }: LessonDetailPageProps) {
   const [state, setState] = useState<LessonState>({ status: 'loading' })
@@ -173,7 +171,7 @@ function MaterialSection({ material }: { material: TeacherMaterial }) {
           <li key={exercise.id} className="flex flex-col gap-3 rounded-lg border border-ink/10 bg-mist/40 p-4">
             <h3 className="text-xs font-semibold uppercase tracking-wide text-ocean">Pregunta {index + 1}</h3>
             <p className="text-ink">
-              <Sentence text={exercise.sentence} />
+              <BlankSentence text={exercise.sentence} />
             </p>
             <ul aria-label="Opciones" className="flex flex-wrap gap-2 text-sm">
               {exercise.options.map((option) =>
@@ -204,16 +202,6 @@ function MaterialSection({ material }: { material: TeacherMaterial }) {
   )
 }
 
-// Frase con el hueco («___») resaltado
-function Sentence({ text }: { text: string }) {
-  const parts = text.split('___')
-  return parts.map((part, index) => (
-    <Fragment key={index}>
-      {part}
-      {index < parts.length - 1 && <span className="font-semibold tracking-widest text-ocean">___</span>}
-    </Fragment>
-  ))
-}
 
 function SubmissionSection({ submission }: { submission: SubmissionSummary }) {
   return (

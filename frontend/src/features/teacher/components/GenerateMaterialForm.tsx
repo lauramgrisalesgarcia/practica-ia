@@ -2,6 +2,7 @@ import { useId, useState, type FormEvent } from 'react'
 import { MAX_EXERCISES, MIN_EXERCISES, type MaterialRequest, type TeacherMaterial } from '@/domain/lesson'
 import { GENERATE_MATERIAL_ANCHOR } from '@/shared/routes/paths'
 import { validateMaterialForm, type MaterialFormErrors } from './materialForm'
+import { errorMessage } from '@/shared/errors/errorMessage'
 
 interface GenerateMaterialFormProps {
   lessonId: string
@@ -40,7 +41,7 @@ export function GenerateMaterialForm({
     try {
       onGenerated(await generateMaterial(lessonId, result.request))
     } catch (error) {
-      setSubmitError(error instanceof Error ? error.message : 'No se pudo generar el material de refuerzo')
+      setSubmitError(errorMessage(error, 'No se pudo generar el material de refuerzo'))
     } finally {
       setIsGenerating(false)
     }

@@ -4,8 +4,9 @@ import type { Answer, LessonPdf, StudentLessonSummary, StudentMaterial, StudentS
 import { PdfDownloadButton } from '@/shared/components/PdfDownloadButton'
 import { formatDate } from '@/shared/i18n/formatDate'
 import { STUDENT_LESSONS_PATH } from '@/shared/routes/paths'
-import { formatScore } from './components/formatScore'
+import { formatScore } from '@/shared/i18n/formatScore'
 import { StudentMaterialPanel } from './components/StudentMaterialPanel'
+import { errorMessage } from '@/shared/errors/errorMessage'
 
 interface StudentLessonPageProps {
   lessonId: string
@@ -40,7 +41,7 @@ export function StudentLessonPage({
       (lesson) => active && setState({ status: 'loaded', lesson }),
       (error: unknown) =>
         active &&
-        setState({ status: 'error', message: error instanceof Error ? error.message : 'No se pudo cargar la clase' }),
+        setState({ status: 'error', message: errorMessage(error, 'No se pudo cargar la clase') }),
     )
     return () => {
       active = false

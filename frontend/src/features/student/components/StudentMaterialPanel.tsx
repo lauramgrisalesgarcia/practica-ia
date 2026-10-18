@@ -1,6 +1,8 @@
-import { Fragment, useEffect, useId, useRef, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import type { Answer, StudentMaterial, StudentSubmission } from '@/domain/lesson'
 import { ExerciseStepper } from './ExerciseStepper'
+import { errorMessage } from '@/shared/errors/errorMessage'
+import { BlankSentence } from '@/shared/components/BlankSentence'
 
 interface StudentMaterialPanelProps {
   lessonId: string
@@ -35,7 +37,7 @@ export function StudentMaterialPanel({ lessonId, loadMaterial, submitMaterial, o
       },
       (error: unknown) =>
         active &&
-        setState({ status: 'error', message: error instanceof Error ? error.message : 'No se pudo cargar el material' }),
+        setState({ status: 'error', message: errorMessage(error, 'No se pudo cargar el material') }),
     )
     return () => {
       active = false
@@ -183,7 +185,7 @@ function CorrectedExercises({ material, submission }: { material: StudentMateria
                 </span>
               </div>
               <p className="text-ink">
-                <Sentence text={exercise.sentence} />
+                <BlankSentence text={exercise.sentence} />
               </p>
               <ul aria-label="Opciones" className="flex flex-wrap gap-2 text-sm">
                 {exercise.options.map((option) => {
@@ -243,15 +245,4 @@ function Mark({ kind }: { kind: 'right' | 'wrong' }) {
       <path d={kind === 'right' ? 'm5 12 5 5 9-10' : 'M6 6l12 12M18 6 6 18'} />
     </svg>
   )
-}
-
-// Frase con el hueco («___») resaltado
-function Sentence({ text }: { text: string }) {
-  const parts = text.split('___')
-  return parts.map((part, index) => (
-    <Fragment key={index}>
-      {part}
-      {index < parts.length - 1 && <span className="font-semibold tracking-widest text-ocean">___</span>}
-    </Fragment>
-  ))
 }

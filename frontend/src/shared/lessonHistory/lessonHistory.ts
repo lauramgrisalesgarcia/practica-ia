@@ -74,13 +74,6 @@ export function groupByMonth<T extends LessonSummary>(lessons: T[], timeZone?: s
   return groups
 }
 
-const scoreFormat = new Intl.NumberFormat('es', { maximumFractionDigits: 0 })
-
-// Porcentaje de aciertos redondeado: «67 %»
-export function formatScore(score: number): string {
-  return `${scoreFormat.format(score)} %`
-}
-
 export function formatDuration(minutes: number): string {
   const hours = Math.floor(minutes / 60)
   const rest = minutes % 60

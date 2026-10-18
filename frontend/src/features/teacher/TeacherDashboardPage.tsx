@@ -6,6 +6,7 @@ import { languageName } from '@/shared/i18n/languageName'
 import { studentDetailPath } from '@/shared/routes/paths'
 import { InsightsPanel } from './components/InsightsPanel'
 import { countByLanguage, countByLevel, initials } from './components/studentStats'
+import { errorMessage } from '@/shared/errors/errorMessage'
 
 interface TeacherDashboardProps {
   teacherName: string
@@ -28,7 +29,7 @@ export function TeacherDashboardPage({ teacherName, loadStudents, loadInsights }
       (students) => active && setState({ status: 'loaded', students }),
       (error: unknown) =>
         active &&
-        setState({ status: 'error', message: error instanceof Error ? error.message : 'No se pudieron cargar los alumnos' }),
+        setState({ status: 'error', message: errorMessage(error, 'No se pudieron cargar los alumnos') }),
     )
     return () => {
       active = false

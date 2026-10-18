@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { LessonPdf } from '@/domain/lesson'
+import { errorMessage } from '@/shared/errors/errorMessage'
 
 interface PdfDownloadButtonProps {
   lessonId: string
@@ -20,7 +21,7 @@ export function PdfDownloadButton({ lessonId, filename, downloadPdf, openPdf }: 
     try {
       openPdf(await downloadPdf(lessonId))
     } catch (downloadError) {
-      setError(downloadError instanceof Error ? downloadError.message : 'No se pudo descargar el PDF')
+      setError(errorMessage(downloadError, 'No se pudo descargar el PDF'))
     } finally {
       setIsDownloading(false)
     }

@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import type { LoginCredentials } from '@/domain/auth'
+import { errorMessage } from '@/shared/errors/errorMessage'
 
 interface LoginFormProps {
   onSubmit: (credentials: LoginCredentials) => Promise<void>
@@ -40,7 +41,7 @@ export function LoginForm({ onSubmit }: LoginFormProps) {
     try {
       await onSubmit(credentials)
     } catch (error) {
-      setSubmitError(error instanceof Error ? error.message : 'No se pudo iniciar sesión')
+      setSubmitError(errorMessage(error, 'No se pudo iniciar sesión'))
     } finally {
       setIsSubmitting(false)
     }
