@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { DAYS_PER_WEEK } from '@/shared/units'
 // Clase en el calendario: el texto (p. ej. «Emma Schmidt · Presentarse») lo decide quien lo usa
 export interface CalendarEntry {
   id: string
@@ -32,11 +33,14 @@ function utcDay(year: number, month: number, day: number): Date {
 
 // Semanas del mes (lunes a domingo); null en los huecos fuera del mes
 function monthWeeks(year: number, month: number): (number | null)[][] {
-  const offset = (utcDay(year, month, 1).getUTCDay() + 6) % 7
+  // getUTCDay() empieza en domingo; la semana del calendario, en lunes
+  const offset = (utcDay(year, month, 1).getUTCDay() + DAYS_PER_WEEK - 1) % DAYS_PER_WEEK
   const daysInMonth = utcDay(year, month + 1, 0).getUTCDate()
   const cells: (number | null)[] = [...Array<null>(offset).fill(null), ...Array.from({ length: daysInMonth }, (_, i) => i + 1)]
-  while (cells.length % 7 !== 0) cells.push(null)
-  return Array.from({ length: cells.length / 7 }, (_, week) => cells.slice(week * 7, week * 7 + 7))
+  while (cells.length % DAYS_PER_WEEK !== 0) cells.push(null)
+  return Array.from({ length: cells.length / DAYS_PER_WEEK }, (_, week) =>
+    cells.slice(week * DAYS_PER_WEEK, (week + 1) * DAYS_PER_WEEK),
+  )
 }
 
 export function LessonCalendar({ lessons, today, timeZone }: LessonCalendarProps) {

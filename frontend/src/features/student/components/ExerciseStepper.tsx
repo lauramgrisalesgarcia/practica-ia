@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { Answer, ExerciseForStudent, StudentSubmission } from '@/domain/lesson'
 import { errorMessage } from '@/shared/errors/errorMessage'
 import { OptionWheel } from './OptionWheel'
+import { PERCENT } from '@/shared/units'
 
 interface ExerciseStepperProps {
   lessonId: string
@@ -54,7 +55,7 @@ export function ExerciseStepper({ lessonId, exercises, submitMaterial, onSubmitt
         >
           <div
             className="h-full rounded-full bg-teal transition-all duration-300"
-            style={{ width: `${((current + 1) / exercises.length) * 100}%` }}
+            style={{ width: `${((current + 1) / exercises.length) * PERCENT}%` }}
           />
         </div>
       </div>

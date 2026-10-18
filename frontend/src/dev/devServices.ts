@@ -7,6 +7,7 @@ import { createMockStudentInsightsService } from '@/features/student/services/mo
 import { createMockStudentService } from '@/features/student/services/mockStudentService'
 import { createMockTeacherService } from '@/features/teacher/services/mockTeacherService'
 import { TEACHER_INSIGHTS } from './devTeacherInsights'
+import { averageScore, RECENT_ACTIVITY_LIMIT, SCORE_HISTORY_LIMIT } from '@/domain/businessRules'
 
 const COMPLETE_SENTENCE_INSTRUCTIONS = 'Completa cada frase con la opción correcta.'
 
@@ -264,7 +265,7 @@ function buildStudentInsights(lessons: LessonDetail[]): StudentInsights {
   return {
     lessonsCount: lessons.length,
     completedMaterials: solved.length,
-    averageScore: scores.length ? Math.round((scores.reduce((a, b) => a + b, 0) / scores.length) * 100) / 100 : null,
+    averageScore: averageScore(scores),
     pendingMaterials: lessons
       .filter((lesson) => lesson.material && !lesson.submission)
       .sort((a, b) => b.date.localeCompare(a.date))
@@ -274,13 +275,13 @@ function buildStudentInsights(lessons: LessonDetail[]): StudentInsights {
         date: lesson.date,
         exerciseCount: lesson.material?.exercises.length ?? 0,
       })),
-    recentActivity: activity.sort((a, b) => b.date.localeCompare(a.date)).slice(0, 10),
+    recentActivity: activity.sort((a, b) => b.date.localeCompare(a.date)).slice(0, RECENT_ACTIVITY_LIMIT),
     calendar: [...lessons]
       .sort((a, b) => a.date.localeCompare(b.date))
       .map(({ id, date, topic }) => ({ id, start: date, topic })),
     scoreHistory: solved
       .sort((a, b) => a.submission.submittedAt.localeCompare(b.submission.submittedAt))
-      .slice(-10)
+      .slice(-SCORE_HISTORY_LIMIT)
       .map(({ lesson, submission }) => ({
         lessonId: lesson.id,
         topic: lesson.topic,

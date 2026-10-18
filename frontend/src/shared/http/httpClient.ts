@@ -1,4 +1,5 @@
 import { ApiError, NetworkError } from './errors'
+import { HTTP_UNAUTHORIZED, HTTP_UNPROCESSABLE_ENTITY } from './httpStatus'
 
 export interface DownloadedFile {
   blob: Blob
@@ -32,7 +33,7 @@ async function errorMessage(response: Response): Promise<string> {
   } catch {
     return UNEXPECTED_MESSAGE
   }
-  return response.status === 422 ? VALIDATION_MESSAGE : UNEXPECTED_MESSAGE
+  return response.status === HTTP_UNPROCESSABLE_ENTITY ? VALIDATION_MESSAGE : UNEXPECTED_MESSAGE
 }
 
 // RFC 6266: filename*=UTF-8''<codificado> tiene prioridad sobre filename="<ascii>"
@@ -71,7 +72,7 @@ export function createHttpClient({ baseUrl, getToken, fetchFn = fetch, onUnautho
 
     if (!response.ok) {
       // Un 401 sin token (p. ej. un login fallido) no es una sesión caducada
-      if (response.status === 401 && token) onUnauthorized?.()
+      if (response.status === HTTP_UNAUTHORIZED && token) onUnauthorized?.()
       throw new ApiError(response.status, await errorMessage(response))
     }
     return response

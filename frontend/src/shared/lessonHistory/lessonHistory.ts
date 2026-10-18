@@ -1,4 +1,5 @@
 import type { LessonSummary, LessonWithResult, MaterialStatus } from '@/domain/lesson'
+import { DAY_MS, MINUTES_PER_HOUR } from '@/shared/units'
 
 export type MaterialFilter = 'all' | MaterialStatus
 
@@ -20,7 +21,6 @@ export interface MonthGroup<T extends LessonSummary = LessonSummary> {
   lessons: T[]
 }
 
-const DAY_MS = 24 * 60 * 60 * 1000
 
 // Días naturales entre dos instantes (según la fecha UTC de cada uno)
 function calendarDaysBetween(from: Date, to: Date): number {
@@ -75,8 +75,8 @@ export function groupByMonth<T extends LessonSummary>(lessons: T[], timeZone?: s
 }
 
 export function formatDuration(minutes: number): string {
-  const hours = Math.floor(minutes / 60)
-  const rest = minutes % 60
+  const hours = Math.floor(minutes / MINUTES_PER_HOUR)
+  const rest = minutes % MINUTES_PER_HOUR
   if (hours === 0) return `${rest} min`
   return rest === 0 ? `${hours} h` : `${hours} h ${rest} min`
 }

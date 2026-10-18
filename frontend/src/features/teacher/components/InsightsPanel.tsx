@@ -5,6 +5,7 @@ import { BarChart } from '@/shared/components/charts/BarChart'
 import { formatDate } from '@/shared/i18n/formatDate'
 import { LessonCalendar } from '@/shared/components/LessonCalendar'
 import { errorMessage } from '@/shared/errors/errorMessage'
+import { PERCENT } from '@/shared/units'
 
 interface InsightsPanelProps {
   // Debe ser una referencia estable: cada cambio vuelve a cargar los indicadores
@@ -126,7 +127,7 @@ export function InsightsPanel({ loadInsights, today = new Date(), timeZone }: In
               <div
                 key={key}
                 className={color}
-                style={{ width: `${totalMaterials ? (materialStatus[key] / totalMaterials) * 100 : 0}%` }}
+                style={{ width: `${totalMaterials ? (materialStatus[key] / totalMaterials) * PERCENT : 0}%` }}
               />
             ))}
           </div>

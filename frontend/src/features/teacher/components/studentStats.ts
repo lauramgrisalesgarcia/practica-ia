@@ -20,12 +20,15 @@ export function countByLanguage(students: Student[]): { language: string; count:
   )
 }
 
+// Palabras del nombre que forman las iniciales: nombre y primer apellido
+const INITIALS_WORDS = 2
+
 // Iniciales del nombre y el primer apellido (p. ej. «Ana Gómez» → «AG»)
 export function initials(name: string): string {
   return name
     .trim()
     .split(/\s+/)
-    .slice(0, 2)
+    .slice(0, INITIALS_WORDS)
     .map((word) => word[0].toLocaleUpperCase('es'))
     .join('')
 }

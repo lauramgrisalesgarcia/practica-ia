@@ -7,6 +7,7 @@ import { GenerateMaterialForm } from './components/GenerateMaterialForm'
 import { PdfDownloadButton } from '@/shared/components/PdfDownloadButton'
 import { errorMessage } from '@/shared/errors/errorMessage'
 import { BlankSentence } from '@/shared/components/BlankSentence'
+import { SCORE_DECIMALS } from '@/domain/businessRules'
 
 interface LessonDetailPageProps {
   lessonId: string
@@ -23,7 +24,7 @@ type LessonState =
   | { status: 'loaded'; lesson: LessonDetail }
   | { status: 'error'; message: string }
 
-const scoreFormat = new Intl.NumberFormat('es', { maximumFractionDigits: 2 })
+const scoreFormat = new Intl.NumberFormat('es', { maximumFractionDigits: SCORE_DECIMALS })
 
 export function LessonDetailPage({ lessonId, loadLesson, downloadPdf, openPdf, generateMaterial }: LessonDetailPageProps) {
   const [state, setState] = useState<LessonState>({ status: 'loading' })

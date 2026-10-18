@@ -1,5 +1,5 @@
 import type { User } from '@/domain/user'
-import { wait } from '@/dev/wait'
+import { DEV_DELAY_MS, wait } from '@/dev/wait'
 import type { AuthService } from './authService'
 
 interface MockAuthServiceOptions {
@@ -8,7 +8,7 @@ interface MockAuthServiceOptions {
 }
 
 // Servicio en memoria para desarrollar sin backend
-export function createMockAuthService({ users, delayMs = 500 }: MockAuthServiceOptions): AuthService {
+export function createMockAuthService({ users, delayMs = DEV_DELAY_MS }: MockAuthServiceOptions): AuthService {
   let currentUser: User | null = null
 
   return {
