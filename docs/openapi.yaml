@@ -7,7 +7,7 @@ info:
     API REST de la plataforma de refuerzo para extranjeros que aprenden español.
 
     **Flujo principal**
-    1. El docente genera material de refuerzo para una clase realizada (actividad *completar la frase*, 1–15 ejercicios). La generación se delega a un LLM, simulado en este proyecto con un JSON fijo.
+    1. El docente genera material de refuerzo para una clase realizada (actividad *completar la frase*, 1–15 ejercicios). La generación se delega a un LLM, simulado en este proyecto a partir de las palabras clave de la clase.
     2. El estudiante resuelve el material **una única vez**.
     3. El backend corrige, calcula el porcentaje de aciertos y devuelve recomendaciones (también simuladas como respuesta de un LLM).
 
