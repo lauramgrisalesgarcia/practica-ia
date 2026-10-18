@@ -76,8 +76,9 @@ src/
 │   ├── auth/       LoginPage + components/ + services/ + session/ (SessionProvider)
 │   ├── teacher/    Páginas del docente + components/ + services/
 │   └── student/    Páginas del estudiante + components/ + services/
-├── shared/         Lo que usan varias features: components/ (Brand, PdfDownloadButton, LessonCalendar, charts/),
-│                   lessonHistory/ (línea de tiempo de clases), http/ (cliente y formas de la API), i18n/, files/, routes/paths
+├── shared/         Lo que usan varias features: components/ (Brand, BlankSentence, PdfDownloadButton, LessonCalendar, charts/),
+│                   lessonHistory/ (línea de tiempo de clases), http/ (cliente y formas de la API), errors/,
+│                   i18n/ (fechas, notas e idiomas), files/, routes/paths
 ├── dev/            Datos y simulaciones para desarrollar sin back (devServices, LLM y corrección simulados)
 └── test/           Helpers de test, contracts/ (contratos compartidos) y fakes/
 ```

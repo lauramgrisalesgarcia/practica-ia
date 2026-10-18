@@ -5,11 +5,12 @@ import {
   filterLessons,
   formatDaysAgo,
   formatDuration,
-  formatScore,
   groupByMonth,
   summarizeHistory,
   type MaterialFilter,
 } from './lessonHistory'
+import { errorMessage } from '@/shared/errors/errorMessage'
+import { formatScore } from '@/shared/i18n/formatScore'
 
 interface LessonTimelineProps<T extends LessonWithResult> {
   // Debe ser una referencia estable: cada cambio vuelve a cargar el historial
@@ -56,7 +57,7 @@ export function LessonTimeline<T extends LessonWithResult>({
       (lessons) => active && setState({ status: 'loaded', lessons }),
       (error: unknown) =>
         active &&
-        setState({ status: 'error', message: error instanceof Error ? error.message : 'No se pudo cargar el historial' }),
+        setState({ status: 'error', message: errorMessage(error, 'No se pudo cargar el historial') }),
     )
     return () => {
       active = false

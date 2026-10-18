@@ -4,6 +4,7 @@ import { languageName } from '@/shared/i18n/languageName'
 import type { StudentDetail } from '@/domain/student'
 import { homePathFor } from '@/shared/routes/paths'
 import { initials } from './components/studentStats'
+import { errorMessage } from '@/shared/errors/errorMessage'
 
 interface StudentDetailPageProps {
   studentId: string
@@ -26,7 +27,7 @@ export function StudentDetailPage({ studentId, loadStudent }: StudentDetailPageP
       (student) => active && setState({ status: 'loaded', student }),
       (error: unknown) =>
         active &&
-        setState({ status: 'error', message: error instanceof Error ? error.message : 'No se pudo cargar el alumno' }),
+        setState({ status: 'error', message: errorMessage(error, 'No se pudo cargar el alumno') }),
     )
     return () => {
       active = false

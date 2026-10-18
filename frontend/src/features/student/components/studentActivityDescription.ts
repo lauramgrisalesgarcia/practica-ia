@@ -1,5 +1,5 @@
 import type { StudentActivity } from '@/domain/studentInsights'
-import { formatScore } from './formatScore'
+import { formatScore } from '@/shared/i18n/formatScore'
 
 // Frase de la actividad reciente del estudiante
 export function studentActivityDescription({ type, topic, score }: StudentActivity): string {

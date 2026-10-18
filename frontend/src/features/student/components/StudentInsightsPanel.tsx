@@ -6,8 +6,9 @@ import { BarChart } from '@/shared/components/charts/BarChart'
 import { LessonCalendar } from '@/shared/components/LessonCalendar'
 import { formatDate } from '@/shared/i18n/formatDate'
 import { studentLessonPath } from '@/shared/routes/paths'
-import { formatScore } from './formatScore'
+import { formatScore } from '@/shared/i18n/formatScore'
 import { studentActivityDescription } from './studentActivityDescription'
+import { errorMessage } from '@/shared/errors/errorMessage'
 
 interface StudentInsightsPanelProps {
   // Debe ser una referencia estable: cada cambio vuelve a cargar los indicadores
@@ -38,7 +39,7 @@ export function StudentInsightsPanel({ loadInsights, today = new Date(), timeZon
       (insights) => active && setState({ status: 'loaded', insights }),
       (error: unknown) =>
         active &&
-        setState({ status: 'error', message: error instanceof Error ? error.message : 'No se pudo cargar tu resumen' }),
+        setState({ status: 'error', message: errorMessage(error, 'No se pudo cargar tu resumen') }),
     )
     return () => {
       active = false

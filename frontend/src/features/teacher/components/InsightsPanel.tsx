@@ -4,6 +4,7 @@ import { activityDescription } from './activityDescription'
 import { BarChart } from '@/shared/components/charts/BarChart'
 import { formatDate } from '@/shared/i18n/formatDate'
 import { LessonCalendar } from '@/shared/components/LessonCalendar'
+import { errorMessage } from '@/shared/errors/errorMessage'
 
 interface InsightsPanelProps {
   // Debe ser una referencia estable: cada cambio vuelve a cargar los indicadores
@@ -44,7 +45,7 @@ export function InsightsPanel({ loadInsights, today = new Date(), timeZone }: In
       (insights) => active && setState({ status: 'loaded', insights }),
       (error: unknown) =>
         active &&
-        setState({ status: 'error', message: error instanceof Error ? error.message : 'No se pudieron cargar los indicadores' }),
+        setState({ status: 'error', message: errorMessage(error, 'No se pudieron cargar los indicadores') }),
     )
     return () => {
       active = false
