@@ -5,6 +5,9 @@ Reglas (docs/001-backend-requirements.md):
 - Exactamente `exercise_count` ejercicios.
 - Cada ejercicio: `id` entero único; `sentence` con exactamente un hueco `___`;
   2–4 `options` distintas y no vacías; `correct_option` es una de las `options`.
+- Coherencia con las palabras clave pedidas (sin distinguir mayúsculas ni espacios sobrantes):
+  la `correct_option` de cada ejercicio es una palabra clave, y se usan todas al menos una vez;
+  si hay más palabras clave que ejercicios, cada ejercicio usa una distinta.
 """
 
 from collections.abc import Mapping
@@ -32,6 +35,7 @@ def parse_generated_material(
     exercises = tuple(_exercise(raw) for raw in raw_exercises)
     if len({exercise.id for exercise in exercises}) != len(exercises):
         raise InvalidLLMResponseError("ids de ejercicio repetidos")
+    _check_keywords(exercises, request.keywords)
 
     return Material(
         generated_at=generated_at,
@@ -65,6 +69,22 @@ def _exercise(raw: object) -> Exercise:
         raise InvalidLLMResponseError("la respuesta correcta no está entre las opciones")
 
     return Exercise(id=exercise_id, sentence=sentence, options=options, correct_option=str(correct_option))
+
+
+def _normalize(text: str) -> str:
+    return " ".join(text.split()).casefold()
+
+
+def _check_keywords(exercises: tuple[Exercise, ...], keywords: tuple[str, ...]) -> None:
+    expected = {_normalize(keyword) for keyword in keywords}
+    answers = [_normalize(exercise.correct_option) for exercise in exercises]
+    if any(answer not in expected for answer in answers):
+        raise InvalidLLMResponseError("una respuesta correcta no es una de las palabras clave")
+    if len(answers) >= len(expected):
+        if set(answers) != expected:
+            raise InvalidLLMResponseError("no se usan todas las palabras clave")
+    elif len(set(answers)) != len(answers):
+        raise InvalidLLMResponseError("palabras clave repetidas con menos ejercicios que palabras clave")
 
 
 def _mapping(value: object, what: str) -> Mapping[str, object]:

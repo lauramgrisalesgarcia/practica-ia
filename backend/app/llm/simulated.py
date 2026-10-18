@@ -1,11 +1,13 @@
-"""LLM simulado: responde con un JSON fijo que imita la respuesta del modelo.
+"""LLM simulado: construye la respuesta del modelo a partir de la petición, sin llamar a ningún proveedor.
 
+Los ejercicios se arman con las palabras clave de la clase (la respuesta correcta de cada uno es una
+palabra clave, por turnos), de modo que cumplen las reglas de `material_validation`.
 Sustituible por un cliente real que implemente `LLMClient` sin tocar el dominio.
 """
 
 import copy
 import json
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from functools import cache
 from pathlib import Path
 from typing import Any
@@ -14,16 +16,59 @@ from app.domain.ports import LLMClient
 
 FIXTURES = Path(__file__).parent / "fixtures"
 
+# Frases genéricas con un único hueco, válidas para cualquier palabra clave
+SENTENCES = (
+    "En la clase practicamos esta expresión: «___».",
+    "Recuerda usar ___ cuando hables de este tema.",
+    "Hoy he repasado ___ con mi docente.",
+    "Para practicar, intenta decir ___ en voz alta.",
+    "Completa la frase con lo que aprendiste: ___.",
+)
+# Distractores de reserva cuando no hay otras palabras clave suficientes
+FILLERS = ("por favor", "gracias", "hasta luego", "de nada")
+OPTIONS_PER_EXERCISE = 3
+
 
 class SimulatedLLMClient(LLMClient):
     def generate_material(self, request: Mapping[str, Any]) -> object:
-        response = copy.deepcopy(_load("reinforcement_material.json"))
-        # El fixture trae 15 ejercicios: se devuelven tantos como se pidan.
-        response["exercises"] = response["exercises"][: int(request["exercise_count"])]
-        return response
+        lesson = request["lesson"]
+        keywords: list[str] = list(lesson["keywords"])
+        count = int(request["exercise_count"])
+        return {
+            "activity_type": request["activity_type"],
+            "title": f"Refuerzo: {lesson['topic']}",
+            "instructions": "Completa cada frase con la palabra o expresión correcta.",
+            "exercises": [_exercise(index, keywords) for index in range(count)],
+        }
 
     def generate_recommendations(self, request: Mapping[str, Any]) -> object:
         return copy.deepcopy(_load("recommendations.json"))
+
+
+def _exercise(index: int, keywords: Sequence[str]) -> dict[str, Any]:
+    answer = keywords[index % len(keywords)]
+    options = [answer, *_distractors(answer, keywords)]
+    # La respuesta correcta cambia de posición para no estar siempre la primera
+    shift = index % len(options)
+    options = options[shift:] + options[:shift]
+    return {
+        "id": index + 1,
+        "sentence": SENTENCES[index % len(SENTENCES)],
+        "options": options,
+        "correct_option": answer,
+    }
+
+
+def _distractors(answer: str, keywords: Sequence[str]) -> list[str]:
+    used = {answer.casefold()}
+    result: list[str] = []
+    for candidate in [*keywords, *FILLERS]:
+        if len(result) == OPTIONS_PER_EXERCISE - 1:
+            break
+        if candidate.casefold() not in used:
+            used.add(candidate.casefold())
+            result.append(candidate)
+    return result
 
 
 @cache

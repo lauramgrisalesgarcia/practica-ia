@@ -11,7 +11,7 @@ Plataforma para **extranjeros que aprenden español**. API REST que da servicio 
 2. El estudiante **resuelve la actividad una única vez**.
 3. El backend **corrige** las respuestas, calcula el porcentaje de aciertos y devuelve **recomendaciones**.
 
-Tanto el material como las recomendaciones los generaría un LLM; en este proyecto se **simulan** con archivos JSON fijos que imitan la respuesta del modelo.
+Tanto el material como las recomendaciones los generaría un LLM; en este proyecto se **simulan**: el material se construye a partir de las palabras clave de la clase y las recomendaciones salen de un JSON fijo que imita la respuesta del modelo.
 
 Roles:
 - **Docente**: consulta sus estudiantes, el detalle de cada uno, su historial de clases y el detalle de una clase; genera el material de refuerzo y ve el resultado del estudiante.
@@ -63,10 +63,9 @@ Roles:
   - Contexto de la clase (situación comunicativa, p. ej. *pedir comida en un restaurante*).
   - Tema y notas del docente.
   - Tipo de actividad y cantidad de ejercicios.
-- En este proyecto el cliente LLM es un **simulador** que devuelve el contenido de `backend/app/llm/fixtures/reinforcement_material.json`. El cliente se define como una interfaz para poder sustituirlo por un LLM real sin tocar el resto del código.
-- La respuesta del LLM **se valida** contra el esquema del material y contra la petición: mismo tipo de actividad y **exactamente** `exercise_count` ejercicios. Si no es válida → `502` con `"No se pudo generar el material de refuerzo"`, y no se guarda nada.
-  - El simulador recorta los ejercicios del JSON fijo a la cantidad pedida (el fixture contiene 15).
-- El material válido se **guarda** asociado a la clase, junto con la petición enviada al LLM (para trazabilidad). Generar de nuevo **reemplaza** el material anterior, **salvo que el estudiante ya lo haya resuelto** → `409`.
+- En este proyecto el cliente LLM es un **simulador** (`backend/app/llm/simulated.py`) que construye los ejercicios con las palabras clave de la petición: la respuesta correcta de cada ejercicio es una palabra clave, por turnos, con otras palabras clave o expresiones comunes como distractores. El cliente se define como una interfaz para poder sustituirlo por un LLM real sin tocar el resto del código.
+- La respuesta del LLM **se valida** contra el esquema del material y contra la petición: mismo tipo de actividad, **exactamente** `exercise_count` ejercicios y **coherencia con las palabras clave** (ver reglas de validación). Si no es válida → `502` con `"No se pudo generar el material de refuerzo"`, y no se guarda nada.
+- El material válido se **guarda** asociado a la clase, junto con la petición enviada al LLM (para trazabilidad). El material se genera **una única vez**: si la clase ya tiene material → `409`.
 
 ### RF9 · Historial de clases (estudiante)
 - El estudiante ve las clases tomadas con su docente, de la más reciente a la más antigua.
@@ -196,7 +195,7 @@ Lo que el backend envía al `LLMClient` al generar material:
 
 > El PDF se envía como referencia al archivo. La extracción de su contenido (texto o adjunto al modelo) queda para la integración con un LLM real.
 
-### Respuesta: material de refuerzo (`reinforcement_material.json`)
+### Respuesta: material de refuerzo
 
 Actividad de *completar la frase* eligiendo la opción que va en el hueco (`___`):
 
@@ -233,6 +232,7 @@ Reglas de validación:
 - `title` e `instructions`: texto no vacío.
 - `exercises`: exactamente `exercise_count` elementos (entre 1 y 15).
 - Cada ejercicio: `id` entero único; `sentence` no vacía y con **exactamente un** hueco `___`; `options` entre 2 y 4 textos distintos y no vacíos; `correct_option` debe ser una de las `options`.
+- Coherencia con las palabras clave pedidas (sin distinguir mayúsculas ni espacios sobrantes): la `correct_option` de cada ejercicio es una de las palabras clave y todas se usan al menos una vez; si hay más palabras clave que ejercicios, cada ejercicio usa una distinta.
 
 ### Petición para recomendaciones
 

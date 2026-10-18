@@ -44,7 +44,12 @@ def make_context(**overrides: Any) -> GenerationContext:
     return GenerationContext(**(values | overrides))
 
 
-def llm_response(count: int) -> dict[str, Any]:
+# Palabras clave de la clase (make_context)
+KEYWORDS = ("la carta", "quisiera", "para beber")
+
+
+def llm_response(count: int, keywords: tuple[str, ...] = KEYWORDS) -> dict[str, Any]:
+    """Respuesta válida: la respuesta correcta de cada ejercicio es una palabra clave, por turnos."""
     return {
         "activity_type": "complete_sentence",
         "title": "En el restaurante",
@@ -53,8 +58,8 @@ def llm_response(count: int) -> dict[str, Any]:
             {
                 "id": n,
                 "sentence": f"Frase número {n} con ___ hueco.",
-                "options": ["un", "una", "unos"],
-                "correct_option": "un",
+                "options": [keywords[(n - 1) % len(keywords)], "una", "unos"],
+                "correct_option": keywords[(n - 1) % len(keywords)],
             }
             for n in range(1, count + 1)
         ],
@@ -93,7 +98,7 @@ def test_genera_y_guarda_el_material() -> None:
     assert material.exercise_count == 3
     assert material.title == "En el restaurante"
     assert material.exercises[0] == Exercise(
-        id=1, sentence="Frase número 1 con ___ hueco.", options=("un", "una", "unos"), correct_option="un"
+        id=1, sentence="Frase número 1 con ___ hueco.", options=("la carta", "una", "unos"), correct_option="la carta"
     )
     assert scenario.materials.saved[LESSON_ID][1] == material
 
@@ -130,7 +135,7 @@ def test_guarda_la_peticion_enviada_al_llm() -> None:
 
 
 def test_usa_las_palabras_clave_revisadas_sin_espacios_sobrantes_ni_duplicados() -> None:
-    scenario = Scenario()
+    scenario = Scenario(llm=FakeLLMClient(response=llm_response(3, ("la carta", "de segundo", "la cuenta"))))
 
     scenario.generate(keywords=["  la carta ", "de segundo", "La Carta", "de segundo", "la cuenta"])
 
@@ -204,6 +209,12 @@ INVALID_RESPONSES = {
     "opción vacía": broken(lambda r: r["exercises"][0].update(options=["un", " "])),
     "respuesta fuera de las opciones": broken(lambda r: r["exercises"][0].update(correct_option="otra")),
     "ids repetidos": broken(lambda r: r["exercises"][1].update(id=1)),
+    "respuesta que no es una palabra clave": broken(
+        lambda r: r["exercises"][0].update(options=["un", "una", "unos"], correct_option="un")
+    ),
+    "una palabra clave sin usar": broken(
+        lambda r: r["exercises"][2].update(options=["la carta", "una", "unos"], correct_option="la carta")
+    ),
     "id no entero": broken(lambda r: r["exercises"][0].update(id="1")),
 }
 
@@ -225,3 +236,37 @@ def test_si_el_llm_falla_se_informa_como_respuesta_invalida() -> None:
         scenario.generate()
 
     assert scenario.materials.saved == {}
+
+
+def test_acepta_la_palabra_clave_aunque_cambien_mayusculas_o_espacios() -> None:
+    response = broken(lambda r: r["exercises"][0].update(options=["La  Carta", "una", "unos"], correct_option="La  Carta"))
+    scenario = Scenario(llm=FakeLLMClient(response=response))
+
+    assert scenario.generate().exercises[0].correct_option == "La  Carta"
+
+
+def test_con_mas_palabras_clave_que_ejercicios_cada_ejercicio_usa_una_distinta() -> None:
+    scenario = Scenario(llm=FakeLLMClient(response=llm_response(2)))
+
+    material = scenario.generate(exercise_count=2)
+
+    assert [exercise.correct_option for exercise in material.exercises] == ["la carta", "quisiera"]
+
+
+def test_con_mas_palabras_clave_que_ejercicios_rechaza_repetir_una_palabra() -> None:
+    response = llm_response(2)
+    response["exercises"][1].update(options=["la carta", "una", "unos"], correct_option="la carta")
+    scenario = Scenario(llm=FakeLLMClient(response=response))
+
+    with pytest.raises(InvalidLLMResponseError):
+        scenario.generate(exercise_count=2)
+
+    assert scenario.materials.saved == {}
+
+
+def test_rechaza_ejercicios_que_no_usan_las_palabras_clave_revisadas_por_el_docente() -> None:
+    scenario = Scenario()  # el LLM responde con las palabras clave de la clase, no con las revisadas
+
+    with pytest.raises(InvalidLLMResponseError):
+        scenario.generate(keywords=["mi hermano", "tengo", "se llama"])
+
