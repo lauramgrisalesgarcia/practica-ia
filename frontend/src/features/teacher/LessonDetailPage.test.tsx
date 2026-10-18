@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import type { LessonDetail, LessonPdf, MaterialRequest, TeacherMaterial } from '@/domain/lesson'
@@ -193,22 +193,27 @@ describe('LessonDetailPage', () => {
   })
 
   describe('generar material', () => {
-    it('lleva al formulario de generar material si se llega con su ancla', async () => {
-      const scrollIntoView = vi.fn()
+    // jsdom no implementa scrollIntoView: se simula solo en estos tests y se retira después
+    const scrollIntoView = vi.fn()
+    beforeEach(() => {
       Element.prototype.scrollIntoView = scrollIntoView
+    })
+    afterEach(() => {
+      scrollIntoView.mockReset()
+      Reflect.deleteProperty(Element.prototype, 'scrollIntoView')
+    })
 
+    it('lleva al formulario de generar material si se llega con su ancla', async () => {
       setup({ lesson: INTRODUCTIONS_LESSON, path: '/docente/clases/x#generar-material' })
 
       const form = await screen.findByRole('form', { name: 'Generar material' })
       expect(form).toHaveAttribute('id', 'generar-material')
-      expect(scrollIntoView).toHaveBeenCalled()
+      // El desplazamiento ocurre en un efecto tras pintar el formulario: se espera a que suceda
+      await waitFor(() => expect(scrollIntoView).toHaveBeenCalled())
       expect(scrollIntoView.mock.contexts[0]).toBe(form)
     })
 
     it('no se desplaza al formulario si se llega sin ancla', async () => {
-      const scrollIntoView = vi.fn()
-      Element.prototype.scrollIntoView = scrollIntoView
-
       setup({ lesson: INTRODUCTIONS_LESSON })
 
       await screen.findByRole('button', { name: 'Generar material de refuerzo' })
