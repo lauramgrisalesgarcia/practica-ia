@@ -16,9 +16,12 @@ export default defineConfig({
   workers: 1,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
-  reporter: process.env.CI ? [['list'], ['html', { open: 'never' }]] : 'list',
+  // Progreso en consola e informe HTML en playwright-report/ (se abre con `npx playwright show-report`)
+  reporter: [['list'], ['html', { open: 'never' }]],
   use: {
     baseURL: `http://localhost:${WEB_PORT}`,
+    // Solo se guardan evidencias de los tests que fallan (en test-results/)
+    screenshot: 'only-on-failure',
     trace: 'retain-on-failure',
   },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],

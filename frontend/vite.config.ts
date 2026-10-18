@@ -1,7 +1,7 @@
 import { fileURLToPath } from 'node:url'
 import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
-import { defineConfig } from 'vitest/config'
+import { defineConfig } from 'vite'
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -18,18 +18,6 @@ export default defineConfig({
         target: process.env.API_PROXY_TARGET ?? 'http://localhost:8001',
         rewrite: (path) => path.replace(/^\/api/, ''),
       },
-    },
-  },
-  test: {
-    environment: 'jsdom',
-    globals: true,
-    setupFiles: ['./src/test/setup.ts'],
-    css: false,
-    coverage: {
-      provider: 'v8',
-      reporter: ['text', 'html'],
-      include: ['src/**/*.{ts,tsx}'],
-      exclude: ['src/app/main.tsx', 'src/test/**', 'src/**/*.test.{ts,tsx}'],
     },
   },
 })
