@@ -87,7 +87,7 @@ Roles:
   - `incorrect_count`: desaciertos.
   - `score`: porcentaje de aciertos, con 2 decimales (`correct_count / total × 100`). Todos los ejercicios pesan lo mismo.
   - Por ejercicio: opción elegida, opción correcta y si acertó.
-- Con el resultado se piden **recomendaciones al cliente LLM** (nivel, idioma natal, contexto, palabras clave y ejercicios fallados), simulado con `backend/app/llm/fixtures/recommendations.json`.
+- Con el resultado se piden **recomendaciones al cliente LLM** (nivel, idioma natal, contexto, palabras clave y ejercicios fallados), simulado a partir de esos datos: un comentario con los aciertos y el tema, una recomendación por palabra clave fallada (con la frase corregida) y una para seguir practicando las palabras clave.
 - La respuesta de recomendaciones se valida. Si no es válida → `502` con `"No se pudieron generar las recomendaciones"`, **no se guarda el intento** y el estudiante puede volver a enviarlo.
 - Si todo es válido se guarda el intento (respuestas, resultado y recomendaciones) y se devuelve.
 
@@ -261,7 +261,7 @@ Reglas de validación:
 }
 ```
 
-### Respuesta: recomendaciones (`recommendations.json`)
+### Respuesta: recomendaciones
 
 ```json
 {

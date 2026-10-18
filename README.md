@@ -22,7 +22,7 @@ Docente                                         Estudiante
 
 - **Generación de material**: el backend envía al LLM el nivel MCER y el idioma natal del estudiante, el tema, el contexto, las palabras clave, las notas y el PDF de la clase. La respuesta se **valida** (cantidad de ejercicios, un hueco `___` por frase, 2–4 opciones distintas, respuesta correcta entre las opciones) antes de guardarse.
 - **Corrección**: siempre en el backend. Las respuestas correctas nunca se envían al estudiante antes de resolver.
-- **LLM simulado**: el material se construye con las palabras clave de la clase y las recomendaciones salen de un fixture JSON, detrás de la interfaz `LLMClient`; un LLM real se conecta sin tocar el dominio.
+- **LLM simulado**: el material se construye con las palabras clave de la clase y las recomendaciones, del tema y los ejercicios fallados, detrás de la interfaz `LLMClient`; un LLM real se conecta sin tocar el dominio.
 
 ## Stack
 
