@@ -205,7 +205,8 @@ npm run build
 # E2E (desde e2e/; requiere PostgreSQL en marcha)
 npm install
 npx playwright install chromium   # solo la primera vez
-npx playwright test
+npm run test:e2e                  # también desde frontend/ con el mismo script
+npm run report                    # abre el informe HTML
 ```
 
 El backend se prueba por capas: use cases con fakes en memoria (sin BD), repositories contra la BD de test, endpoints con `TestClient`. Además:
@@ -216,7 +217,7 @@ El backend se prueba por capas: use cases con fakes en memoria (sin BD), reposit
 
 El frontend se prueba con React Testing Library y **tests de contrato** (`src/test/contracts/`): cada servicio cumple el mismo comportamiento en su versión HTTP (contra un back falso según `docs/openapi.yaml`) y en memoria.
 
-Los **tests E2E** (`e2e/`) arrancan su propia API (puerto 8011) y su propio front (5180) sobre `practica_ia_e2e`, que se vacía, migra y llena con el seed en cada ejecución. Cubren el inicio de sesión por rol y el material de refuerzo de principio a fin: el docente lo genera, el estudiante lo resuelve y el docente ve el resultado.
+Los **tests E2E** (`e2e/`) arrancan su propia API (puerto 8011) y su propio front (5180) sobre `practica_ia_e2e`, que se vacía, migra y llena con el seed en cada ejecución. Cubren el inicio de sesión por rol y el material de refuerzo de principio a fin: el docente lo genera, el estudiante lo resuelve y el docente ve el resultado. Generan siempre un informe HTML (`e2e/playwright-report/`) y guardan capturas solo de los tests que fallan (`e2e/test-results/`). Los tests unitarios (Vitest, configurados en `frontend/vitest.config.ts`) excluyen `e2e/`.
 
 ### Integración continua
 
@@ -224,7 +225,7 @@ Los **tests E2E** (`e2e/`) arrancan su propia API (puerto 8011) y su propio fron
 |---|---|
 | Backend CI | mypy, pytest (con PostgreSQL de servicio) y `alembic check` |
 | Frontend CI | lint, tests con cobertura y build |
-| E2E | Playwright con PostgreSQL de servicio y contraseña del seed aleatoria |
+| E2E | Playwright con PostgreSQL de servicio y contraseña del seed aleatoria; si falla, publica el informe HTML y las capturas |
 | Detección de secretos | Gitleaks sobre todo el historial |
 
 ## Forma de trabajo
