@@ -51,7 +51,7 @@ practica-ia/
 │   │   ├── core/             Configuración, argon2, JWT, reloj
 │   │   └── composition.py    Inyección de dependencias
 │   ├── migrations/           Migraciones de Alembic y esquema SQL generado
-│   ├── Dockerfile            Imagen para migrar y cargar datos con Docker
+│   ├── Dockerfile            Imagen del backend: API, migraciones y seed
 │   └── tests/                Por capa + contrato, arquitectura y migraciones
 ├── frontend/src/
 │   ├── app/                  Rutas, composición de servicios y layout
@@ -60,6 +60,8 @@ practica-ia/
 │   ├── shared/               Componentes, cliente HTTP, i18n y utilidades compartidas
 │   ├── dev/                  Datos y simulaciones para desarrollar sin backend
 │   └── test/                 Helpers y tests de contrato de los servicios
+├── frontend/Dockerfile       Imagen del front (build de Vite) y Caddy como servidor web
+├── frontend/Caddyfile        Dominio, HTTPS y reenvío de /api (despliegue)
 ├── e2e/                      Tests E2E con Playwright (flujos completos front ↔ back)
 ├── .github/workflows/        CI: backend, frontend, E2E y detección de secretos
 ├── docs/
@@ -68,7 +70,8 @@ practica-ia/
 │   ├── 003-arquitectura.md           Arquitectura, diagramas y decisiones
 │   └── openapi.yaml                  Contrato de la API (fuente de verdad)
 ├── infra/postgres/           Inicialización de PostgreSQL
-├── docker-compose.yml        PostgreSQL y utilidades migrate / seed
+├── docker-compose.yml        PostgreSQL y utilidades migrate / seed (desarrollo)
+├── docker-compose.prod.yml   Despliegue en producción: db, migrate, api y web
 └── CLAUDE.md                 Normas de desarrollo del proyecto
 ```
 
@@ -158,6 +161,74 @@ uvx --python 3.13 pre-commit install
 
 Ejecuta Gitleaks antes de cada commit y bloquea cualquier secreto.
 
+## Despliegue en producción
+
+La aplicación está desplegada en una única instancia de **AWS EC2** (región Europa, París, `t3.micro`) con **Docker Compose**. Caddy sirve el frontend compilado, reenvía `/api` a la API y obtiene el certificado HTTPS de Let's Encrypt para el dominio.
+
+```
+Internet ──► web (Caddy :80/:443) ──► /      → frontend compilado (SPA)
+                                 └─► /api/* → api (uvicorn :8000) ──► db (PostgreSQL 16)
+```
+
+Ficheros: `docker-compose.prod.yml`, `frontend/Dockerfile` y `frontend/Caddyfile`. El dominio se define en `frontend/Caddyfile`.
+
+### Requisitos previos
+
+- Instancia EC2 con Ubuntu Server LTS. Con 1 GB de RAM, crea un swap de 2 GB.
+- Grupo de seguridad: SSH (22) solo desde tu IP; HTTP (80) y HTTPS (443) desde cualquier lugar.
+- Una IP elástica asociada a la instancia. No tiene coste mientras esté asociada a una instancia en ejecución.
+- Un nombre de dominio que apunte a esa IP (por ejemplo, un subdominio gratuito de DuckDNS).
+- Docker y Docker Compose v2.
+
+### Primera puesta en marcha
+
+```bash
+git clone https://github.com/lauramgrisalesgarcia/practica-ia.git
+cd practica-ia
+cp .env.example .env
+cp backend/.env.example backend/.env
+mkdir -p backend/storage
+```
+
+Rellena los secretos en el servidor. No se versionan:
+
+- `.env` (raíz): `POSTGRES_PASSWORD`.
+- `backend/.env`: `DATABASE_URL=postgresql+psycopg://practica:<POSTGRES_PASSWORD>@db:5432/practica_ia`, `JWT_SECRET` (mínimo 32 caracteres) y, solo si quieres datos de demo, `SEED_USER_PASSWORD` (mínimo 12 caracteres).
+
+Para generar valores aleatorios:
+
+```bash
+python3 -c "import secrets; print(secrets.token_urlsafe(32))"
+```
+
+Después levanta los servicios. `migrate` se ejecuta solo antes de arrancar la API:
+
+```bash
+docker compose -f docker-compose.prod.yml up -d --build
+docker compose -f docker-compose.prod.yml run --rm api python -m app.persistence.seed   # solo datos de demo
+```
+
+### Actualizar
+
+```bash
+cd ~/practica-ia
+git pull
+docker compose -f docker-compose.prod.yml up -d --build
+```
+
+### Operación
+
+- Estado: `docker compose -f docker-compose.prod.yml ps`
+- Logs: `docker compose -f docker-compose.prod.yml logs -f api`
+- Copia de seguridad: `docker compose -f docker-compose.prod.yml exec db pg_dump -U <usuario> practica_ia > backup.sql`. Guárdala fuera del repositorio.
+- Parar: `docker compose -f docker-compose.prod.yml down`. Los datos se mantienen en el volumen `pgdata`.
+
+### Notas de seguridad
+
+- La base de datos no publica puertos: solo es accesible desde la red interna de Docker.
+- Los secretos existen solo en el servidor. `.env` y `backend/.env` nunca se suben al repositorio.
+- Si cargas la seed en producción, los usuarios de demo usan la contraseña `SEED_USER_PASSWORD`. No uses datos reales en ese entorno.
+
 ## API
 
 El contrato completo está en [`docs/openapi.yaml`](docs/openapi.yaml). Todos los endpoints protegidos usan `Authorization: Bearer <token>`.
@@ -244,4 +315,5 @@ Las normas completas están en [`CLAUDE.md`](CLAUDE.md) y los requerimientos en 
 - ✅ Backend: los 17 endpoints del contrato.
 - ✅ Frontend conectado a la API: paneles del docente y del estudiante, historial de clases, detalle de clase, generación del material y resolución pregunta a pregunta.
 - ✅ Tests E2E con Playwright: inicio de sesión por rol y material de refuerzo de principio a fin (`e2e/`).
+- ✅ Despliegue en AWS (EC2, Docker Compose y Caddy con HTTPS).
 - ⏳ Conectar un LLM real (basta con otra implementación de `LLMClient` en `backend/app/composition.py`).
