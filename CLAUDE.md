@@ -19,6 +19,10 @@ Guía para Claude Code al trabajar en este repositorio.
 ### End-to-end
 - **Playwright** para tests E2E que cubren flujos completos frontend ↔ backend (`e2e/`, con su propio `package.json`)
 
+### Despliegue
+- **AWS EC2** (una instancia, Docker Compose con `docker-compose.prod.yml`), con **Caddy** (`frontend/Caddyfile`) como servidor web: sirve el frontend compilado, reenvía `/api` a la API y gestiona el HTTPS. El dominio está en el `Caddyfile`.
+- Los secretos viven solo en el servidor (`.env` y `backend/.env`, nunca versionados). Guía completa en el README, sección "Despliegue en producción".
+
 ## Metodología: TDD obligatorio
 
 Todo el desarrollo sigue **Test-Driven Development**. Sin excepciones.
@@ -174,4 +178,9 @@ npm install
 npx playwright install chromium   # una vez
 npm run test:e2e                  # también desde frontend/ con el mismo script
 npm run report                    # abre el informe HTML (playwright-report/)
+
+# Producción (en el servidor EC2, desde la raíz del repo; ver README)
+docker compose -f docker-compose.prod.yml up -d --build                                  # levanta db, migrate, api y web
+docker compose -f docker-compose.prod.yml run --rm api python -m app.persistence.seed    # datos de demo (opcional)
+docker compose -f docker-compose.prod.yml ps                                             # estado de los servicios
 ```

@@ -30,6 +30,7 @@ flowchart LR
 - El **frontend** es una SPA que solo habla con la API. En desarrollo, Vite reenvía `/api` al backend: mismo origen y sin CORS.
 - El **backend** expone una API REST (contrato en [`openapi.yaml`](openapi.yaml)), guarda los datos en PostgreSQL y los PDF en disco, y delega la generación de material y recomendaciones en un **LLM** detrás de una interfaz (hoy simulado).
 - El frontend también funciona **sin backend**, con servicios en memoria (`src/dev`), para desarrollar y hacer demostraciones.
+- En **producción** (`docker-compose.prod.yml`), todo corre en una misma instancia: Caddy sirve el frontend compilado y reenvía `/api` a la API, igual que el proxy de Vite en desarrollo, y además gestiona el HTTPS. Ver el README, sección «Despliegue en producción».
 
 ## 2. Backend: tres capas
 
@@ -201,7 +202,7 @@ erDiagram
 - **Autenticación**: JWT HS256 de 60 minutos, sin estado; contraseñas con **argon2**. El front guarda el token en `sessionStorage` y cierra la sesión ante un `401`.
 - **Autorización** en cada use case: rol y **propiedad** (un docente solo ve a sus alumnos; un estudiante, sus clases). Un recurso ajeno responde `404`, sin revelar que existe.
 - **Identificadores públicos**: UUID v4 aleatorios; los ids numéricos de la BD nunca salen de la persistencia.
-- **Secretos**: solo en `.env` locales o secretos de CI, como `SecretStr` y sin valores por defecto; Gitleaks en el *pre-commit* y en CI sobre todo el historial.
+- **Secretos**: solo en `.env` locales, en el servidor de producción (los `.env` de la instancia) o en secretos de CI, como `SecretStr` y sin valores por defecto; Gitleaks en el *pre-commit* y en CI sobre todo el historial.
 - **El estudiante nunca recibe las respuestas correctas** antes de resolver: el schema del material del estudiante no tiene ese campo.
 
 ## 6. Calidad y tests
@@ -240,3 +241,5 @@ flowchart LR
 | D9 | Frontend por features con servicios inyectados por props y tests de contrato | Las pantallas se prueban sin red y el front funciona sin back; las implementaciones son intercambiables | Llamar a `fetch` desde los componentes |
 | D10 | Proxy de Vite en lugar de CORS | Mismo origen en desarrollo: menos configuración y superficie de ataque | Habilitar CORS en la API |
 | D11 | E2E con BD propia que se reinicia | Tests deterministas que nunca tocan los datos de desarrollo (el script se niega a vaciar una BD que no termine en `_e2e`) | Usar la BD de desarrollo |
+| D12 | Despliegue en **una sola instancia EC2** con Docker Compose | Dentro de la capa gratuita de AWS, con pocas piezas que mantener; la base de datos, la API y el frontend comparten la misma máquina | RDS + S3/CloudFront: más servicios que configurar y mantener para el alcance actual |
+| D13 | **Caddy** como servidor web, con HTTPS automático para un dominio | Certificado de confianza sin gestionarlo a mano y renovación automática; el mismo proxy sirve el frontend y reenvía `/api` | Certificado autofirmado (el navegador avisa) o gestionar Let's Encrypt manualmente con Nginx |
