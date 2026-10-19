@@ -65,6 +65,7 @@ practica-ia/
 ├── docs/
 │   ├── 001-backend-requirements.md   Requerimientos del backend
 │   ├── 002-frontend-requirements.md  Requerimientos del frontend
+│   ├── 003-arquitectura.md           Arquitectura, diagramas y decisiones
 │   └── openapi.yaml                  Contrato de la API (fuente de verdad)
 ├── infra/postgres/           Inicialización de PostgreSQL
 ├── docker-compose.yml        PostgreSQL y utilidades migrate / seed
