@@ -26,8 +26,8 @@ const weekLabel = (weekStart: string) => weekFormat.format(new Date(`${weekStart
 // Escala de un solo tono (ocean) de claro a oscuro: los estados son ordenados
 const MATERIAL_STATUS = [
   { key: 'completed', label: 'Resuelto', color: 'bg-ocean' },
-  { key: 'pending', label: 'Pendiente', color: 'bg-[#85a4af]' },
-  { key: 'none', label: 'Sin material', color: 'bg-[#d3dee2]' },
+  { key: 'pending', label: 'Pendiente', color: 'bg-ocean/55' },
+  { key: 'none', label: 'Sin material', color: 'bg-ocean/20' },
 ] as const
 
 // El tipo siempre lleva etiqueta de texto: el icono y el color solo la acompañan
