@@ -1,0 +1,60 @@
+# Despliegue de producción (una máquina): base de datos, migraciones, API y web (Caddy).
+#   docker compose -f docker-compose.prod.yml up -d --build
+# Los secretos salen de .env (raíz) y backend/.env, que existen solo en el servidor y nunca se versionan.
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    # Sin "ports": la base de datos solo es accesible desde la red interna de Docker.
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?Define POSTGRES_USER en .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Define POSTGRES_PASSWORD en .env}
+      POSTGRES_DB: ${POSTGRES_DB:-practica_ia}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+
+  # Aplica las migraciones antes de arrancar la API; termina y se queda parado.
+  migrate:
+    build: ./backend
+    env_file: ./backend/.env
+    # Dentro de Docker la BD se alcanza por la red interna (db:5432); esto sobrescribe el valor de backend/.env.
+    environment: &backend-db
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-practica_ia}
+    command: ["alembic", "upgrade", "head"]
+    depends_on:
+      db:
+        condition: service_healthy
+
+  api:
+    build: ./backend
+    restart: unless-stopped
+    env_file: ./backend/.env
+    environment: *backend-db
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+    volumes:
+      # Los PDF de las clases persisten fuera del contenedor.
+      - ./backend/storage:/app/storage
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  web:
+    build: ./frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      # Caddy guarda aquí los certificados HTTPS (cuando se use un dominio).
+      - caddy_data:/data
+    depends_on:
+      - api
+
+volumes:
+  pgdata:
+  caddy_data:
