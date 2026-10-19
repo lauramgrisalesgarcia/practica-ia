@@ -1,4 +1,5 @@
-:80 {
+practica-ia.duckdns.org {
+	# Caddy obtiene el certificado HTTPS para este dominio y redirige HTTP a HTTPS.
 	# /api/... se reenvía a la API quitando el prefijo, igual que el proxy de Vite en local.
 	handle_path /api/* {
 		reverse_proxy api:8000
