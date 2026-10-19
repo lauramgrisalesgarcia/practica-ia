@@ -1,0 +1,13 @@
+:80 {
+	# /api/... se reenvía a la API quitando el prefijo, igual que el proxy de Vite en local.
+	handle_path /api/* {
+		reverse_proxy api:8000
+	}
+
+	# La SPA usa BrowserRouter: las rutas desconocidas devuelven index.html.
+	handle {
+		root * /srv
+		try_files {path} /index.html
+		file_server
+	}
+}
