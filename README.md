@@ -1,6 +1,6 @@
 # Práctica IA
 
-Plataforma de refuerzo para **extranjeros que aprenden español**. El docente genera, a partir de cada clase, una actividad de refuerzo con un LLM (simulado en este proyecto); el estudiante la resuelve **una única vez** y recibe su corrección con recomendaciones personalizadas.
+Plataforma de refuerzo para **extranjeros que aprenden español**. El docente genera, a partir de cada clase, una actividad de refuerzo con un LLM (Gemini si se configura `GEMINI_API_KEY`; si no, uno simulado); el estudiante la resuelve **una única vez** y recibe su corrección con recomendaciones personalizadas.
 
 ## Cómo funciona
 
@@ -23,9 +23,10 @@ Docente                                         Estudiante
 8. Ve el resultado del estudiante        ◄──────  → corrección, nota y recomendaciones
 ```
 
-- **Generación de material**: el backend envía al LLM el nivel MCER y el idioma natal del estudiante, el tema, el contexto, las palabras clave, las notas y el PDF de la clase. La respuesta se **valida** (cantidad de ejercicios, un hueco `___` por frase, 2–4 opciones distintas, respuesta correcta entre las opciones y coherente con las palabras clave) antes de guardarse; si no es válida, no se guarda nada.
+- **Generación de material**: el backend envía al LLM el nivel MCER y el idioma natal del estudiante, el tema, el contexto, las palabras clave, las notas y el PDF de la clase (Gemini aún no recibe el PDF; está previsto extraer su texto más adelante). La respuesta se **valida** (cantidad de ejercicios, un hueco `___` por frase, 2–4 opciones distintas, respuesta correcta entre las opciones y coherente con las palabras clave) antes de guardarse; si no es válida, no se guarda nada.
 - **Corrección**: siempre en el backend. Las respuestas correctas nunca se envían al estudiante antes de resolver.
 - **LLM simulado**: los ejercicios se construyen con las palabras clave de la clase y frases de ejemplo para practicarlas (`backend/app/llm/fixtures/example_sentences.json`), y las recomendaciones, con el tema y los ejercicios fallados. Todo va detrás de la interfaz `LLMClient`: un LLM real se conecta sin tocar el dominio.
+- **Gemini**: con `GEMINI_API_KEY` en `backend/.env` (clave de Google AI Studio), el material lo genera Gemini (`backend/app/llm/gemini.py`; modelo configurable con `GEMINI_MODEL`, por defecto `gemini-3.8-flash`). Si el modelo está saturado (503) se reintenta una vez; una cuota agotada (429) no se reintenta. Las recomendaciones siguen simuladas. Los tests y los E2E nunca llaman a Gemini.
 
 ## Stack
 
@@ -47,7 +48,7 @@ practica-ia/
 │   │   ├── transport/http/   Capa de transporte: routers FastAPI, schemas, errores HTTP
 │   │   ├── domain/           Capa de dominio: entidades, puertos y use cases (Python puro)
 │   │   ├── persistence/      Capa de persistencia: modelos SQLAlchemy y repositories
-│   │   ├── llm/              Adaptador del LLM (simulado)
+│   │   ├── llm/              Adaptadores del LLM (Gemini y simulado)
 │   │   ├── core/             Configuración, argon2, JWT, reloj
 │   │   └── composition.py    Inyección de dependencias
 │   ├── migrations/           Migraciones de Alembic y esquema SQL generado
@@ -316,4 +317,5 @@ Las normas completas están en [`CLAUDE.md`](CLAUDE.md) y los requerimientos en 
 - ✅ Frontend conectado a la API: paneles del docente y del estudiante, historial de clases, detalle de clase, generación del material y resolución pregunta a pregunta.
 - ✅ Tests E2E con Playwright: inicio de sesión por rol y material de refuerzo de principio a fin (`e2e/`).
 - ✅ Despliegue en AWS (EC2, Docker Compose y Caddy con HTTPS).
-- ⏳ Conectar un LLM real (basta con otra implementación de `LLMClient` en `backend/app/composition.py`).
+- ✅ LLM real: Gemini genera el material de refuerzo si se configura `GEMINI_API_KEY`.
+- ⏳ Recomendaciones con Gemini y uso del texto del PDF de la clase en el prompt.

@@ -1,8 +1,10 @@
 from functools import lru_cache
 from pathlib import Path
 
-from pydantic import Field, SecretStr
+from pydantic import Field, SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+DEFAULT_GEMINI_MODEL = "gemini-3.8-flash"
 
 
 class Settings(BaseSettings):
@@ -20,6 +22,22 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int = 60
     # Carpeta de archivos (PDF de las clases), relativa a backend/. No es un secreto.
     storage_dir: Path = Path("storage")
+    # Clave de Google AI Studio. Opcional: sin ella se usa el LLM simulado.
+    gemini_api_key: SecretStr | None = None
+    gemini_model: str = DEFAULT_GEMINI_MODEL
+
+    @field_validator("gemini_model", mode="before")
+    @classmethod
+    def _modelo_vacio_por_defecto(cls, value: object) -> object:
+        # Un modelo vacío dejaría la URL de Gemini rota: se usa el de por defecto
+        return DEFAULT_GEMINI_MODEL if value == "" else value
+
+    @field_validator("gemini_api_key", mode="before")
+    @classmethod
+    def _clave_vacia_no_configurada(cls, value: object) -> object:
+        # Una clave vacía (p. ej. la plantilla .env.example) equivale a no tener clave
+        texto = value.get_secret_value() if isinstance(value, SecretStr) else value
+        return None if texto == "" else value
 
 
 @lru_cache

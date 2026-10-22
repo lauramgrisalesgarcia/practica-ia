@@ -20,6 +20,8 @@ class _TestSettings(BaseSettings):
 os.environ["DATABASE_URL"] = _TestSettings().test_database_url.get_secret_value()
 # Clave aleatoria en cada ejecución: ningún secreto queda escrito en el código.
 os.environ["JWT_SECRET"] = secrets.token_urlsafe(32)
+# Los tests nunca llaman a Gemini: una clave vacía (aunque esté en backend/.env) usa el LLM simulado.
+os.environ["GEMINI_API_KEY"] = ""
 
 from alembic import command  # noqa: E402
 from alembic.config import Config  # noqa: E402

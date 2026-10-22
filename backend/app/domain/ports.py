@@ -99,7 +99,8 @@ class StudentInsightsRepository(Protocol):
 
 class MaterialRepository(Protocol):
     def save(self, lesson_id: UUID, llm_request: Mapping[str, Any], material: Material) -> None:
-        """Guarda el material de la clase junto con la petición enviada al LLM. Si la clase ya tiene
+        """Guarda el material de la clase junto con la petición del dominio al LLM (el adaptador puede
+        ajustarla a su proveedor: Gemini añade instrucciones y no envía el PDF). Si la clase ya tiene
         material (incluso por generaciones simultáneas), lanza MaterialAlreadyGeneratedError."""
         ...
 
