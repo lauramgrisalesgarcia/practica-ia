@@ -4,7 +4,8 @@ from pathlib import Path
 from pydantic import Field, SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-DEFAULT_GEMINI_MODEL = "gemini-3.8-flash"
+# gemini-3.8-flash tarda más de un minuto en generar 7 ejercicios (piensa mucho); este responde en segundos
+DEFAULT_GEMINI_MODEL = "gemini-3.5-flash"
 
 
 class Settings(BaseSettings):
