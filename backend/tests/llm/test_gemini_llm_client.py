@@ -320,3 +320,11 @@ def test_el_prompt_pide_variar_los_sujetos_sin_romper_la_concordancia() -> None:
     assert "varía los sujetos" in prompt
     assert "la abuela" in prompt
     assert "concuerde con la respuesta correcta" in prompt
+
+
+def test_las_palabras_clave_del_docente_mandan_y_el_resto_de_la_frase_sigue_el_nivel() -> None:
+    prompt = sent_prompt(with_level("A2"))
+
+    assert "las palabras clave las elige el docente" in prompt
+    assert "úsalas tal cual como respuesta correcta aunque sean de otro nivel" in prompt
+    assert "la regla de tiempos verbales se aplica al resto de la frase y a las opciones incorrectas" in prompt

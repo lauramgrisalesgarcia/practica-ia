@@ -33,7 +33,7 @@ Docente                                         Estudiante
   - **Vocabulario del nivel**, también en las opciones incorrectas.
   - **Sujetos variados**: pronombres (*yo, tú, ella*…) y personas nombradas (*la abuela, el señor García*), siempre que concuerden con la respuesta correcta.
 
-  La respuesta correcta tiene que ser exactamente una palabra clave, así que si el docente escribe *llevo* el sujeto será «yo», y una palabra clave de un nivel superior (como *quisiera* en A2) aparecerá igualmente. El validador no puede comprobar el nivel del vocabulario ni la ambigüedad de las frases: dependen de que el modelo siga el prompt.
+  **Las palabras clave las elige el docente** y no se validan: puede incluir a propósito alguna de otro nivel (por ejemplo, *quisiera* como fórmula de cortesía en A2). El LLM las usa tal cual como respuesta correcta, y la regla de tiempos verbales se aplica al resto de la frase y a las opciones incorrectas. Como la respuesta tiene que ser exactamente una palabra clave, si el docente escribe *llevo* el sujeto será «yo». El validador no puede comprobar el nivel del vocabulario ni la ambigüedad de las frases: dependen de que el modelo siga el prompt.
 
 ## Stack
 

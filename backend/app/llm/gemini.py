@@ -158,8 +158,12 @@ def _level_rules(level: Level) -> str:
         "Entre los ejercicios, varía los sujetos: pronombres (yo, tú, él, ella, nosotros, ustedes) y personas "
         "nombradas (la abuela, el señor García, mis amigos), siempre que el sujeto concuerde con la respuesta "
         "correcta, que tiene que ser exactamente una palabra clave: si la palabra clave es una forma conjugada "
-        "(por ejemplo, «llevo»), usa el sujeto que le corresponde. Antes de responder, comprueba también que "
-        "cada frase y cada opción usan palabras y tiempos verbales de ese nivel."
+        "(por ejemplo, «llevo»), usa el sujeto que le corresponde. "
+        # El docente puede elegir a propósito una palabra clave de otro nivel (p. ej. «quisiera» como fórmula de cortesía)
+        "Ten en cuenta que las palabras clave las elige el docente: úsalas tal cual como respuesta correcta aunque "
+        "sean de otro nivel, y la regla de tiempos verbales se aplica al resto de la frase y a las opciones "
+        "incorrectas. Antes de responder, comprueba también que, salvo las palabras clave, cada frase y cada "
+        "opción usan palabras y tiempos verbales de ese nivel."
     )
 
 
