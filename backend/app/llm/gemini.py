@@ -25,7 +25,7 @@ RETRYABLE_STATUSES = frozenset({HTTPStatus.SERVICE_UNAVAILABLE})
 RETRY_DELAY_SECONDS = 2.0
 
 # Tiempos verbales que se introducen en cada nivel del MCER (orientativo, según el Plan Curricular del
-# Instituto Cervantes). Cada nivel usa también los de los niveles anteriores.
+# Instituto Cervantes), en orden de A1 a C2. Cada nivel usa también los de los niveles anteriores.
 NEW_TENSES_BY_LEVEL: Mapping[Level, tuple[str, ...]] = {
     Level.A1: ("presente de indicativo", "ir a + infinitivo"),
     Level.A2: (
@@ -51,6 +51,9 @@ NEW_TENSES_BY_LEVEL: Mapping[Level, tuple[str, ...]] = {
     Level.C1: ("pretérito pluscuamperfecto de subjuntivo",),
     Level.C2: (),
 }
+
+# Separa las instrucciones del prompt de los datos de la clase
+CLASS_DATA_HEADER = "Datos de la clase:"
 
 GENERATE_MATERIAL_INSTRUCTIONS = (
     "Eres un profesor de español para extranjeros. Crea material de refuerzo a partir de los datos de la clase. "
@@ -146,7 +149,7 @@ def _material_prompt(request: Mapping[str, Any]) -> str:
     )
     level_rules = _level_rules(Level(request["student"]["level"]))
     data = json.dumps(_sin_ruta_del_pdf(request), ensure_ascii=False)
-    return f"{GENERATE_MATERIAL_INSTRUCTIONS} {rules} {level_rules}\n\nDatos de la clase:\n{data}"
+    return f"{GENERATE_MATERIAL_INSTRUCTIONS} {rules} {level_rules}\n\n{CLASS_DATA_HEADER}\n{data}"
 
 
 def _level_rules(level: Level) -> str:
@@ -168,8 +171,8 @@ def _level_rules(level: Level) -> str:
 
 
 def _tenses_up_to(level: Level) -> tuple[str, ...]:
-    """Tiempos del nivel y de todos los anteriores, en orden de aparición."""
-    levels = list(Level)
+    """Tiempos del nivel y de todos los anteriores, en el orden del MCER que fija NEW_TENSES_BY_LEVEL."""
+    levels = list(NEW_TENSES_BY_LEVEL)
     return tuple(tense for previous in levels[: levels.index(level) + 1] for tense in NEW_TENSES_BY_LEVEL[previous])
 
 
