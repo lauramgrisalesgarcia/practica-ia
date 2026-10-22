@@ -8,6 +8,12 @@ describe('Brand', () => {
     expect(screen.getByRole('img', { name: 'PractIcA' })).toHaveTextContent('PractIcA')
   })
 
+  it('muestra el loro junto al nombre', () => {
+    const { container } = render(<Brand />)
+
+    expect(container.querySelector('svg')).not.toBeNull()
+  })
+
   it('destaca la I y la A', () => {
     render(<Brand />)
 
