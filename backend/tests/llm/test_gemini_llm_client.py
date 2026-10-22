@@ -278,3 +278,11 @@ def test_el_prompt_pide_las_opciones_dentro_de_los_limites_del_dominio() -> None
     prompt = sent_prompt(PAYLOAD)
 
     assert f"entre {MIN_OPTIONS} y {MAX_OPTIONS} opciones distintas" in prompt
+
+
+def test_el_prompt_exige_que_solo_una_opcion_encaje_en_la_frase() -> None:
+    prompt = sent_prompt(PAYLOAD)
+
+    assert "exactamente una opción correcta" in prompt
+    assert "sujeto explícito" in prompt
+    assert "si más de una opción encaja, reescribe la frase" in prompt
