@@ -26,7 +26,7 @@ Docente                                         Estudiante
 - **Generación de material**: el backend envía al LLM el nivel MCER y el idioma natal del estudiante, el tema, el contexto, las palabras clave, las notas y el PDF de la clase (Gemini aún no recibe el PDF; está previsto extraer su texto más adelante). La respuesta se **valida** (cantidad de ejercicios, un hueco `___` por frase, 2–4 opciones distintas, respuesta correcta entre las opciones y coherente con las palabras clave) antes de guardarse; si no es válida, no se guarda nada.
 - **Corrección**: siempre en el backend. Las respuestas correctas nunca se envían al estudiante antes de resolver.
 - **LLM simulado**: los ejercicios se construyen con las palabras clave de la clase y frases de ejemplo para practicarlas (`backend/app/llm/fixtures/example_sentences.json`), y las recomendaciones, con el tema y los ejercicios fallados. Todo va detrás de la interfaz `LLMClient`: un LLM real se conecta sin tocar el dominio.
-- **Gemini**: con `GEMINI_API_KEY` en `backend/.env` (clave de Google AI Studio), el material lo genera Gemini (`backend/app/llm/gemini.py`; modelo configurable con `GEMINI_MODEL`, por defecto `gemini-3.8-flash`). Si Gemini está saturado (429/503) se reintenta una vez. Las recomendaciones siguen simuladas. Los tests y los E2E nunca llaman a Gemini.
+- **Gemini**: con `GEMINI_API_KEY` en `backend/.env` (clave de Google AI Studio), el material lo genera Gemini (`backend/app/llm/gemini.py`; modelo configurable con `GEMINI_MODEL`, por defecto `gemini-3.8-flash`). Si el modelo está saturado (503) se reintenta una vez; una cuota agotada (429) no se reintenta. Las recomendaciones siguen simuladas. Los tests y los E2E nunca llaman a Gemini.
 
 ## Stack
 

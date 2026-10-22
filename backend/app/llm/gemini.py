@@ -12,21 +12,22 @@ from collections.abc import Callable, Mapping
 from http import HTTPStatus
 from typing import Any, Protocol
 
+from app.domain.material_validation import MAX_OPTIONS, MIN_OPTIONS
 from app.domain.ports import LLMClient
 
 GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
 API_KEY_HEADER = "x-goog-api-key"
 TIMEOUT_SECONDS = 60
-# Gemini responde 429 o 503 cuando está saturado (habitual en el plan gratuito): se reintenta una vez
-RETRYABLE_STATUSES = frozenset({HTTPStatus.TOO_MANY_REQUESTS, HTTPStatus.SERVICE_UNAVAILABLE})
+# Gemini responde 503 cuando el modelo está saturado (suele ser momentáneo): se reintenta una vez.
+# 429 es cuota agotada y no se reintenta: a los pocos segundos volvería a fallar.
+RETRYABLE_STATUSES = frozenset({HTTPStatus.SERVICE_UNAVAILABLE})
 RETRY_DELAY_SECONDS = 2.0
 
 GENERATE_MATERIAL_INSTRUCTIONS = (
     "Eres un profesor de español para extranjeros. Crea material de refuerzo a partir de los datos de la clase. "
     "Responde solo con JSON, en español, con la forma: "
     '{"activity_type", "title", "instructions", "exercises": [{"id", "sentence", "options", "correct_option"}]}. '
-    "Cada frase lleva exactamente un hueco «___». Cada ejercicio tiene tres opciones distintas; la correcta "
-    "está entre ellas y es una palabra clave de la clase."
+    "Cada frase lleva exactamente un hueco «___»."
 )
 
 
@@ -104,6 +105,8 @@ def _material_prompt(request: Mapping[str, Any]) -> str:
     rules = (
         f"Genera exactamente {count} ejercicios, con ids enteros del 1 al {count}. "
         f'El campo activity_type debe ser exactamente "{request["activity_type"]}". '
+        f"Cada ejercicio tiene entre {MIN_OPTIONS} y {MAX_OPTIONS} opciones distintas (mejor tres); "
+        "la correcta está entre ellas y es una palabra clave de la clase. "
         f"Entre todos los ejercicios, {keyword_rule}."
     )
     data = json.dumps(_sin_ruta_del_pdf(request), ensure_ascii=False)

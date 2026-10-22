@@ -8,6 +8,7 @@ from urllib.request import Request
 
 import pytest
 
+from app.domain.material_validation import MAX_OPTIONS, MIN_OPTIONS
 from app.domain.ports import LLMClient
 from app.llm.gemini import (
     GEMINI_URL,
@@ -244,9 +245,8 @@ def test_con_menos_ejercicios_que_palabras_clave_pide_no_repetirlas() -> None:
     assert "usa todas las palabras clave" not in prompt
 
 
-@pytest.mark.parametrize("status", [429, 503])
-def test_reintenta_una_vez_si_gemini_esta_saturado(status: int) -> None:
-    post = FlakyJsonPost([status], gemini_reply(json.dumps(MATERIAL)))
+def test_reintenta_una_vez_si_gemini_esta_saturado() -> None:
+    post = FlakyJsonPost([503], gemini_reply(json.dumps(MATERIAL)))
     sleeps: list[float] = []
 
     response = make_client(post, sleep=sleeps.append).generate_material(PAYLOAD)
@@ -264,9 +264,17 @@ def test_si_sigue_saturado_tras_el_reintento_falla() -> None:
     assert post.calls == 2
 
 
-def test_no_reintenta_los_errores_que_no_son_de_saturacion() -> None:
-    post = FlakyJsonPost([400], gemini_reply(json.dumps(MATERIAL)))
+# 429 es cuota agotada (por minuto o por día): reintentar a los pocos segundos solo gasta otra petición
+@pytest.mark.parametrize("status", [400, 429])
+def test_no_reintenta_los_errores_que_no_son_de_saturacion(status: int) -> None:
+    post = FlakyJsonPost([status], gemini_reply(json.dumps(MATERIAL)))
 
     with pytest.raises(urllib.error.HTTPError):
         make_client(post).generate_material(PAYLOAD)
     assert post.calls == 1
+
+
+def test_el_prompt_pide_las_opciones_dentro_de_los_limites_del_dominio() -> None:
+    prompt = sent_prompt(PAYLOAD)
+
+    assert f"entre {MIN_OPTIONS} y {MAX_OPTIONS} opciones distintas" in prompt

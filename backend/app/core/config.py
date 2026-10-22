@@ -4,6 +4,8 @@ from pathlib import Path
 from pydantic import Field, SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+DEFAULT_GEMINI_MODEL = "gemini-3.8-flash"
+
 
 class Settings(BaseSettings):
     """Configuración leída de variables de entorno o de `.env` (nunca versionado).
@@ -22,7 +24,13 @@ class Settings(BaseSettings):
     storage_dir: Path = Path("storage")
     # Clave de Google AI Studio. Opcional: sin ella se usa el LLM simulado.
     gemini_api_key: SecretStr | None = None
-    gemini_model: str = "gemini-3.8-flash"
+    gemini_model: str = DEFAULT_GEMINI_MODEL
+
+    @field_validator("gemini_model", mode="before")
+    @classmethod
+    def _modelo_vacio_por_defecto(cls, value: object) -> object:
+        # Un modelo vacío dejaría la URL de Gemini rota: se usa el de por defecto
+        return DEFAULT_GEMINI_MODEL if value == "" else value
 
     @field_validator("gemini_api_key", mode="before")
     @classmethod

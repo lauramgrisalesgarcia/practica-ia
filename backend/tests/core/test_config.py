@@ -79,3 +79,7 @@ def test_una_clave_de_gemini_vacia_cuenta_como_no_configurada() -> None:
 
 def test_el_modelo_de_gemini_por_defecto_es_uno_disponible_para_cuentas_nuevas() -> None:
     assert make_settings().gemini_model == "gemini-3.8-flash"
+
+
+def test_un_modelo_de_gemini_vacio_usa_el_modelo_por_defecto() -> None:
+    assert make_settings(gemini_model="").gemini_model == "gemini-3.8-flash"
