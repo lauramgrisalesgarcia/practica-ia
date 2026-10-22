@@ -1,22 +1,13 @@
-import secrets
+from typing import Any
 
-from pydantic import SecretStr
+import pytest
 
+from app import composition
 from app.composition import build_llm_client
-from app.core.config import Settings
+from app.domain.ports import LLMClient
 from app.llm.gemini import GeminiLLMClient
 from app.llm.simulated import SimulatedLLMClient
-
-DATABASE_URL = "postgresql+psycopg://usuario:clave-de-bd@127.0.0.1:5433/base"
-
-
-def make_settings(*, gemini_api_key: str | None) -> Settings:
-    return Settings(
-        _env_file=None,
-        database_url=SecretStr(DATABASE_URL),
-        jwt_secret=SecretStr(secrets.token_urlsafe(32)),
-        gemini_api_key=SecretStr(gemini_api_key) if gemini_api_key is not None else None,
-    )
+from tests.core.settings_factory import make_settings
 
 
 def test_sin_clave_de_gemini_usa_el_llm_simulado() -> None:
@@ -25,3 +16,21 @@ def test_sin_clave_de_gemini_usa_el_llm_simulado() -> None:
 
 def test_con_clave_de_gemini_usa_gemini() -> None:
     assert isinstance(build_llm_client(make_settings(gemini_api_key="clave-de-prueba")), GeminiLLMClient)
+
+
+def test_con_clave_pasa_al_cliente_de_gemini_la_clave_el_modelo_y_el_simulado_para_recomendaciones(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    recorded: dict[str, Any] = {}
+
+    def fake_gemini_client(**kwargs: Any) -> LLMClient:
+        recorded.update(kwargs)
+        return SimulatedLLMClient()
+
+    monkeypatch.setattr(composition, "GeminiLLMClient", fake_gemini_client)
+
+    build_llm_client(make_settings(gemini_api_key="clave-de-prueba", gemini_model="modelo-de-prueba"))
+
+    assert recorded["api_key"] == "clave-de-prueba"
+    assert recorded["model"] == "modelo-de-prueba"
+    assert isinstance(recorded["recommendations"], SimulatedLLMClient)
