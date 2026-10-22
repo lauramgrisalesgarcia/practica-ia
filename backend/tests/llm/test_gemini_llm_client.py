@@ -286,3 +286,37 @@ def test_el_prompt_exige_que_solo_una_opcion_encaje_en_la_frase() -> None:
     assert "exactamente una opción correcta" in prompt
     assert "sujeto explícito" in prompt
     assert "si más de una opción encaja, reescribe la frase" in prompt
+
+
+def with_level(level: str) -> dict[str, Any]:
+    return {**PAYLOAD, "student": {**PAYLOAD["student"], "level": level}}
+
+
+def test_en_a1_el_prompt_solo_permite_los_tiempos_verbales_del_nivel() -> None:
+    prompt = sent_prompt(with_level("A1"))
+
+    assert "usa solo estos tiempos verbales, propios del nivel A1: presente de indicativo" in prompt
+    assert "pretérito indefinido" not in prompt
+    assert "subjuntivo" not in prompt
+
+
+def test_en_b2_el_prompt_suma_los_tiempos_de_los_niveles_anteriores() -> None:
+    prompt = sent_prompt(with_level("B2"))
+
+    assert "presente de indicativo" in prompt
+    assert "pretérito indefinido" in prompt
+    assert "presente de subjuntivo" in prompt
+    assert "pretérito imperfecto de subjuntivo" in prompt
+    assert "pluscuamperfecto de subjuntivo" not in prompt
+
+
+def test_el_prompt_pide_vocabulario_propio_del_nivel_del_estudiante() -> None:
+    assert "vocabulario y expresiones propios del nivel A2" in sent_prompt(with_level("A2"))
+
+
+def test_el_prompt_pide_variar_los_sujetos_sin_romper_la_concordancia() -> None:
+    prompt = sent_prompt(PAYLOAD)
+
+    assert "varía los sujetos" in prompt
+    assert "la abuela" in prompt
+    assert "concuerde con la respuesta correcta" in prompt

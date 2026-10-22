@@ -12,6 +12,7 @@ from collections.abc import Callable, Mapping
 from http import HTTPStatus
 from typing import Any, Protocol
 
+from app.domain.entities import Level
 from app.domain.material_validation import MAX_OPTIONS, MIN_OPTIONS
 from app.domain.ports import LLMClient
 
@@ -23,6 +24,34 @@ TIMEOUT_SECONDS = 60
 RETRYABLE_STATUSES = frozenset({HTTPStatus.SERVICE_UNAVAILABLE})
 RETRY_DELAY_SECONDS = 2.0
 
+# Tiempos verbales que se introducen en cada nivel del MCER (orientativo, según el Plan Curricular del
+# Instituto Cervantes). Cada nivel usa también los de los niveles anteriores.
+NEW_TENSES_BY_LEVEL: Mapping[Level, tuple[str, ...]] = {
+    Level.A1: ("presente de indicativo", "ir a + infinitivo"),
+    Level.A2: (
+        "pretérito perfecto",
+        "pretérito indefinido",
+        "pretérito imperfecto",
+        "estar + gerundio",
+        "imperativo afirmativo",
+    ),
+    Level.B1: (
+        "futuro simple",
+        "condicional simple",
+        "pretérito pluscuamperfecto",
+        "presente de subjuntivo",
+        "imperativo negativo",
+    ),
+    Level.B2: (
+        "pretérito perfecto de subjuntivo",
+        "pretérito imperfecto de subjuntivo",
+        "futuro compuesto",
+        "condicional compuesto",
+    ),
+    Level.C1: ("pretérito pluscuamperfecto de subjuntivo",),
+    Level.C2: (),
+}
+
 GENERATE_MATERIAL_INSTRUCTIONS = (
     "Eres un profesor de español para extranjeros. Crea material de refuerzo a partir de los datos de la clase. "
     "Responde solo con JSON, en español, con la forma: "
@@ -32,7 +61,7 @@ GENERATE_MATERIAL_INSTRUCTIONS = (
     "Cada ejercicio tiene exactamente una opción correcta: el contexto de la frase (sujeto explícito, "
     "concordancia de género y número, tiempo verbal) debe hacer incorrectas las demás. Si las opciones son "
     "formas de la misma palabra o del mismo verbo, incluye el sujeto o una pista que deje una sola válida "
-    "(por ejemplo, «Yo siempre ___ zapatos cómodos»). Antes de responder, revisa cada ejercicio: "
+    "(por ejemplo, «Mi abuela siempre ___ zapatos cómodos»). Antes de responder, revisa cada ejercicio: "
     "si más de una opción encaja, reescribe la frase."
 )
 
@@ -115,8 +144,29 @@ def _material_prompt(request: Mapping[str, Any]) -> str:
         "la correcta está entre ellas y es una palabra clave de la clase. "
         f"Entre todos los ejercicios, {keyword_rule}."
     )
+    level_rules = _level_rules(Level(request["student"]["level"]))
     data = json.dumps(_sin_ruta_del_pdf(request), ensure_ascii=False)
-    return f"{GENERATE_MATERIAL_INSTRUCTIONS} {rules}\n\nDatos de la clase:\n{data}"
+    return f"{GENERATE_MATERIAL_INSTRUCTIONS} {rules} {level_rules}\n\nDatos de la clase:\n{data}"
+
+
+def _level_rules(level: Level) -> str:
+    """Tiempos verbales, vocabulario y variedad de sujetos adecuados al nivel MCER del estudiante."""
+    return (
+        f"El estudiante tiene nivel {level}: usa vocabulario y expresiones propios del nivel {level} "
+        f"y usa solo estos tiempos verbales, propios del nivel {level}: {', '.join(_tenses_up_to(level))}. "
+        "Las opciones incorrectas también deben ser palabras de ese nivel. "
+        "Entre los ejercicios, varía los sujetos: pronombres (yo, tú, él, ella, nosotros, ustedes) y personas "
+        "nombradas (la abuela, el señor García, mis amigos), siempre que el sujeto concuerde con la respuesta "
+        "correcta, que tiene que ser exactamente una palabra clave: si la palabra clave es una forma conjugada "
+        "(por ejemplo, «llevo»), usa el sujeto que le corresponde. Antes de responder, comprueba también que "
+        "cada frase y cada opción usan palabras y tiempos verbales de ese nivel."
+    )
+
+
+def _tenses_up_to(level: Level) -> tuple[str, ...]:
+    """Tiempos del nivel y de todos los anteriores, en orden de aparición."""
+    levels = list(Level)
+    return tuple(tense for previous in levels[: levels.index(level) + 1] for tense in NEW_TENSES_BY_LEVEL[previous])
 
 
 def _sin_ruta_del_pdf(request: Mapping[str, Any]) -> dict[str, Any]:
