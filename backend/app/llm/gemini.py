@@ -5,6 +5,7 @@ envía como prompt y devuelve el JSON que responde el modelo, sin validarlo: la 
 """
 
 import json
+import logging
 import time
 import urllib.error
 import urllib.request
@@ -15,6 +16,8 @@ from typing import Any, Protocol
 from app.domain.entities import Level
 from app.domain.material_validation import MAX_OPTIONS, MIN_OPTIONS
 from app.domain.ports import LLMClient
+
+logger = logging.getLogger(__name__)
 
 GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
 API_KEY_HEADER = "x-goog-api-key"
@@ -106,6 +109,8 @@ class GeminiLLMClient(LLMClient):
         fallback_model: str | None = None,
     ) -> None:
         self._headers = {API_KEY_HEADER: api_key}
+        self._model = model
+        self._fallback_model = fallback_model
         self._url = GEMINI_URL.format(model=model)
         self._fallback_url = GEMINI_URL.format(model=fallback_model) if fallback_model else None
         self._post = post
@@ -131,6 +136,12 @@ class GeminiLLMClient(LLMClient):
         except (urllib.error.HTTPError, TimeoutError) as error:
             if self._fallback_url is None or not _is_unavailable(error):
                 raise
+            logger.warning(
+                "Gemini no disponible con %s (%s); se usa el modelo de respaldo %s",
+                self._model,
+                _describe(error),
+                self._fallback_model,
+            )
             # Un único intento con el respaldo: si también falla, se propaga su error
             return self._post(self._fallback_url, self._headers, body)
 
@@ -142,6 +153,10 @@ class GeminiLLMClient(LLMClient):
                 raise
         self._sleep(RETRY_DELAY_SECONDS)
         return self._post(self._url, self._headers, body)
+
+
+def _describe(error: urllib.error.HTTPError | TimeoutError) -> str:
+    return "timeout" if isinstance(error, TimeoutError) else f"HTTP {error.code}"
 
 
 def _is_unavailable(error: urllib.error.HTTPError | TimeoutError) -> bool:

@@ -34,8 +34,14 @@ services:
     build: ./backend
     restart: unless-stopped
     env_file: ./backend/.env
-    environment: *backend-db
-    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+    environment:
+      <<: *backend-db
+      # Sin Swagger, ReDoc ni /openapi.json en producción
+      API_DOCS_ENABLED: "false"
+    # --proxy-headers: la API toma la IP real del cliente de X-Forwarded-For (la pone Caddy), necesaria para
+    # limitar los intentos de login por origen. Se acepta de cualquier IP porque la API no publica puertos:
+    # solo Caddy, dentro de la red de Docker, puede llegar a ella.
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--proxy-headers", "--forwarded-allow-ips", "*"]
     volumes:
       # Los PDF de las clases persisten fuera del contenedor.
       - ./backend/storage:/app/storage

@@ -24,6 +24,7 @@ Roles:
 - El correo no distingue mayúsculas/minúsculas.
 - Éxito → devuelve un token de acceso y los datos del usuario (`id`, `first_name`, `last_name`, `email`, `role`).
 - Fallo → `401` con el mensaje genérico `"Credenciales incorrectas"` (no revela si el correo existe).
+- **Límite de intentos**: tras 5 intentos fallidos en 15 minutos desde el mismo origen (IP) para el mismo correo → `429` con `"Demasiados intentos fallidos. Espera unos minutos e inténtalo de nuevo."`, incluso con la contraseña correcta. Un inicio de sesión correcto reinicia la cuenta. Se lleva en memoria: vale para una sola instancia de la API.
 - Solo se valida que correo y contraseña no estén vacíos y que el correo tenga formato válido. Las reglas de complejidad de contraseña no aplican en el login.
 
 ### RF2 · Usuario actual
@@ -63,7 +64,9 @@ Roles:
   - Contexto de la clase (situación comunicativa, p. ej. *pedir comida en un restaurante*).
   - Tema y notas del docente.
   - Tipo de actividad y cantidad de ejercicios.
-- En este proyecto el cliente LLM es un **simulador** (`backend/app/llm/simulated.py`) que construye los ejercicios con las palabras clave de la petición: la respuesta correcta de cada ejercicio es una palabra clave, por turnos, con otras palabras clave o expresiones comunes como distractores, y una frase de ejemplo por palabra clave de un banco (`backend/app/llm/fixtures/example_sentences.json`, que cubre las palabras clave del seed; para otras palabras usa una frase de reserva). El cliente se define como una interfaz para poder sustituirlo por un LLM real sin tocar el resto del código.
+- El cliente LLM es una interfaz (`LLMClient`) con dos implementaciones, que se eligen en `composition.py`:
+  - **Gemini** (`backend/app/llm/gemini.py`), si hay `GEMINI_API_KEY`. Envía la petición como prompt con las reglas del validador y, además: una sola opción correcta por ejercicio, tiempos verbales y vocabulario del nivel MCER del estudiante (`NEW_TENSES_BY_LEVEL`) y sujetos variados. Las palabras clave las elige el docente y se usan tal cual, aunque sean de otro nivel. Si el modelo está saturado (503) se reintenta una vez; si sigue saturado, sin cuota (429) o tarda más de 60 s, se prueba una vez el modelo de respaldo (`GEMINI_FALLBACK_MODEL`). La ruta del PDF no se envía al proveedor.
+  - **Simulado** (`backend/app/llm/simulated.py`), si no hay clave: construye los ejercicios con las palabras clave de la petición. La respuesta correcta de cada ejercicio es una palabra clave, por turnos, con otras palabras clave o expresiones comunes como distractores, y una frase de ejemplo por palabra clave de un banco (`backend/app/llm/fixtures/example_sentences.json`, que cubre las palabras clave del seed; para otras palabras usa una frase de reserva). Los tests y los E2E usan siempre este.
 - La respuesta del LLM **se valida** contra el esquema del material y contra la petición: mismo tipo de actividad, **exactamente** `exercise_count` ejercicios y **coherencia con las palabras clave** (ver reglas de validación). Si no es válida → `502` con `"No se pudo generar el material de refuerzo"`, y no se guarda nada.
 - El material válido se **guarda** asociado a la clase, junto con la petición enviada al LLM (para trazabilidad). El material se genera **una única vez**: si la clase ya tiene material → `409`.
 
@@ -87,7 +90,7 @@ Roles:
   - `incorrect_count`: desaciertos.
   - `score`: porcentaje de aciertos, con 2 decimales (`correct_count / total × 100`). Todos los ejercicios pesan lo mismo.
   - Por ejercicio: opción elegida, opción correcta y si acertó.
-- Con el resultado se piden **recomendaciones al cliente LLM** (nivel, idioma natal, contexto, palabras clave y ejercicios fallados), simulado a partir de esos datos: un comentario con los aciertos y el tema, una recomendación por palabra clave fallada (con la frase corregida) y una para seguir practicando las palabras clave.
+- Con el resultado se piden **recomendaciones al cliente LLM** (nivel, idioma natal, contexto, palabras clave y ejercicios fallados). Las genera siempre el LLM simulado, también cuando Gemini está configurado, a partir de esos datos: un comentario con los aciertos y el tema, una recomendación por palabra clave fallada (con la frase corregida) y una para seguir practicando las palabras clave.
 - La respuesta de recomendaciones se valida. Si no es válida → `502` con `"No se pudieron generar las recomendaciones"`, **no se guarda el intento** y el estudiante puede volver a enviarlo.
 - Si todo es válido se guarda el intento (respuestas, resultado y recomendaciones) y se devuelve.
 
@@ -190,7 +193,7 @@ material_submissions
 
 Los PDF se guardan como archivos en el almacenamiento del backend (`backend/storage/lessons/<UUID del estudiante>/`) y la base de datos solo guarda su ruta, que nunca se expone en la API. El seed incluye PDF de ejemplo.
 
-## Integración con el LLM (simulada)
+## Integración con el LLM
 
 ### Petición para generar material
 
@@ -219,7 +222,7 @@ Lo que el backend envía al `LLMClient` al generar material:
 }
 ```
 
-> El PDF se envía como referencia al archivo. La extracción de su contenido (texto o adjunto al modelo) queda para la integración con un LLM real.
+> La petición del dominio incluye una referencia al PDF, que se guarda con el material para trazabilidad. El adaptador de Gemini la quita antes de enviar la petición, porque la ruta es un dato interno del servidor: Gemini no recibe el PDF ni su contenido.
 
 ### Respuesta: material de refuerzo
 
@@ -337,6 +340,7 @@ Errores de negocio (todas las respuestas de error son JSON con `detail`):
 |---|---|---|
 | 401 | `Credenciales incorrectas` | Login con correo o contraseña incorrectos |
 | 401 | — | Token ausente, inválido o caducado |
+| 429 | `Demasiados intentos fallidos. Espera unos minutos e inténtalo de nuevo.` | 5 logins fallidos en 15 minutos desde el mismo origen para el mismo correo |
 | 403 | `No tienes permiso para acceder a este recurso` | Rol no permitido |
 | 404 | `Estudiante no encontrado` | Estudiante inexistente o de otro docente |
 | 404 | `Clase no encontrada` | Clase inexistente, futura o de otro usuario |
@@ -356,12 +360,12 @@ Errores de negocio (todas las respuestas de error son JSON con `detail`):
 - **Caducidad: 60 minutos**. Al caducar, el frontend vuelve al login.
 - **Cierre de sesión en el cliente**: el frontend descarta el token. No hay lista de revocación ni refresh tokens.
 
-Motivo: sin creación de usuarios ni cambios de contraseña, una sesión sin estado es lo más sencillo y suficiente para el alcance del proyecto. Si más adelante se necesita, se añaden refresh tokens.
+Motivo: sin creación de usuarios ni cambios de contraseña, una sesión sin estado es lo más sencillo y suficiente para el alcance del proyecto.
 
 ## Requerimientos no funcionales
 - **Stack**: Python + FastAPI, SQLAlchemy 2, PostgreSQL 16, Pydantic para validar entrada y salida.
 - **Migraciones**: Alembic desde el primer modelo; el esquema nunca se crea con `create_all` en entornos reales.
-- **LLM desacoplado**: la generación de material y de recomendaciones depende de una interfaz (`LLMClient`) que recibe las peticiones descritas arriba. La implementación simulada construye las respuestas a partir de la petición (con un banco de frases de ejemplo en `fixtures/example_sentences.json`); en los tests se inyectan clientes falsos (respuesta válida, inválida, error) y se verifica la petición que se les envía.
+- **LLM desacoplado**: la generación de material y de recomendaciones depende de una interfaz (`LLMClient`) que recibe las peticiones descritas arriba. Las implementaciones son Gemini (material) y la simulada (material sin clave y siempre recomendaciones); en los tests se inyectan clientes falsos (respuesta válida, inválida, error) y se verifica la petición que se les envía, y el cliente de Gemini se prueba con un HTTP falso, sin red.
 - **Corrección en el servidor**: la calificación se calcula siempre en el backend; las respuestas correctas nunca se envían al estudiante antes de resolver.
 - **Concurrencia**: la restricción de unicidad en `material_submissions.material_id` garantiza un único intento aunque lleguen dos envíos a la vez.
 - **Archivos**: los PDF se sirven solo a usuarios autorizados; nunca se exponen rutas del sistema de archivos.
@@ -370,11 +374,14 @@ Motivo: sin creación de usuarios ni cambios de contraseña, una sesión sin est
 - **Datos de prueba**: script de seed con 2 docentes y 4 estudiantes de distintos niveles (A1–B2) e idiomas natales, con 6–7 clases pasadas y alguna futura cada uno, y un PDF de ejemplo por clase. Es idempotente: al volver a ejecutarlo solo añade lo que falte.
 - **Tests E2E**: Playwright sobre una BD propia (`practica_ia_e2e`) que se reinicia en cada ejecución (ver `e2e/`).
 - **Errores**: respuestas JSON con `detail`, en español para los mensajes que ve el usuario.
+- **Registros**: se registran los inicios de sesión fallidos y bloqueados (con el origen, nunca la contraseña), los errores 5xx con su causa (p. ej. el 503 de Gemini, nunca la clave) y el uso del modelo de respaldo. Salen por la salida de error (`docker compose logs api`).
+- **Documentación interactiva**: Swagger, ReDoc y `/openapi.json` se pueden desactivar con `API_DOCS_ENABLED=false`, como en producción.
 
 ## Fuera de alcance
 - Registro y creación de usuarios, cambio y recuperación de contraseña.
 - Gestión (crear/editar) de clases y subida de PDF desde la API.
-- Integración con un LLM real y extracción del contenido de los PDF.
+- Extracción del contenido de los PDF y envío al LLM.
+- Recomendaciones generadas con Gemini (se generan con el LLM simulado).
 - Tipos de actividad distintos de `complete_sentence`.
 - Edición manual del material por el docente.
 - Reintentos o reinicio del material por el estudiante.

@@ -7,9 +7,9 @@ info:
     API REST de la plataforma de refuerzo para extranjeros que aprenden español.
 
     **Flujo principal**
-    1. El docente genera material de refuerzo para una clase realizada (actividad *completar la frase*, 1–15 ejercicios). La generación se delega a un LLM, simulado en este proyecto a partir de las palabras clave de la clase.
+    1. El docente genera material de refuerzo para una clase realizada (actividad *completar la frase*, 1–15 ejercicios). La generación se delega a un LLM: Gemini si el servidor tiene clave configurada o, si no, uno simulado a partir de las palabras clave de la clase.
     2. El estudiante resuelve el material **una única vez**.
-    3. El backend corrige, calcula el porcentaje de aciertos y devuelve recomendaciones (también simuladas como respuesta de un LLM).
+    3. El backend corrige, calcula el porcentaje de aciertos y devuelve recomendaciones, generadas por un LLM simulado.
 
     **Autenticación**: JWT de acceso (HS256, caducidad 60 minutos) en la cabecera `Authorization: Bearer <token>`.
 
@@ -59,6 +59,7 @@ paths:
       description: |
         Autentica con correo y contraseña. El correo no distingue mayúsculas.
         No se aplican reglas de complejidad de contraseña en el login.
+        Tras 5 intentos fallidos en 15 minutos desde el mismo origen para el mismo correo, responde `429`.
       security: []
       requestBody:
         required: true
@@ -96,6 +97,16 @@ paths:
                 detail: Credenciales incorrectas
         '422':
           $ref: '#/components/responses/ValidationError'
+        '429':
+          description: |
+            Demasiados intentos fallidos desde el mismo origen (IP) para el mismo correo: 5 en 15 minutos.
+            Mientras dure el bloqueo se rechaza incluso la contraseña correcta.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                detail: Demasiados intentos fallidos. Espera unos minutos e inténtalo de nuevo.
 
   /auth/me:
     get:
@@ -438,7 +449,7 @@ paths:
         '422':
           $ref: '#/components/responses/ValidationError'
         '502':
-          description: La respuesta del LLM no cumple el esquema del material.
+          description: El LLM no respondió o su respuesta no cumple el esquema del material. No se guarda nada.
           content:
             application/json:
               schema:

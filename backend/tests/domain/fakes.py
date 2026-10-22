@@ -28,6 +28,7 @@ from app.domain.ports import (
     FileStorage,
     LessonRepository,
     LLMClient,
+    LoginThrottle,
     MaterialRepository,
     PasswordHasher,
     StudentInsightsRepository,
@@ -228,6 +229,24 @@ def make_lesson(
         keywords=keywords,
         score=score,
     )
+
+
+class FakeLoginThrottle(LoginThrottle):
+    """Registra los fallos y reinicios; bloquea solo si se indica."""
+
+    def __init__(self, *, blocked: bool = False) -> None:
+        self.blocked = blocked
+        self.failures: list[str] = []
+        self.resets: list[str] = []
+
+    def is_blocked(self, key: str) -> bool:
+        return self.blocked
+
+    def register_failure(self, key: str) -> None:
+        self.failures.append(key)
+
+    def reset(self, key: str) -> None:
+        self.resets.append(key)
 
 
 class FixedClock(Clock):

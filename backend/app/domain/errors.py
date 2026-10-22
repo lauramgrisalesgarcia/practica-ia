@@ -6,6 +6,10 @@ class InvalidCredentialsError(DomainError):
     """El correo no existe o la contraseña no es correcta (no se distingue a propósito)."""
 
 
+class TooManyLoginAttemptsError(DomainError):
+    """Demasiados intentos fallidos de inicio de sesión desde el mismo origen para el mismo correo."""
+
+
 class AccessDeniedError(DomainError):
     """El usuario no tiene el rol necesario para esta acción."""
 

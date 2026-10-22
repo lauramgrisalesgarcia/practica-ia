@@ -23,7 +23,7 @@ Docente                                         Estudiante
 8. Ve el resultado del estudiante        ◄──────  → corrección, nota y recomendaciones
 ```
 
-- **Generación de material**: el backend envía al LLM el nivel MCER y el idioma natal del estudiante, el tema, el contexto, las palabras clave, las notas y el PDF de la clase (Gemini aún no recibe el PDF; está previsto extraer su texto más adelante). La respuesta se **valida** (cantidad de ejercicios, un hueco `___` por frase, 2–4 opciones distintas, respuesta correcta entre las opciones y coherente con las palabras clave) antes de guardarse; si no es válida, no se guarda nada.
+- **Generación de material**: el backend envía al LLM el nivel MCER y el idioma natal del estudiante, el tema, el contexto, las palabras clave, las notas y una referencia al PDF de la clase (Gemini no recibe el PDF: el adaptador quita la ruta antes de enviar la petición). La respuesta se **valida** (cantidad de ejercicios, un hueco `___` por frase, 2–4 opciones distintas, respuesta correcta entre las opciones y coherente con las palabras clave) antes de guardarse; si no es válida, no se guarda nada.
 - **Corrección**: siempre en el backend. Las respuestas correctas nunca se envían al estudiante antes de resolver.
 - **LLM simulado**: los ejercicios se construyen con las palabras clave de la clase y frases de ejemplo para practicarlas (`backend/app/llm/fixtures/example_sentences.json`), y las recomendaciones, con el tema y los ejercicios fallados. Todo va detrás de la interfaz `LLMClient`: un LLM real se conecta sin tocar el dominio.
 - **Gemini**: con `GEMINI_API_KEY` en `backend/.env` (clave de Google AI Studio), el material lo genera Gemini (`backend/app/llm/gemini.py`; modelo configurable con `GEMINI_MODEL`, por defecto `gemini-3.5-flash`). Si el modelo está saturado (503) se reintenta una vez; una cuota agotada (429) no se reintenta. Si el principal sigue saturado, se queda sin cuota o tarda más de 60 s, se prueba una vez el **modelo de respaldo** (`GEMINI_FALLBACK_MODEL`, por defecto `gemini-3.5-flash-lite`): los *flash-lite* tienen mucha menos demanda, aunque fallan más con palabras clave que son verbos conjugados. Las recomendaciones siguen simuladas. Los tests y los E2E nunca llaman a Gemini.
@@ -42,7 +42,8 @@ Docente                                         Estudiante
 | Frontend | React · TypeScript · Vite · React Router · Tailwind CSS v4 · Vitest + React Testing Library |
 | Backend | Python 3.13 · FastAPI · SQLAlchemy 2 · Alembic · Pydantic · uv |
 | Base de datos | PostgreSQL 16 (Docker Compose) |
-| Seguridad | JWT (60 min) · argon2 · identificadores públicos UUID · Gitleaks |
+| LLM | Gemini (API de Google AI Studio) · cliente simulado sin clave |
+| Seguridad | JWT (60 min) · argon2 · límite de intentos de login · cabeceras de seguridad (Caddy) · identificadores públicos UUID · Gitleaks |
 | Calidad | TDD · mypy estricto · test de contrato OpenAPI · test de arquitectura · GitHub Actions |
 | E2E | Playwright |
 
@@ -56,7 +57,7 @@ practica-ia/
 │   │   ├── domain/           Capa de dominio: entidades, puertos y use cases (Python puro)
 │   │   ├── persistence/      Capa de persistencia: modelos SQLAlchemy y repositories
 │   │   ├── llm/              Adaptadores del LLM (Gemini y simulado)
-│   │   ├── core/             Configuración, argon2, JWT, reloj
+│   │   ├── core/             Configuración, argon2, JWT, reloj, límite de intentos de login y registros
 │   │   └── composition.py    Inyección de dependencias
 │   ├── migrations/           Migraciones de Alembic y esquema SQL generado
 │   ├── Dockerfile            Imagen del backend: API, migraciones y seed
@@ -104,7 +105,7 @@ cp frontend/.env.example frontend/.env.local
 ```
 
 - `.env` (raíz): credenciales de PostgreSQL para Docker Compose.
-- `backend/.env`: `DATABASE_URL` y `TEST_DATABASE_URL` (con la misma contraseña), `JWT_SECRET` (mínimo 32 caracteres) y `SEED_USER_PASSWORD` (contraseña de los usuarios de prueba, también la usan los tests E2E).
+- `backend/.env`: `DATABASE_URL` y `TEST_DATABASE_URL` (con la misma contraseña), `JWT_SECRET` (mínimo 32 caracteres), `SEED_USER_PASSWORD` (contraseña de los usuarios de prueba, también la usan los tests E2E) y, opcionalmente, `GEMINI_API_KEY` (clave de Google AI Studio; sin ella el material lo genera el LLM simulado).
 - `frontend/.env.local`: solo `VITE_API_URL=/api` (configuración pública, nunca secretos: todo lo que empieza por `VITE_` llega al navegador).
 
 Para generar valores aleatorios:
@@ -201,7 +202,7 @@ mkdir -p backend/storage
 Rellena los secretos en el servidor. No se versionan:
 
 - `.env` (raíz): `POSTGRES_PASSWORD`.
-- `backend/.env`: `DATABASE_URL=postgresql+psycopg://practica:<POSTGRES_PASSWORD>@db:5432/practica_ia`, `JWT_SECRET` (mínimo 32 caracteres) y, solo si quieres datos de demo, `SEED_USER_PASSWORD` (mínimo 12 caracteres).
+- `backend/.env`: `DATABASE_URL=postgresql+psycopg://practica:<POSTGRES_PASSWORD>@db:5432/practica_ia`, `JWT_SECRET` (mínimo 32 caracteres), `GEMINI_API_KEY` para generar el material con Gemini (opcional; conviene una clave distinta de la de desarrollo, para poder revocarla por separado) y, solo si quieres datos de demo, `SEED_USER_PASSWORD` (mínimo 12 caracteres).
 
 Para generar valores aleatorios:
 
@@ -227,6 +228,8 @@ docker compose -f docker-compose.prod.yml up -d --build
 ### Operación
 
 - Estado: `docker compose -f docker-compose.prod.yml ps`
+- LLM en uso (imprime `GeminiLLMClient` o `SimulatedLLMClient`, sin mostrar la clave): `docker compose -f docker-compose.prod.yml exec api python -c "from app.composition import get_llm_client; print(type(get_llm_client()).__name__)"`
+- Tras cambiar `backend/.env`, recrea la API para que lea los valores nuevos: `docker compose -f docker-compose.prod.yml up -d --force-recreate api`
 - Logs: `docker compose -f docker-compose.prod.yml logs -f api`
 - Copia de seguridad: `docker compose -f docker-compose.prod.yml exec db pg_dump -U <usuario> practica_ia > backup.sql`. Guárdala fuera del repositorio.
 - Parar: `docker compose -f docker-compose.prod.yml down`. Los datos se mantienen en el volumen `pgdata`.
@@ -236,6 +239,10 @@ docker compose -f docker-compose.prod.yml up -d --build
 - La base de datos no publica puertos: solo es accesible desde la red interna de Docker.
 - Los secretos existen solo en el servidor. `.env` y `backend/.env` nunca se suben al repositorio.
 - Si cargas la seed en producción, los usuarios de demo usan la contraseña `SEED_USER_PASSWORD`. No uses datos reales en ese entorno.
+- El login se bloquea con `429` tras 5 intentos fallidos en 15 minutos desde la misma IP para el mismo correo. La API toma la IP real de la cabecera que añade Caddy (`--proxy-headers`).
+- Caddy envía cabeceras de seguridad (HSTS, `nosniff`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`) y oculta la cabecera `Server`.
+- En producción no se publican Swagger ni el esquema de la API (`API_DOCS_ENABLED=false` en `docker-compose.prod.yml`). En local siguen en <http://localhost:8001/docs>.
+- Los logins fallidos y bloqueados, los errores 5xx con su causa y el uso del modelo de respaldo de Gemini quedan en los registros: `docker compose -f docker-compose.prod.yml logs api`.
 
 ## API
 
@@ -324,5 +331,5 @@ Las normas completas están en [`CLAUDE.md`](CLAUDE.md) y los requerimientos en 
 - ✅ Frontend conectado a la API: paneles del docente y del estudiante, historial de clases, detalle de clase, generación del material y resolución pregunta a pregunta.
 - ✅ Tests E2E con Playwright: inicio de sesión por rol y material de refuerzo de principio a fin (`e2e/`).
 - ✅ Despliegue en AWS (EC2, Docker Compose y Caddy con HTTPS).
-- ✅ LLM real: Gemini genera el material de refuerzo si se configura `GEMINI_API_KEY`.
-- ⏳ Recomendaciones con Gemini y uso del texto del PDF de la clase en el prompt.
+- ✅ LLM real: Gemini genera el material de refuerzo si se configura `GEMINI_API_KEY`, con reintento y modelo de respaldo.
+- Alcance: las recomendaciones al estudiante las genera el LLM simulado, y el contenido de los PDF no se envía al LLM.
