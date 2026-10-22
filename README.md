@@ -27,6 +27,13 @@ Docente                                         Estudiante
 - **Corrección**: siempre en el backend. Las respuestas correctas nunca se envían al estudiante antes de resolver.
 - **LLM simulado**: los ejercicios se construyen con las palabras clave de la clase y frases de ejemplo para practicarlas (`backend/app/llm/fixtures/example_sentences.json`), y las recomendaciones, con el tema y los ejercicios fallados. Todo va detrás de la interfaz `LLMClient`: un LLM real se conecta sin tocar el dominio.
 - **Gemini**: con `GEMINI_API_KEY` en `backend/.env` (clave de Google AI Studio), el material lo genera Gemini (`backend/app/llm/gemini.py`; modelo configurable con `GEMINI_MODEL`, por defecto `gemini-3.5-flash`). Si el modelo está saturado (503) se reintenta una vez; una cuota agotada (429) no se reintenta. Las recomendaciones siguen simuladas. Los tests y los E2E nunca llaman a Gemini.
+- **Prompt de Gemini**: además de las reglas que comprueba el validador (cantidad exacta de ejercicios, ids, opciones y uso de las palabras clave), el prompt pide:
+  - **Una sola opción correcta** por ejercicio: el contexto (sujeto explícito, concordancia, tiempo verbal) debe descartar las demás. Así se evitan frases como «Siempre ___ zapatos cómodos», donde *llevo*, *llevas* y *lleva* serían válidas.
+  - **Tiempos verbales del nivel MCER** del estudiante y de los niveles anteriores: por ejemplo, en A1 solo presente e *ir a + infinitivo*. La lista es orientativa, según el Plan Curricular del Instituto Cervantes, y se ajusta en `NEW_TENSES_BY_LEVEL` (`backend/app/llm/gemini.py`).
+  - **Vocabulario del nivel**, también en las opciones incorrectas.
+  - **Sujetos variados**: pronombres (*yo, tú, ella*…) y personas nombradas (*la abuela, el señor García*), siempre que concuerden con la respuesta correcta.
+
+  La respuesta correcta tiene que ser exactamente una palabra clave, así que si el docente escribe *llevo* el sujeto será «yo», y una palabra clave de un nivel superior (como *quisiera* en A2) aparecerá igualmente. El validador no puede comprobar el nivel del vocabulario ni la ambigüedad de las frases: dependen de que el modelo siga el prompt.
 
 ## Stack
 
