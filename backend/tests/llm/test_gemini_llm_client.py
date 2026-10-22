@@ -103,10 +103,18 @@ def no_sleep(_: float) -> None:
 
 
 def make_client(
-    post: JsonPost, recommendations: LLMClient = FakeRecommendations(), sleep: Callable[[float], None] = no_sleep
+    post: JsonPost,
+    recommendations: LLMClient = FakeRecommendations(),
+    sleep: Callable[[float], None] = no_sleep,
+    fallback_model: str | None = None,
 ) -> GeminiLLMClient:
     return GeminiLLMClient(
-        api_key="clave-de-prueba", model="modelo-de-prueba", post=post, recommendations=recommendations, sleep=sleep
+        api_key="clave-de-prueba",
+        model="modelo-de-prueba",
+        post=post,
+        recommendations=recommendations,
+        sleep=sleep,
+        fallback_model=fallback_model,
     )
 
 
@@ -356,3 +364,81 @@ def test_cada_nivel_usa_los_tiempos_de_su_nivel_y_anteriores_y_ninguno_posterior
     for later in MCER_ORDER[index + 1 :]:
         for tense in NEW_TENSES_BY_LEVEL[Level(later)]:
             assert tense not in instructions
+
+
+PRIMARY = "modelo-de-prueba"
+FALLBACK = "modelo-de-respaldo"
+Outcome = int | Exception | Mapping[str, Any]
+
+
+class ByModelJsonPost:
+    """Responde según el modelo de la URL: un código HTTP, una excepción o una respuesta, en orden."""
+
+    def __init__(self, outcomes: dict[str, list[Outcome]]) -> None:
+        self.outcomes = outcomes
+        self.calls: list[str] = []
+
+    def __call__(self, url: str, headers: Mapping[str, str], body: Mapping[str, Any]) -> Mapping[str, Any]:
+        model = next(name for name in self.outcomes if f"/models/{name}:" in url)
+        self.calls.append(model)
+        outcome = self.outcomes[model].pop(0)
+        if isinstance(outcome, int):
+            raise http_error(outcome)
+        if isinstance(outcome, Exception):
+            raise outcome
+        return outcome
+
+
+def material_reply() -> dict[str, Any]:
+    return gemini_reply(json.dumps(MATERIAL))
+
+
+def test_si_el_modelo_principal_sigue_saturado_tras_el_reintento_usa_el_de_respaldo() -> None:
+    post = ByModelJsonPost({PRIMARY: [503, 503], FALLBACK: [material_reply()]})
+
+    response = make_client(post, fallback_model=FALLBACK).generate_material(PAYLOAD)
+
+    assert response == MATERIAL
+    assert post.calls == [PRIMARY, PRIMARY, FALLBACK]
+
+
+def test_si_el_modelo_principal_agota_su_cuota_usa_el_de_respaldo_sin_reintentar() -> None:
+    post = ByModelJsonPost({PRIMARY: [429], FALLBACK: [material_reply()]})
+
+    response = make_client(post, fallback_model=FALLBACK).generate_material(PAYLOAD)
+
+    assert response == MATERIAL
+    assert post.calls == [PRIMARY, FALLBACK]
+
+
+def test_si_el_modelo_principal_tarda_demasiado_usa_el_de_respaldo() -> None:
+    post = ByModelJsonPost({PRIMARY: [TimeoutError("lectura agotada")], FALLBACK: [material_reply()]})
+
+    response = make_client(post, fallback_model=FALLBACK).generate_material(PAYLOAD)
+
+    assert response == MATERIAL
+    assert post.calls == [PRIMARY, FALLBACK]
+
+
+def test_no_usa_el_respaldo_ante_errores_que_no_son_de_disponibilidad() -> None:
+    post = ByModelJsonPost({PRIMARY: [400], FALLBACK: [material_reply()]})
+
+    with pytest.raises(urllib.error.HTTPError):
+        make_client(post, fallback_model=FALLBACK).generate_material(PAYLOAD)
+    assert post.calls == [PRIMARY]
+
+
+def test_si_el_respaldo_tambien_falla_se_propaga_su_error_sin_reintentar() -> None:
+    post = ByModelJsonPost({PRIMARY: [429], FALLBACK: [503]})
+
+    with pytest.raises(urllib.error.HTTPError):
+        make_client(post, fallback_model=FALLBACK).generate_material(PAYLOAD)
+    assert post.calls == [PRIMARY, FALLBACK]
+
+
+def test_sin_modelo_de_respaldo_se_propaga_el_error_del_principal() -> None:
+    post = ByModelJsonPost({PRIMARY: [429]})
+
+    with pytest.raises(urllib.error.HTTPError):
+        make_client(post).generate_material(PAYLOAD)
+    assert post.calls == [PRIMARY]

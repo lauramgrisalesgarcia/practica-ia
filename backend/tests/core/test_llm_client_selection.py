@@ -29,8 +29,13 @@ def test_con_clave_pasa_al_cliente_de_gemini_la_clave_el_modelo_y_el_simulado_pa
 
     monkeypatch.setattr(composition, "GeminiLLMClient", fake_gemini_client)
 
-    build_llm_client(make_settings(gemini_api_key="clave-de-prueba", gemini_model="modelo-de-prueba"))
+    build_llm_client(
+        make_settings(
+            gemini_api_key="clave-de-prueba", gemini_model="modelo-de-prueba", gemini_fallback_model="respaldo-de-prueba"
+        )
+    )
 
     assert recorded["api_key"] == "clave-de-prueba"
     assert recorded["model"] == "modelo-de-prueba"
+    assert recorded["fallback_model"] == "respaldo-de-prueba"
     assert isinstance(recorded["recommendations"], SimulatedLLMClient)
