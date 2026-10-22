@@ -1,5 +1,5 @@
-# Imagen del backend. Hoy se usa para migrar la base de datos y cargar los datos de prueba
-# (servicios "migrate" y "seed" de docker-compose.yml).
+# Imagen del backend: en desarrollo, migraciones y datos de prueba (servicios "migrate" y "seed" de
+# docker-compose.yml); en producción, también la API (servicio "api" de docker-compose.prod.yml).
 # Los secretos NO se copian a la imagen: se inyectan como variables de entorno al ejecutarla.
 FROM python:3.13-slim
 

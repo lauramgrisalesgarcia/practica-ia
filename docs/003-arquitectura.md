@@ -18,17 +18,18 @@ flowchart LR
 
     subgraph Backend
         API[FastAPI<br/>transport → domain ← persistence]
-        LLM[LLMClient<br/>simulado]
+        LLM[LLMClient<br/>Gemini o simulado]
         FS[(Almacenamiento<br/>PDF de las clases)]
     end
 
     API --> DB[(PostgreSQL 16)]
     API --> FS
     API --> LLM
+    LLM -. HTTPS .-> G([API de Gemini])
 ```
 
 - El **frontend** es una SPA que solo habla con la API. En desarrollo, Vite reenvía `/api` al backend: mismo origen y sin CORS.
-- El **backend** expone una API REST (contrato en [`openapi.yaml`](openapi.yaml)), guarda los datos en PostgreSQL y los PDF en disco, y delega la generación de material y recomendaciones en un **LLM** detrás de una interfaz (hoy simulado).
+- El **backend** expone una API REST (contrato en [`openapi.yaml`](openapi.yaml)), guarda los datos en PostgreSQL y los PDF en disco, y delega la generación de material y recomendaciones en un **LLM** detrás de una interfaz: Gemini genera el material si hay `GEMINI_API_KEY` (si no, el simulado), y las recomendaciones las genera siempre el simulado.
 - El frontend también funciona **sin backend**, con servicios en memoria (`src/dev`), para desarrollar y hacer demostraciones.
 - En **producción** (`docker-compose.prod.yml`), todo corre en una misma instancia: Caddy sirve el frontend compilado y reenvía `/api` a la API, igual que el proxy de Vite en desarrollo, y además gestiona el HTTPS. Ver el README, sección «Despliegue en producción».
 
@@ -69,7 +70,7 @@ flowchart TB
 - **Dominio**: entidades inmutables (`dataclass(frozen=True)`), errores de negocio, **puertos** (`Protocol`: `UserRepository`, `LessonRepository`, `MaterialRepository`, `LLMClient`, `FileStorage`, `Clock`, …) y **un use case por acción** (`GenerateMaterial`, `SubmitMaterial`, `GetTeacherInsights`, …) con sus dependencias inyectadas y un método `execute`.
 - **Persistencia**: un repository por agregado que implementa su puerto y devuelve entidades, nunca modelos. Solo hace `flush`; la transacción es por petición (`get_session` hace `commit` o `rollback`).
 - **Transporte**: valida con Pydantic, obtiene el use case por `Depends` y traduce los errores de dominio a HTTP **en un único lugar** (`error_handlers.py`).
-- **Composición** (`composition.py`): el único módulo que conoce a la vez persistencia y dominio. Para cambiar una implementación (p. ej. un LLM real) basta con tocar aquí.
+- **Composición** (`composition.py`): el único módulo que conoce a la vez persistencia y dominio. Para cambiar una implementación basta con tocar aquí: por ejemplo, `build_llm_client` elige Gemini o el LLM simulado según haya `GEMINI_API_KEY`.
 
 ### Una petición de principio a fin: generar material
 
@@ -231,7 +232,9 @@ flowchart LR
 | # | Decisión | Motivo | Alternativa descartada |
 |---|---|---|---|
 | D1 | Arquitectura en tres capas con puertos y use cases | El dominio (corrección, validación del LLM, reglas de «una sola vez») se prueba sin BD ni HTTP, y las implementaciones se cambian sin tocarlo | Lógica en los routers: más simple al inicio, pero acopla negocio y framework |
-| D2 | LLM detrás de la interfaz `LLMClient`, **simulado** | El proyecto no depende de un proveedor ni de su coste; un LLM real es otra implementación en `composition.py` | Llamar a un proveedor desde el use case |
+| D2 | LLM detrás de la interfaz `LLMClient`: **Gemini** para el material si hay clave y **simulado** si no (y siempre para las recomendaciones) | El dominio no depende del proveedor; Gemini es otra implementación elegida en `composition.py`, y sin clave (tests, E2E, desarrollo) todo funciona sin red ni coste | Llamar a un proveedor desde el use case |
+| D14 | Gemini con **reintento** ante 503 y **modelo de respaldo** (`gemini-3.5-flash-lite`) ante 503 persistente, 429 o timeout | En el plan gratuito la saturación y la cuota agotada son habituales; cada modelo tiene su propia demanda y cuota | Solo reintentar con el mismo modelo |
+| D15 | Las **palabras clave las elige el docente** y no se validan; el prompt las usa tal cual y aplica el nivel MCER al resto de la frase | El docente puede incluir a propósito expresiones de otro nivel; el nivel o la ambigüedad no se pueden comprobar sin otro LLM | Validar las palabras clave con el LLM y rechazarlas |
 | D3 | **Validar siempre** la respuesta del LLM (cantidad, hueco, opciones, coherencia con las palabras clave) | Un LLM puede devolver contenido incorrecto; mejor un `502` sin guardar nada que material roto para el estudiante | Confiar en la respuesta |
 | D4 | Material generado **una sola vez** y resuelto **una sola vez** | El resultado del estudiante debe corresponder a un material estable; la BD lo garantiza con restricciones de unicidad | Regenerar o reintentar (fuera de alcance) |
 | D5 | Corrección **en el servidor** y material del estudiante **sin respuestas** | Evita que el estudiante vea o manipule la corrección | Corregir en el cliente |
