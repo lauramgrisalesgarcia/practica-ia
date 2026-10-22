@@ -134,6 +134,16 @@ class FileStorage(Protocol):
         ...
 
 
+class LoginThrottle(Protocol):
+    """Limita los intentos fallidos de inicio de sesión por clave (origen y correo)."""
+
+    def is_blocked(self, key: str) -> bool: ...
+
+    def register_failure(self, key: str) -> None: ...
+
+    def reset(self, key: str) -> None: ...
+
+
 class Clock(Protocol):
     def now(self) -> datetime:
         """Momento actual, con zona horaria."""

@@ -14,6 +14,7 @@ def make_settings(
     gemini_api_key: str | None = None,
     gemini_model: str | None = None,
     gemini_fallback_model: str | None = None,
+    api_docs_enabled: bool | None = None,
 ) -> Settings:
     """Configuración para tests, sin leer ningún .env. Lo que no se indica toma su valor por defecto."""
     extra: dict[str, Any] = {}
@@ -23,6 +24,8 @@ def make_settings(
         extra["gemini_model"] = gemini_model
     if gemini_fallback_model is not None:
         extra["gemini_fallback_model"] = gemini_fallback_model
+    if api_docs_enabled is not None:
+        extra["api_docs_enabled"] = api_docs_enabled
     return Settings(
         _env_file=None,
         database_url=SecretStr(DATABASE_URL),

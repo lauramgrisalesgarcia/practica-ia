@@ -1,3 +1,4 @@
+import logging
 from datetime import timedelta
 
 import pytest
@@ -7,6 +8,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
 from app.domain.entities import Role
+from app.core.login_throttle import MAX_FAILED_ATTEMPTS
 from app.core.tokens import create_access_token, decode_access_token
 from tests.factories import create_user
 
@@ -14,6 +16,43 @@ PASSWORD = "Docente#2026"
 
 
 class TestLogin:
+    def test_un_inicio_de_sesion_fallido_queda_registrado_con_el_origen_y_sin_la_contraseña(
+        self, client: TestClient, db_session: Session, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        create_user(db_session, email="docente@colegio.edu", password=PASSWORD)
+
+        with caplog.at_level(logging.WARNING, logger="app"):
+            client.post("/auth/login", json={"email": "docente@colegio.edu", "password": "Otra#2026"})
+
+        assert "Inicio de sesión fallido desde testclient" in caplog.text
+        assert "Otra#2026" not in caplog.text
+
+    def test_un_inicio_de_sesion_bloqueado_queda_registrado(
+        self, client: TestClient, db_session: Session, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        create_user(db_session, email="docente@colegio.edu", password=PASSWORD)
+        wrong = {"email": "docente@colegio.edu", "password": "Otra#2026"}
+        for _ in range(MAX_FAILED_ATTEMPTS):
+            client.post("/auth/login", json=wrong)
+
+        with caplog.at_level(logging.WARNING, logger="app"):
+            client.post("/auth/login", json=wrong)
+
+        assert "Inicio de sesión bloqueado por demasiados intentos desde testclient" in caplog.text
+
+    def test_tras_5_intentos_fallidos_bloquea_incluso_la_contraseña_correcta(
+        self, client: TestClient, db_session: Session
+    ) -> None:
+        create_user(db_session, email="docente@colegio.edu", password=PASSWORD)
+        wrong = {"email": "docente@colegio.edu", "password": "Otra#2026"}
+        for _ in range(MAX_FAILED_ATTEMPTS):
+            assert client.post("/auth/login", json=wrong).status_code == 401
+
+        response = client.post("/auth/login", json={"email": "docente@colegio.edu", "password": PASSWORD})
+
+        assert response.status_code == 429
+        assert response.json() == {"detail": "Demasiados intentos fallidos. Espera unos minutos e inténtalo de nuevo."}
+
     def test_devuelve_token_y_datos_del_usuario(self, client: TestClient, db_session: Session) -> None:
         user = create_user(db_session, email="docente@colegio.edu", password=PASSWORD)
 

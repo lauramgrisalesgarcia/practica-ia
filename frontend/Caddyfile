@@ -1,4 +1,18 @@
 practica-ia.duckdns.org {
+	# Cabeceras de seguridad (OWASP A05)
+	header {
+		# Solo HTTPS durante un año, también en los reintentos del navegador
+		Strict-Transport-Security "max-age=31536000"
+		# El navegador no adivina el tipo de los archivos
+		X-Content-Type-Options "nosniff"
+		# La aplicación no se puede incrustar en otra web (clickjacking)
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+		# No anuncia el servidor web
+		-Server
+	}
+
 	# Caddy obtiene el certificado HTTPS para este dominio y redirige HTTP a HTTPS.
 	# /api/... se reenvía a la API quitando el prefijo, igual que el proxy de Vite en local.
 	handle_path /api/* {

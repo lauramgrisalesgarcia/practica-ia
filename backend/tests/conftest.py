@@ -28,7 +28,9 @@ from alembic.config import Config  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
 from sqlalchemy.orm import Session  # noqa: E402
 
-from app.composition import get_file_storage  # noqa: E402
+from app.composition import get_file_storage, get_login_throttle  # noqa: E402
+from app.core.clock import SystemClock  # noqa: E402
+from app.core.login_throttle import InMemoryLoginThrottle  # noqa: E402
 from app.persistence.database import engine, get_session  # noqa: E402
 from app.persistence.file_storage import LocalFileStorage  # noqa: E402
 from app.main import create_app  # noqa: E402
@@ -68,5 +70,8 @@ def client(db_session: Session, file_storage: LocalFileStorage) -> Iterator[Test
     app = create_app()
     app.dependency_overrides[get_session] = lambda: db_session
     app.dependency_overrides[get_file_storage] = lambda: file_storage
+    # Un limitador nuevo por test: los intentos fallidos de un test no bloquean a otro
+    throttle = InMemoryLoginThrottle(SystemClock())
+    app.dependency_overrides[get_login_throttle] = lambda: throttle
     with TestClient(app) as test_client:
         yield test_client

@@ -1,3 +1,4 @@
+import logging
 from collections.abc import Iterator, Mapping
 from datetime import UTC, datetime, timedelta
 from typing import Any
@@ -168,6 +169,34 @@ class BrokenLLMClient(LLMClient):
 
     def generate_recommendations(self, request: Mapping[str, Any]) -> object:
         return {}
+
+
+class UnavailableLLMClient(LLMClient):
+    def generate_material(self, request: Mapping[str, Any]) -> object:
+        raise TimeoutError("lectura agotada")
+
+    def generate_recommendations(self, request: Mapping[str, Any]) -> object:
+        return {}
+
+
+def test_un_fallo_del_llm_queda_registrado_con_su_causa(
+    client: TestClient,
+    lesson_setup: tuple[UserModel, UserModel, LessonModel],
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    teacher, _, lesson = lesson_setup
+    app: Any = client.app
+    app.dependency_overrides[get_llm_client] = lambda: UnavailableLLMClient()
+
+    with caplog.at_level(logging.ERROR, logger="app"):
+        response = client.post(
+            url(lesson), json={"activity_type": "complete_sentence", "exercise_count": 3}, headers=auth_header(teacher.public_id)
+        )
+
+    del app.dependency_overrides[get_llm_client]
+    assert response.status_code == 502
+    assert "No se pudo generar el material de refuerzo: el LLM no respondió" in caplog.text
+    assert "TimeoutError('lectura agotada')" in caplog.text
 
 
 @pytest.fixture

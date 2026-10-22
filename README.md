@@ -43,7 +43,7 @@ Docente                                         Estudiante
 | Backend | Python 3.13 · FastAPI · SQLAlchemy 2 · Alembic · Pydantic · uv |
 | Base de datos | PostgreSQL 16 (Docker Compose) |
 | LLM | Gemini (API de Google AI Studio) · cliente simulado sin clave |
-| Seguridad | JWT (60 min) · argon2 · identificadores públicos UUID · Gitleaks |
+| Seguridad | JWT (60 min) · argon2 · límite de intentos de login · cabeceras de seguridad (Caddy) · identificadores públicos UUID · Gitleaks |
 | Calidad | TDD · mypy estricto · test de contrato OpenAPI · test de arquitectura · GitHub Actions |
 | E2E | Playwright |
 
@@ -57,7 +57,7 @@ practica-ia/
 │   │   ├── domain/           Capa de dominio: entidades, puertos y use cases (Python puro)
 │   │   ├── persistence/      Capa de persistencia: modelos SQLAlchemy y repositories
 │   │   ├── llm/              Adaptadores del LLM (Gemini y simulado)
-│   │   ├── core/             Configuración, argon2, JWT, reloj
+│   │   ├── core/             Configuración, argon2, JWT, reloj, límite de intentos de login y registros
 │   │   └── composition.py    Inyección de dependencias
 │   ├── migrations/           Migraciones de Alembic y esquema SQL generado
 │   ├── Dockerfile            Imagen del backend: API, migraciones y seed
@@ -239,6 +239,10 @@ docker compose -f docker-compose.prod.yml up -d --build
 - La base de datos no publica puertos: solo es accesible desde la red interna de Docker.
 - Los secretos existen solo en el servidor. `.env` y `backend/.env` nunca se suben al repositorio.
 - Si cargas la seed en producción, los usuarios de demo usan la contraseña `SEED_USER_PASSWORD`. No uses datos reales en ese entorno.
+- El login se bloquea con `429` tras 5 intentos fallidos en 15 minutos desde la misma IP para el mismo correo. La API toma la IP real de la cabecera que añade Caddy (`--proxy-headers`).
+- Caddy envía cabeceras de seguridad (HSTS, `nosniff`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`) y oculta la cabecera `Server`.
+- En producción no se publican Swagger ni el esquema de la API (`API_DOCS_ENABLED=false` en `docker-compose.prod.yml`). En local siguen en <http://localhost:8001/docs>.
+- Los logins fallidos y bloqueados, los errores 5xx con su causa y el uso del modelo de respaldo de Gemini quedan en los registros: `docker compose -f docker-compose.prod.yml logs api`.
 
 ## API
 

@@ -11,12 +11,14 @@ from sqlalchemy.orm import Session
 
 from app.core.clock import SystemClock
 from app.core.config import Settings, get_settings
+from app.core.login_throttle import InMemoryLoginThrottle
 from app.core.password_hasher import Argon2PasswordHasher
 from app.domain.ports import (
     Clock,
     FileStorage,
     LessonRepository,
     LLMClient,
+    LoginThrottle,
     MaterialRepository,
     StudentInsightsRepository,
     StudentRepository,
@@ -99,8 +101,19 @@ def get_file_storage() -> FileStorage:
     return LocalFileStorage(get_settings().storage_dir)
 
 
-def get_authenticate_user(users: Annotated[UserRepository, Depends(get_user_repository)]) -> AuthenticateUser:
-    return AuthenticateUser(users=users, password_hasher=Argon2PasswordHasher())
+# Una sola instancia para toda la API: los intentos fallidos se cuentan entre peticiones
+_login_throttle = InMemoryLoginThrottle(SystemClock())
+
+
+def get_login_throttle() -> LoginThrottle:
+    return _login_throttle
+
+
+def get_authenticate_user(
+    users: Annotated[UserRepository, Depends(get_user_repository)],
+    throttle: Annotated[LoginThrottle, Depends(get_login_throttle)],
+) -> AuthenticateUser:
+    return AuthenticateUser(users=users, password_hasher=Argon2PasswordHasher(), throttle=throttle)
 
 
 def get_get_user(users: Annotated[UserRepository, Depends(get_user_repository)]) -> GetUser:

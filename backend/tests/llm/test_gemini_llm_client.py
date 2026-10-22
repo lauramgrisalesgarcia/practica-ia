@@ -1,4 +1,5 @@
 import json
+import logging
 import urllib.error
 import urllib.request
 from collections.abc import Callable, Mapping
@@ -442,3 +443,13 @@ def test_sin_modelo_de_respaldo_se_propaga_el_error_del_principal() -> None:
     with pytest.raises(urllib.error.HTTPError):
         make_client(post).generate_material(PAYLOAD)
     assert post.calls == [PRIMARY]
+
+
+def test_el_uso_del_modelo_de_respaldo_queda_registrado(caplog: pytest.LogCaptureFixture) -> None:
+    post = ByModelJsonPost({PRIMARY: [429], FALLBACK: [material_reply()]})
+
+    with caplog.at_level(logging.WARNING, logger="app"):
+        make_client(post, fallback_model=FALLBACK).generate_material(PAYLOAD)
+
+    assert f"Gemini no disponible con {PRIMARY} (HTTP 429); se usa el modelo de respaldo {FALLBACK}" in caplog.text
+    assert "clave-de-prueba" not in caplog.text

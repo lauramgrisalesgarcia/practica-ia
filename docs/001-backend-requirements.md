@@ -24,6 +24,7 @@ Roles:
 - El correo no distingue mayúsculas/minúsculas.
 - Éxito → devuelve un token de acceso y los datos del usuario (`id`, `first_name`, `last_name`, `email`, `role`).
 - Fallo → `401` con el mensaje genérico `"Credenciales incorrectas"` (no revela si el correo existe).
+- **Límite de intentos**: tras 5 intentos fallidos en 15 minutos desde el mismo origen (IP) para el mismo correo → `429` con `"Demasiados intentos fallidos. Espera unos minutos e inténtalo de nuevo."`, incluso con la contraseña correcta. Un inicio de sesión correcto reinicia la cuenta. Se lleva en memoria: vale para una sola instancia de la API.
 - Solo se valida que correo y contraseña no estén vacíos y que el correo tenga formato válido. Las reglas de complejidad de contraseña no aplican en el login.
 
 ### RF2 · Usuario actual
@@ -339,6 +340,7 @@ Errores de negocio (todas las respuestas de error son JSON con `detail`):
 |---|---|---|
 | 401 | `Credenciales incorrectas` | Login con correo o contraseña incorrectos |
 | 401 | — | Token ausente, inválido o caducado |
+| 429 | `Demasiados intentos fallidos. Espera unos minutos e inténtalo de nuevo.` | 5 logins fallidos en 15 minutos desde el mismo origen para el mismo correo |
 | 403 | `No tienes permiso para acceder a este recurso` | Rol no permitido |
 | 404 | `Estudiante no encontrado` | Estudiante inexistente o de otro docente |
 | 404 | `Clase no encontrada` | Clase inexistente, futura o de otro usuario |
@@ -372,6 +374,8 @@ Motivo: sin creación de usuarios ni cambios de contraseña, una sesión sin est
 - **Datos de prueba**: script de seed con 2 docentes y 4 estudiantes de distintos niveles (A1–B2) e idiomas natales, con 6–7 clases pasadas y alguna futura cada uno, y un PDF de ejemplo por clase. Es idempotente: al volver a ejecutarlo solo añade lo que falte.
 - **Tests E2E**: Playwright sobre una BD propia (`practica_ia_e2e`) que se reinicia en cada ejecución (ver `e2e/`).
 - **Errores**: respuestas JSON con `detail`, en español para los mensajes que ve el usuario.
+- **Registros**: se registran los inicios de sesión fallidos y bloqueados (con el origen, nunca la contraseña), los errores 5xx con su causa (p. ej. el 503 de Gemini, nunca la clave) y el uso del modelo de respaldo. Salen por la salida de error (`docker compose logs api`).
+- **Documentación interactiva**: Swagger, ReDoc y `/openapi.json` se pueden desactivar con `API_DOCS_ENABLED=false`, como en producción.
 
 ## Fuera de alcance
 - Registro y creación de usuarios, cambio y recuperación de contraseña.

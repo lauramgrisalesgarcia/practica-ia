@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 
 from app.composition import get_authenticate_user
 from app.core.config import get_settings
@@ -12,13 +12,18 @@ from app.transport.http.schemas.auth import LoginRequest, LoginResponse, UserOut
 
 router = APIRouter(prefix="/auth", tags=["Autenticación"])
 
+# Origen cuando el servidor no conoce la IP del cliente (no ocurre detrás de Caddy)
+UNKNOWN_ORIGIN = "desconocido"
+
 
 @router.post("/login", response_model=LoginResponse)
 def login(
     credentials: LoginRequest,
+    request: Request,
     authenticate: Annotated[AuthenticateUser, Depends(get_authenticate_user)],
 ) -> LoginResponse:
-    user = authenticate.execute(credentials.email, credentials.password)
+    origin = request.client.host if request.client else UNKNOWN_ORIGIN
+    user = authenticate.execute(credentials.email, credentials.password, origin)
 
     return LoginResponse(
         access_token=create_access_token(user.id),

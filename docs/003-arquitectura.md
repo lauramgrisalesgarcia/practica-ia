@@ -205,6 +205,11 @@ erDiagram
 - **Identificadores públicos**: UUID v4 aleatorios; los ids numéricos de la BD nunca salen de la persistencia.
 - **Secretos**: solo en `.env` locales, en el servidor de producción (los `.env` de la instancia) o en secretos de CI, como `SecretStr` y sin valores por defecto; Gitleaks en el *pre-commit* y en CI sobre todo el historial.
 - **El estudiante nunca recibe las respuestas correctas** antes de resolver: el schema del material del estudiante no tiene ese campo.
+- **Fuerza bruta en el login**: 5 intentos fallidos en 15 minutos por origen y correo bloquean con `429` (puerto `LoginThrottle`, implementación en memoria). Detrás de Caddy, la API toma la IP real con `--proxy-headers`.
+- **Cabeceras de seguridad** en Caddy: HSTS, `nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy` y `Permissions-Policy`, sin la cabecera `Server`.
+- **Superficie mínima**: en producción no se publican Swagger, ReDoc ni `/openapi.json` (`API_DOCS_ENABLED=false`).
+- **Registros**: logins fallidos y bloqueados con su origen, errores 5xx con su causa y uso del modelo de respaldo; nunca contraseñas, tokens ni claves.
+- **Dependencias**: sin vulnerabilidades conocidas (`pip-audit` y `npm audit`) en la versión final.
 
 ## 6. Calidad y tests
 

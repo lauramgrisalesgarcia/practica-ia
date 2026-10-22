@@ -29,6 +29,8 @@ class Settings(BaseSettings):
     gemini_api_key: SecretStr | None = None
     gemini_model: str = DEFAULT_GEMINI_MODEL
     gemini_fallback_model: str = DEFAULT_GEMINI_FALLBACK_MODEL
+    # Swagger, ReDoc y /openapi.json. En producción se desactiva (API_DOCS_ENABLED=false en docker-compose.prod.yml).
+    api_docs_enabled: bool = True
 
     @field_validator("gemini_model", mode="before")
     @classmethod

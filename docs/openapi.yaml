@@ -59,6 +59,7 @@ paths:
       description: |
         Autentica con correo y contraseña. El correo no distingue mayúsculas.
         No se aplican reglas de complejidad de contraseña en el login.
+        Tras 5 intentos fallidos en 15 minutos desde el mismo origen para el mismo correo, responde `429`.
       security: []
       requestBody:
         required: true
@@ -96,6 +97,16 @@ paths:
                 detail: Credenciales incorrectas
         '422':
           $ref: '#/components/responses/ValidationError'
+        '429':
+          description: |
+            Demasiados intentos fallidos desde el mismo origen (IP) para el mismo correo: 5 en 15 minutos.
+            Mientras dure el bloqueo se rechaza incluso la contraseña correcta.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                detail: Demasiados intentos fallidos. Espera unos minutos e inténtalo de nuevo.
 
   /auth/me:
     get:

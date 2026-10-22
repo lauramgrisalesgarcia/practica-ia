@@ -47,7 +47,7 @@ app/
 ├── transport/http/   Transporte: routers FastAPI, schemas Pydantic, autenticación HTTP
 ├── domain/           Dominio: entidades, errores, puertos (interfaces) y use cases
 ├── persistence/      Persistencia: modelos SQLAlchemy y repositories
-├── core/             Transversal: configuración, argon2, JWT, reloj
+├── core/             Transversal: configuración, argon2, JWT, reloj, límite de intentos de login y registros (log_config)
 ├── llm/              Adaptadores del LLM (puerto LLMClient): Gemini (gemini.py, genera el material si hay GEMINI_API_KEY) y simulado (ejercicios con las palabras clave y recomendaciones según el tema y los ejercicios fallados)
 ├── composition.py    Raíz de composición: crea repositories y los inyecta en los use cases
 └── main.py           Crea la app y registra los routers
