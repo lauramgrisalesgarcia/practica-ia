@@ -83,3 +83,11 @@ def test_el_modelo_de_gemini_por_defecto_es_uno_disponible_y_rapido() -> None:
 
 def test_un_modelo_de_gemini_vacio_usa_el_modelo_por_defecto() -> None:
     assert make_settings(gemini_model="").gemini_model == "gemini-3.5-flash"
+
+
+def test_el_modelo_de_respaldo_por_defecto_es_un_flash_lite_disponible() -> None:
+    assert make_settings().gemini_fallback_model == "gemini-3.5-flash-lite"
+
+
+def test_un_modelo_de_respaldo_vacio_usa_el_de_por_defecto() -> None:
+    assert make_settings(gemini_fallback_model="").gemini_fallback_model == "gemini-3.5-flash-lite"

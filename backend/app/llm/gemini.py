@@ -23,6 +23,9 @@ TIMEOUT_SECONDS = 60
 # 429 es cuota agotada y no se reintenta: a los pocos segundos volvería a fallar.
 RETRYABLE_STATUSES = frozenset({HTTPStatus.SERVICE_UNAVAILABLE})
 RETRY_DELAY_SECONDS = 2.0
+# Con el principal saturado (503 tras el reintento) o sin cuota (429) se prueba una vez el modelo de respaldo:
+# cada modelo tiene su propia demanda y su propia cuota. Lo mismo si el principal tarda más que el timeout.
+FALLBACK_STATUSES = frozenset({HTTPStatus.TOO_MANY_REQUESTS, HTTPStatus.SERVICE_UNAVAILABLE})
 
 # Tiempos verbales que se introducen en cada nivel del MCER (orientativo, según el Plan Curricular del
 # Instituto Cervantes), en orden de A1 a C2. Cada nivel usa también los de los niveles anteriores.
@@ -100,16 +103,18 @@ class GeminiLLMClient(LLMClient):
         recommendations: LLMClient,
         post: JsonPost = post_json,
         sleep: Callable[[float], None] = time.sleep,
+        fallback_model: str | None = None,
     ) -> None:
-        self._api_key = api_key
+        self._headers = {API_KEY_HEADER: api_key}
         self._url = GEMINI_URL.format(model=model)
+        self._fallback_url = GEMINI_URL.format(model=fallback_model) if fallback_model else None
         self._post = post
         self._sleep = sleep
         # De momento las recomendaciones no las genera Gemini: se delegan en otro cliente
         self._recommendations = recommendations
 
     def generate_material(self, request: Mapping[str, Any]) -> object:
-        reply = self._send(
+        reply = self._send_with_fallback(
             {
                 "contents": [{"parts": [{"text": _material_prompt(request)}]}],
                 "generationConfig": {"responseMimeType": "application/json"},
@@ -120,15 +125,28 @@ class GeminiLLMClient(LLMClient):
     def generate_recommendations(self, request: Mapping[str, Any]) -> object:
         return self._recommendations.generate_recommendations(request)
 
-    def _send(self, body: Mapping[str, Any]) -> Mapping[str, Any]:
-        headers = {API_KEY_HEADER: self._api_key}
+    def _send_with_fallback(self, body: Mapping[str, Any]) -> Mapping[str, Any]:
         try:
-            return self._post(self._url, headers, body)
+            return self._send(body)
+        except (urllib.error.HTTPError, TimeoutError) as error:
+            if self._fallback_url is None or not _is_unavailable(error):
+                raise
+            # Un único intento con el respaldo: si también falla, se propaga su error
+            return self._post(self._fallback_url, self._headers, body)
+
+    def _send(self, body: Mapping[str, Any]) -> Mapping[str, Any]:
+        try:
+            return self._post(self._url, self._headers, body)
         except urllib.error.HTTPError as error:
             if error.code not in RETRYABLE_STATUSES:
                 raise
         self._sleep(RETRY_DELAY_SECONDS)
-        return self._post(self._url, headers, body)
+        return self._post(self._url, self._headers, body)
+
+
+def _is_unavailable(error: urllib.error.HTTPError | TimeoutError) -> bool:
+    """El modelo no puede responder ahora (saturado, sin cuota o lento), aunque la petición sea correcta."""
+    return isinstance(error, TimeoutError) or error.code in FALLBACK_STATUSES
 
 
 def _material_prompt(request: Mapping[str, Any]) -> str:

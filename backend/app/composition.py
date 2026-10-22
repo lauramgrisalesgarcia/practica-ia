@@ -86,6 +86,7 @@ def build_llm_client(settings: Settings) -> LLMClient:
     return GeminiLLMClient(
         api_key=settings.gemini_api_key.get_secret_value(),
         model=settings.gemini_model,
+        fallback_model=settings.gemini_fallback_model,
         recommendations=SimulatedLLMClient(),
     )
 
