@@ -103,7 +103,7 @@ function LessonView({ lesson, downloadPdf, openPdf, loadMaterial, submitMaterial
             <p className="text-5xl font-semibold text-ocean">{formatScore(lesson.score)}</p>
             <p className="text-xs text-ink/70">del refuerzo</p>
             {submittedAt && (
-              <p className="mt-3 w-full border-t border-mist pt-3 text-xs text-ink/70">Resuelto el {formatDate(submittedAt)}</p>
+              <p className="mt-3 w-full border-t border-cream pt-3 text-xs text-ink/70">Resuelto el {formatDate(submittedAt)}</p>
             )}
           </section>
         )}
@@ -125,7 +125,7 @@ function LessonView({ lesson, downloadPdf, openPdf, loadMaterial, submitMaterial
             <h2 className="text-sm font-semibold uppercase tracking-wide text-ink/70">Palabras clave</h2>
             <ul aria-label="Palabras clave" className="flex flex-wrap gap-2">
               {lesson.keywords.map((keyword) => (
-                <li key={keyword} className="rounded-full bg-mist px-2 py-0.5 text-sm text-ocean">
+                <li key={keyword} className="rounded-full bg-cream px-2 py-0.5 text-sm text-ocean">
                   {keyword}
                 </li>
               ))}

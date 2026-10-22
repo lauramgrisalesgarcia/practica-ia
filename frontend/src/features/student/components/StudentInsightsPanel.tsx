@@ -25,8 +25,8 @@ type InsightsState =
 
 // El tipo siempre lleva etiqueta de texto: el icono y el color solo la acompañan
 const ACTIVITY_TYPES: Record<ActivityType, { label: string; icon: string; style: string }> = {
-  submission: { label: 'Refuerzo resuelto', icon: 'M5 12l5 5L20 7', style: 'bg-mint text-ink' },
-  material: { label: 'Refuerzo nuevo', icon: 'M12 5v14M5 12h14', style: 'bg-teal text-white' },
+  submission: { label: 'Refuerzo resuelto', icon: 'M5 12l5 5L20 7', style: 'bg-apricot text-ink' },
+  material: { label: 'Refuerzo nuevo', icon: 'M12 5v14M5 12h14', style: 'bg-rose text-ink' },
   lesson: { label: 'Clase', icon: 'M4 6h16M4 12h16M4 18h10', style: 'bg-ocean text-white' },
 }
 
@@ -85,7 +85,7 @@ export function StudentInsightsPanel({ loadInsights, today = new Date(), timeZon
             ) : (
               <ul className="flex flex-col gap-2">
                 {insights.pendingMaterials.map((pending) => (
-                  <li key={pending.lessonId} className="flex items-center justify-between gap-3 rounded-lg bg-mist px-3 py-2">
+                  <li key={pending.lessonId} className="flex items-center justify-between gap-3 rounded-lg bg-cream px-3 py-2">
                     <span className="flex min-w-0 flex-col">
                       <span className="font-semibold text-ink">{pending.topic}</span>
                       <span className="text-xs text-ink/70">

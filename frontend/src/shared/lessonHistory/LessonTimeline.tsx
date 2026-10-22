@@ -28,9 +28,9 @@ interface LessonTimelineProps<T extends LessonWithResult> {
 type LessonsState<T> = { status: 'loading' } | { status: 'loaded'; lessons: T[] } | { status: 'error'; message: string }
 
 const MATERIAL_STATUS: Record<MaterialStatus, { label: string; badge: string; dot: string }> = {
-  none: { label: 'Sin material', badge: 'bg-mist text-ink/80', dot: 'border-2 border-ink/30 bg-white' },
-  pending: { label: 'Material pendiente', badge: 'bg-teal/20 text-ocean', dot: 'bg-teal' },
-  completed: { label: 'Material resuelto', badge: 'bg-mint text-ink', dot: 'bg-ocean' },
+  none: { label: 'Sin material', badge: 'bg-cream text-ink/80', dot: 'border-2 border-ink/30 bg-white' },
+  pending: { label: 'Material pendiente', badge: 'bg-rose/20 text-ocean', dot: 'bg-rose' },
+  completed: { label: 'Material resuelto', badge: 'bg-apricot text-ink', dot: 'bg-ocean' },
 }
 
 const FILTERS: { value: MaterialFilter; label: string }[] = [
@@ -121,7 +121,7 @@ export function LessonTimeline<T extends LessonWithResult>({
             aria-valuemin={0}
             aria-valuemax={summary.withMaterial}
             aria-valuenow={summary.completedMaterial}
-            className="h-2 w-full overflow-hidden rounded-full bg-mist"
+            className="h-2 w-full overflow-hidden rounded-full bg-cream"
           >
             <div
               className="h-full rounded-full bg-ocean"
@@ -153,11 +153,11 @@ export function LessonTimeline<T extends LessonWithResult>({
                 aria-pressed={filter === value}
                 onClick={() => setFilter(value)}
                 className={`flex items-center gap-1.5 rounded-full border px-3 py-1 text-sm ${
-                  filter === value ? 'border-ocean bg-ocean text-white' : 'border-ink/20 text-ink/80 hover:bg-mist'
+                  filter === value ? 'border-ocean bg-ocean text-white' : 'border-ink/20 text-ink/80 hover:bg-cream'
                 }`}
               >
                 {label}
-                <span className={`text-xs font-semibold ${filter === value ? 'text-mint' : 'text-ocean'}`}>
+                <span className={`text-xs font-semibold ${filter === value ? 'text-ink' : 'text-ocean'}`}>
                   {countOf(value)}
                 </span>
               </button>
@@ -226,7 +226,7 @@ function LessonEntry({ lesson, isLast, actions }: LessonEntryProps) {
         {lesson.keywords.length > 0 && (
           <ul aria-label="Palabras clave" className="flex flex-wrap gap-1.5">
             {lesson.keywords.map((keyword) => (
-              <li key={keyword} className="rounded-md bg-mist px-2 py-0.5 text-xs text-ink">
+              <li key={keyword} className="rounded-md bg-cream px-2 py-0.5 text-xs text-ink">
                 {keyword}
               </li>
             ))}

@@ -125,7 +125,7 @@ export function GenerateMaterialForm({
             type="button"
             onClick={onCancel}
             disabled={isGenerating}
-            className="rounded-md border border-ink/20 px-4 py-2 font-medium text-ocean hover:bg-mist disabled:opacity-50"
+            className="rounded-md border border-ink/20 px-4 py-2 font-medium text-ocean hover:bg-cream disabled:opacity-50"
           >
             Cancelar
           </button>

@@ -57,7 +57,7 @@ export function TeacherDashboardPage({ teacherName, loadStudents, loadInsights }
           <div className="flex items-baseline justify-between gap-2">
             <h2 className="text-lg font-semibold text-ink">Mis alumnos</h2>
             {state.status === 'loaded' && (
-              <span className="rounded-full bg-mist px-2.5 py-0.5 text-sm font-medium text-ocean">
+              <span className="rounded-full bg-cream px-2.5 py-0.5 text-sm font-medium text-ocean">
                 {students.length} {students.length === 1 ? 'alumno' : 'alumnos'}
               </span>
             )}
@@ -91,11 +91,11 @@ export function TeacherDashboardPage({ teacherName, loadStudents, loadInsights }
                   <li key={student.id}>
                     <Link
                       to={studentDetailPath(student.id)}
-                      className="flex items-center gap-3 rounded-lg px-2 py-2.5 transition hover:bg-mist focus-visible:outline-2 focus-visible:outline-ocean"
+                      className="flex items-center gap-3 rounded-lg px-2 py-2.5 transition hover:bg-cream focus-visible:outline-2 focus-visible:outline-ocean"
                     >
                       <span
                         aria-hidden="true"
-                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-teal text-sm font-semibold text-white"
+                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-rose text-sm font-semibold text-white"
                       >
                         {initials(student.name)}
                       </span>
@@ -114,7 +114,7 @@ export function TeacherDashboardPage({ teacherName, loadStudents, loadInsights }
               <SidebarSection title="Alumnos por nivel">
                 <ul className="flex flex-wrap gap-2">
                   {countByLevel(students).map(({ level, count }) => (
-                    <li key={level} className="flex items-center gap-1 rounded-full bg-mist px-3 py-1 text-sm">
+                    <li key={level} className="flex items-center gap-1 rounded-full bg-cream px-3 py-1 text-sm">
                       <span className="font-semibold text-ocean">{level}</span> <span className="text-ink">{count}</span>
                     </li>
                   ))}
@@ -143,7 +143,7 @@ export function TeacherDashboardPage({ teacherName, loadStudents, loadInsights }
 
 function SidebarSection({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <section aria-label={title} className="flex flex-col gap-2 border-t border-mist pt-3">
+    <section aria-label={title} className="flex flex-col gap-2 border-t border-cream pt-3">
       <h3 className="text-xs font-medium uppercase tracking-wide text-ink/70">{title}</h3>
       {children}
     </section>

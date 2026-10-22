@@ -51,10 +51,10 @@ export function ExerciseStepper({ lessonId, exercises, submitMaterial, onSubmitt
           aria-valuemin={1}
           aria-valuemax={exercises.length}
           aria-valuenow={current + 1}
-          className="h-2.5 w-full overflow-hidden rounded-full bg-mist"
+          className="h-2.5 w-full overflow-hidden rounded-full bg-cream"
         >
           <div
-            className="h-full rounded-full bg-teal transition-all duration-300"
+            className="h-full rounded-full bg-rose transition-all duration-300"
             style={{ width: `${((current + 1) / exercises.length) * PERCENT}%` }}
           />
         </div>
@@ -88,7 +88,7 @@ export function ExerciseStepper({ lessonId, exercises, submitMaterial, onSubmitt
             type="button"
             onClick={() => setCurrent((index) => index - 1)}
             disabled={isSubmitting}
-            className="rounded-xl border-2 border-ink/15 px-5 py-3 font-semibold text-ocean hover:bg-mist disabled:opacity-50"
+            className="rounded-xl border-2 border-ink/15 px-5 py-3 font-semibold text-ocean hover:bg-cream disabled:opacity-50"
           >
             Anterior
           </button>

@@ -53,7 +53,7 @@ export function StudentDetailPage({ studentId, loadStudent }: StudentDetailPageP
           <header className="flex items-center gap-4">
             <span
               aria-hidden="true"
-              className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-teal text-lg font-semibold text-white"
+              className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-rose text-lg font-semibold text-white"
             >
               {initials(state.student.name)}
             </span>
