@@ -48,7 +48,7 @@ app/
 ├── domain/           Dominio: entidades, errores, puertos (interfaces) y use cases
 ├── persistence/      Persistencia: modelos SQLAlchemy y repositories
 ├── core/             Transversal: configuración, argon2, JWT, reloj
-├── llm/              Adaptador del LLM (implementa el puerto LLMClient; hoy simulado: ejercicios con las palabras clave y recomendaciones según el tema y los ejercicios fallados)
+├── llm/              Adaptadores del LLM (puerto LLMClient): Gemini (gemini.py, genera el material si hay GEMINI_API_KEY) y simulado (ejercicios con las palabras clave y recomendaciones según el tema y los ejercicios fallados)
 ├── composition.py    Raíz de composición: crea repositories y los inyecta en los use cases
 └── main.py           Crea la app y registra los routers
 ```
@@ -59,7 +59,7 @@ app/
   - Un **use case** por acción en `use_cases/`: una clase con dependencias inyectadas en el constructor y un método `execute`. Lanza errores de dominio; nunca `HTTPException`.
 - **Identificadores públicos**: la API, el dominio y los tokens identifican cada recurso con un **UUID v4 aleatorio** (`public_id`). El `id` numérico de la BD solo existe dentro de la persistencia (claves foráneas) y nunca se expone. Todo recurso nuevo debe tener `public_id` (`public_id_column()` en `models.py`).
 - **Archivos**: se leen y escriben solo a través del puerto `FileStorage` (implementación `LocalFileStorage`, limitada a `backend/storage/` y protegida contra path traversal). La BD guarda la ruta; la ruta nunca se expone en la API. Las descargas usan `transport/http/files.py` (nombre de archivo saneado y `X-Content-Type-Options: nosniff`).
-- **LLM (`app/llm`)**: implementa el puerto `LLMClient`. El dominio construye la petición (`MaterialGenerationRequest.to_llm_payload()`) y **valida siempre la respuesta** (`domain/material_validation.py`) antes de guardarla; una respuesta no válida o un fallo del proveedor es `InvalidLLMResponseError` (502) y no se guarda nada. Para usar un LLM real basta con otra implementación de `LLMClient` en `composition.py`.
+- **LLM (`app/llm`)**: implementa el puerto `LLMClient`. El dominio construye la petición (`MaterialGenerationRequest.to_llm_payload()`) y **valida siempre la respuesta** (`domain/material_validation.py`) antes de guardarla; una respuesta no válida o un fallo del proveedor es `InvalidLLMResponseError` (502) y no se guarda nada. `build_llm_client` (`composition.py`) usa Gemini si hay `GEMINI_API_KEY` y el simulado si no; las recomendaciones siguen simuladas. Los tests (`conftest.py`) y los E2E (`playwright.config.ts`) fuerzan la clave vacía: nunca llaman a Gemini.
 - **Migraciones**: toda modificación del esquema es una migración de Alembic (`migrations/versions/`). Tras crearla, se regenera `migrations/001-esquema-base-de-datos.sql` (script SQL completo del esquema) con `migrations/export_schema.py`; un test falla si el archivo no está sincronizado.
 - **Transacciones**: una unidad de trabajo por petición. `get_session` hace `commit` si la petición termina bien y `rollback` si falla. Los repositories solo hacen `flush`, nunca `commit`.
 - **Persistencia (`app/persistence`)**: modelos SQLAlchemy (`*Model`) y un **repository** por agregado en `repositories/` que implementa el puerto del dominio y devuelve **entidades**, nunca modelos.

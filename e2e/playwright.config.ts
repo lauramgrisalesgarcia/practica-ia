@@ -39,6 +39,8 @@ export default defineConfig({
         // Clave aleatoria en cada ejecución: los tokens de E2E no sirven en ningún otro entorno
         JWT_SECRET: randomBytes(32).toString('base64url'),
         STORAGE_DIR: '../e2e/.storage',
+        // Los E2E nunca llaman a Gemini: una clave vacía (aunque esté en backend/.env) usa el LLM simulado
+        GEMINI_API_KEY: '',
       },
     },
     {

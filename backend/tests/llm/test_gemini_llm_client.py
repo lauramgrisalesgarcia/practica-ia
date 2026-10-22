@@ -1,13 +1,22 @@
 import json
+import urllib.error
 import urllib.request
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
+from email.message import Message
 from typing import Any
 from urllib.request import Request
 
 import pytest
 
 from app.domain.ports import LLMClient
-from app.llm.gemini import GEMINI_URL, GeminiLLMClient, GeminiResponseError, JsonPost, post_json
+from app.llm.gemini import (
+    GEMINI_URL,
+    RETRY_DELAY_SECONDS,
+    GeminiLLMClient,
+    GeminiResponseError,
+    JsonPost,
+    post_json,
+)
 
 TOPIC = "Pedir en un restaurante"
 PDF_PATH = "lessons/10/restaurante-a2.pdf"
@@ -85,10 +94,46 @@ def gemini_reply(text: str) -> dict[str, Any]:
     return {"candidates": [{"content": {"parts": [{"text": text}]}}]}
 
 
-def make_client(post: JsonPost, recommendations: LLMClient = FakeRecommendations()) -> GeminiLLMClient:
+def no_sleep(_: float) -> None:
+    return None
+
+
+def make_client(
+    post: JsonPost, recommendations: LLMClient = FakeRecommendations(), sleep: Callable[[float], None] = no_sleep
+) -> GeminiLLMClient:
     return GeminiLLMClient(
-        api_key="clave-de-prueba", model="modelo-de-prueba", post=post, recommendations=recommendations
+        api_key="clave-de-prueba", model="modelo-de-prueba", post=post, recommendations=recommendations, sleep=sleep
     )
+
+
+def sent_prompt(payload: Mapping[str, Any]) -> str:
+    post = FakeJsonPost(gemini_reply(json.dumps(MATERIAL)))
+    make_client(post).generate_material(payload)
+    _, _, body = post.calls[0]
+    return str(body["contents"][0]["parts"][0]["text"])
+
+
+def with_lesson(exercise_count: int, keywords: list[str]) -> dict[str, Any]:
+    return {**PAYLOAD, "exercise_count": exercise_count, "lesson": {**PAYLOAD["lesson"], "keywords": keywords}}
+
+
+def http_error(status: int) -> urllib.error.HTTPError:
+    return urllib.error.HTTPError(GEMINI_URL, status, "error de prueba", Message(), None)
+
+
+class FlakyJsonPost:
+    """Falla con los códigos indicados, en orden, y después responde."""
+
+    def __init__(self, failures: list[int], reply: Mapping[str, Any]) -> None:
+        self.failures = failures
+        self.reply = reply
+        self.calls = 0
+
+    def __call__(self, url: str, headers: Mapping[str, str], body: Mapping[str, Any]) -> Mapping[str, Any]:
+        self.calls += 1
+        if self.failures:
+            raise http_error(self.failures.pop(0))
+        return self.reply
 
 
 def test_devuelve_el_material_que_responde_el_modelo() -> None:
@@ -175,3 +220,53 @@ def test_post_json_envia_un_post_con_la_clave_y_el_cuerpo_en_json(monkeypatch: p
     assert isinstance(request.data, bytes)
     assert json.loads(request.data) == {"contents": [{"parts": [{"text": TOPIC}]}]}
     assert reply == gemini_reply("{}")
+
+
+def test_el_prompt_pide_la_cantidad_exacta_el_tipo_de_actividad_y_los_ids() -> None:
+    prompt = sent_prompt(with_lesson(4, ["la carta", "quisiera"]))
+
+    assert "exactamente 4 ejercicios" in prompt
+    assert "ids enteros del 1 al 4" in prompt
+    assert 'activity_type debe ser exactamente "complete_sentence"' in prompt
+
+
+def test_con_al_menos_tantos_ejercicios_como_palabras_clave_pide_usarlas_todas() -> None:
+    prompt = sent_prompt(with_lesson(2, ["la carta", "quisiera"]))
+
+    assert "usa todas las palabras clave" in prompt
+    assert "no repitas ninguna palabra clave" not in prompt
+
+
+def test_con_menos_ejercicios_que_palabras_clave_pide_no_repetirlas() -> None:
+    prompt = sent_prompt(with_lesson(1, ["la carta", "quisiera"]))
+
+    assert "no repitas ninguna palabra clave" in prompt
+    assert "usa todas las palabras clave" not in prompt
+
+
+@pytest.mark.parametrize("status", [429, 503])
+def test_reintenta_una_vez_si_gemini_esta_saturado(status: int) -> None:
+    post = FlakyJsonPost([status], gemini_reply(json.dumps(MATERIAL)))
+    sleeps: list[float] = []
+
+    response = make_client(post, sleep=sleeps.append).generate_material(PAYLOAD)
+
+    assert response == MATERIAL
+    assert post.calls == 2
+    assert sleeps == [RETRY_DELAY_SECONDS]
+
+
+def test_si_sigue_saturado_tras_el_reintento_falla() -> None:
+    post = FlakyJsonPost([503, 503], gemini_reply(json.dumps(MATERIAL)))
+
+    with pytest.raises(urllib.error.HTTPError):
+        make_client(post).generate_material(PAYLOAD)
+    assert post.calls == 2
+
+
+def test_no_reintenta_los_errores_que_no_son_de_saturacion() -> None:
+    post = FlakyJsonPost([400], gemini_reply(json.dumps(MATERIAL)))
+
+    with pytest.raises(urllib.error.HTTPError):
+        make_client(post).generate_material(PAYLOAD)
+    assert post.calls == 1

@@ -5,8 +5,11 @@ envía como prompt y devuelve el JSON que responde el modelo, sin validarlo: la 
 """
 
 import json
+import time
+import urllib.error
 import urllib.request
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
+from http import HTTPStatus
 from typing import Any, Protocol
 
 from app.domain.ports import LLMClient
@@ -14,13 +17,16 @@ from app.domain.ports import LLMClient
 GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
 API_KEY_HEADER = "x-goog-api-key"
 TIMEOUT_SECONDS = 60
+# Gemini responde 429 o 503 cuando está saturado (habitual en el plan gratuito): se reintenta una vez
+RETRYABLE_STATUSES = frozenset({HTTPStatus.TOO_MANY_REQUESTS, HTTPStatus.SERVICE_UNAVAILABLE})
+RETRY_DELAY_SECONDS = 2.0
 
 GENERATE_MATERIAL_INSTRUCTIONS = (
     "Eres un profesor de español para extranjeros. Crea material de refuerzo a partir de los datos de la clase. "
     "Responde solo con JSON, en español, con la forma: "
     '{"activity_type", "title", "instructions", "exercises": [{"id", "sentence", "options", "correct_option"}]}. '
-    "Cada frase lleva exactamente un hueco «___». Cada ejercicio tiene tres opciones; la correcta es una "
-    "palabra clave de la clase."
+    "Cada frase lleva exactamente un hueco «___». Cada ejercicio tiene tres opciones distintas; la correcta "
+    "está entre ellas y es una palabra clave de la clase."
 )
 
 
@@ -47,28 +53,61 @@ def post_json(url: str, headers: Mapping[str, str], body: Mapping[str, Any]) -> 
 
 
 class GeminiLLMClient(LLMClient):
-    def __init__(self, *, api_key: str, model: str, recommendations: LLMClient, post: JsonPost = post_json) -> None:
+    def __init__(
+        self,
+        *,
+        api_key: str,
+        model: str,
+        recommendations: LLMClient,
+        post: JsonPost = post_json,
+        sleep: Callable[[float], None] = time.sleep,
+    ) -> None:
         self._api_key = api_key
         self._url = GEMINI_URL.format(model=model)
         self._post = post
+        self._sleep = sleep
         # De momento las recomendaciones no las genera Gemini: se delegan en otro cliente
         self._recommendations = recommendations
 
     def generate_material(self, request: Mapping[str, Any]) -> object:
-        data = json.dumps(_sin_ruta_del_pdf(request), ensure_ascii=False)
-        prompt = f"{GENERATE_MATERIAL_INSTRUCTIONS}\n\nDatos de la clase:\n{data}"
-        reply = self._post(
-            self._url,
-            {API_KEY_HEADER: self._api_key},
+        reply = self._send(
             {
-                "contents": [{"parts": [{"text": prompt}]}],
+                "contents": [{"parts": [{"text": _material_prompt(request)}]}],
                 "generationConfig": {"responseMimeType": "application/json"},
-            },
+            }
         )
         return _json_text(reply)
 
     def generate_recommendations(self, request: Mapping[str, Any]) -> object:
         return self._recommendations.generate_recommendations(request)
+
+    def _send(self, body: Mapping[str, Any]) -> Mapping[str, Any]:
+        headers = {API_KEY_HEADER: self._api_key}
+        try:
+            return self._post(self._url, headers, body)
+        except urllib.error.HTTPError as error:
+            if error.code not in RETRYABLE_STATUSES:
+                raise
+        self._sleep(RETRY_DELAY_SECONDS)
+        return self._post(self._url, headers, body)
+
+
+def _material_prompt(request: Mapping[str, Any]) -> str:
+    """Instrucciones con las reglas que comprueba `material_validation`, seguidas de los datos de la clase."""
+    count = int(request["exercise_count"])
+    keyword_count = len(request["lesson"]["keywords"])
+    keyword_rule = (
+        "usa todas las palabras clave como respuesta correcta al menos una vez"
+        if count >= keyword_count
+        else "no repitas ninguna palabra clave como respuesta correcta"
+    )
+    rules = (
+        f"Genera exactamente {count} ejercicios, con ids enteros del 1 al {count}. "
+        f'El campo activity_type debe ser exactamente "{request["activity_type"]}". '
+        f"Entre todos los ejercicios, {keyword_rule}."
+    )
+    data = json.dumps(_sin_ruta_del_pdf(request), ensure_ascii=False)
+    return f"{GENERATE_MATERIAL_INSTRUCTIONS} {rules}\n\nDatos de la clase:\n{data}"
 
 
 def _sin_ruta_del_pdf(request: Mapping[str, Any]) -> dict[str, Any]:
