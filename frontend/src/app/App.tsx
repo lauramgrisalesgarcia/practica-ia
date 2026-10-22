@@ -83,7 +83,7 @@ function App() {
 
   if (session.status === 'loading') {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-mist px-4">
+      <main className="flex min-h-screen items-center justify-center bg-cream px-4">
         <p className="text-ink/70">Cargando…</p>
       </main>
     )

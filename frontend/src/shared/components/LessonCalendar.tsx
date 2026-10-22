@@ -70,11 +70,11 @@ export function LessonCalendar({ lessons, today, timeZone }: LessonCalendarProps
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
-        <button type="button" aria-label="Mes anterior" onClick={() => moveMonth(-1)} className="flex h-9 w-9 items-center justify-center rounded-full text-xl text-ocean hover:bg-mist">
+        <button type="button" aria-label="Mes anterior" onClick={() => moveMonth(-1)} className="flex h-9 w-9 items-center justify-center rounded-full text-xl text-ocean hover:bg-cream">
           ‹
         </button>
         <h4 className="font-semibold text-ink first-letter:uppercase">{monthTitleFormat.format(utcDay(visible.year, visible.month, 1))}</h4>
-        <button type="button" aria-label="Mes siguiente" onClick={() => moveMonth(1)} className="flex h-9 w-9 items-center justify-center rounded-full text-xl text-ocean hover:bg-mist">
+        <button type="button" aria-label="Mes siguiente" onClick={() => moveMonth(1)} className="flex h-9 w-9 items-center justify-center rounded-full text-xl text-ocean hover:bg-cream">
           ›
         </button>
       </div>
@@ -109,13 +109,13 @@ export function LessonCalendar({ lessons, today, timeZone }: LessonCalendarProps
                       aria-pressed={isSelected}
                       onClick={() => setSelectedKey(key)}
                       className={`flex h-10 w-full flex-col items-center justify-center gap-0.5 rounded-lg ${
-                        isSelected ? 'bg-ocean text-white' : 'hover:bg-mist'
-                      } ${isToday && !isSelected ? 'font-semibold text-ocean ring-2 ring-teal' : ''}`}
+                        isSelected ? 'bg-ocean text-white' : 'hover:bg-cream'
+                      } ${isToday && !isSelected ? 'font-semibold text-ocean ring-2 ring-rose' : ''}`}
                     >
                       {day}
                       <span aria-hidden="true" className="flex h-1.5 gap-0.5">
                         {Array.from({ length: Math.min(count, MAX_DOTS) }, (_, dot) => (
-                          <span key={dot} className={`h-1.5 w-1.5 rounded-full ${isSelected ? 'bg-mint' : 'bg-teal'}`} />
+                          <span key={dot} className={`h-1.5 w-1.5 rounded-full ${isSelected ? 'bg-apricot' : 'bg-rose'}`} />
                         ))}
                       </span>
                     </button>
@@ -127,14 +127,14 @@ export function LessonCalendar({ lessons, today, timeZone }: LessonCalendarProps
         </tbody>
       </table>
 
-      <section aria-label={`Clases del ${selectedLabel}`} className="flex flex-col gap-2 border-t border-mist pt-3">
+      <section aria-label={`Clases del ${selectedLabel}`} className="flex flex-col gap-2 border-t border-cream pt-3">
         <p className="text-sm font-semibold text-ink">Clases del {selectedLabel}</p>
         {selectedLessons.length === 0 ? (
           <p className="text-sm text-ink/70">No hay clases este día.</p>
         ) : (
           <ul className="flex flex-col gap-2">
             {selectedLessons.map((lesson) => (
-              <li key={lesson.id} className="flex items-center gap-3 rounded-lg bg-mist px-3 py-2 text-sm">
+              <li key={lesson.id} className="flex items-center gap-3 rounded-lg bg-cream px-3 py-2 text-sm">
                 <time dateTime={lesson.start} className="font-semibold text-ocean">
                   {timeFormat.format(new Date(lesson.start))}
                 </time>

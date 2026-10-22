@@ -102,7 +102,7 @@ export function LessonDetailPage({ lessonId, loadLesson, downloadPdf, openPdf, g
             <h2 className="text-sm font-semibold uppercase tracking-wide text-ink/70">Palabras clave</h2>
             <ul aria-label="Palabras clave" className="flex flex-wrap gap-2">
               {lesson.keywords.map((keyword) => (
-                <li key={keyword} className="rounded-full bg-mist px-2 py-0.5 text-sm text-ocean">
+                <li key={keyword} className="rounded-full bg-cream px-2 py-0.5 text-sm text-ocean">
                   {keyword}
                 </li>
               ))}
@@ -169,7 +169,7 @@ function MaterialSection({ material }: { material: TeacherMaterial }) {
       </span>
       <ol className="flex flex-col gap-3">
         {material.exercises.map((exercise, index) => (
-          <li key={exercise.id} className="flex flex-col gap-3 rounded-lg border border-ink/10 bg-mist/40 p-4">
+          <li key={exercise.id} className="flex flex-col gap-3 rounded-lg border border-ink/10 bg-cream/40 p-4">
             <h3 className="text-xs font-semibold uppercase tracking-wide text-ocean">Pregunta {index + 1}</h3>
             <p className="text-ink">
               <BlankSentence text={exercise.sentence} />
@@ -179,7 +179,7 @@ function MaterialSection({ material }: { material: TeacherMaterial }) {
                 option === exercise.correctOption ? (
                   <li
                     key={option}
-                    className="flex items-center gap-1.5 rounded-full border border-ocean bg-mint px-3 py-1 text-ink"
+                    className="flex items-center gap-1.5 rounded-full border border-ocean bg-apricot px-3 py-1 text-ink"
                   >
                     <svg aria-hidden="true" viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round">
                       <path d="m5 12 5 5 9-10" />

@@ -138,7 +138,7 @@ export function OptionWheel({ options, value, onChange }: OptionWheelProps) {
         onPointerMove={handlePointerMove}
         onPointerUp={endDrag}
         onPointerLeave={endDrag}
-        className={`h-[168px] select-none overflow-y-auto overscroll-contain rounded-2xl py-14 outline-none [scrollbar-width:none] focus-visible:ring-2 focus-visible:ring-teal ${
+        className={`h-[168px] select-none overflow-y-auto overscroll-contain rounded-2xl py-14 outline-none [scrollbar-width:none] focus-visible:ring-2 focus-visible:ring-rose ${
           isDragging ? 'cursor-grabbing' : 'snap-y snap-mandatory cursor-grab'
         }`}
       >
@@ -153,7 +153,7 @@ export function OptionWheel({ options, value, onChange }: OptionWheelProps) {
               onClick={() => select(index)}
               className={`mx-1 flex h-14 cursor-pointer snap-center items-center justify-center rounded-2xl border-2 text-xl transition-colors ${
                 isSelected
-                  ? 'border-teal bg-mist font-semibold text-ocean'
+                  ? 'border-rose bg-cream font-semibold text-ocean'
                   : 'border-transparent text-ocean/60 hover:text-ocean'
               }`}
             >

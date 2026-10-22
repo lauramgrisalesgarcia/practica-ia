@@ -12,11 +12,11 @@ const ARBITRARY_COLOR = /\b[a-z-]+-\[(?:#[0-9a-f]{3,8}|rgba?\(|hsla?\()/gi
 
 // Tokens de la marca (@theme de index.css) con sus colores aprobados
 const BRAND_TOKENS: Record<string, string> = {
-  ink: '#852e5f',
-  ocean: '#225d91',
-  teal: '#3f84b0',
-  mint: '#e3b7d7',
-  mist: '#edccdd',
+  ink: '#2b2622',
+  ocean: '#28716e',
+  rose: '#ce9a9f',
+  apricot: '#e18f64',
+  cream: '#f2ebe2',
 }
 
 describe('paleta de colores', () => {

@@ -35,7 +35,7 @@ export function PdfDownloadButton({ lessonId, filename, downloadPdf, openPdf }: 
         disabled={isDownloading}
         aria-label={filename ? `Descargar PDF (${filename})` : undefined}
         title={filename}
-        className="flex items-center gap-1.5 self-start rounded-md border border-ink/20 px-3 py-1.5 text-sm font-medium text-ocean hover:bg-mist disabled:opacity-50"
+        className="flex items-center gap-1.5 self-start rounded-md border border-ink/20 px-3 py-1.5 text-sm font-medium text-ocean hover:bg-cream disabled:opacity-50"
       >
         <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
           <path d="M12 4v11m0 0-4-4m4 4 4-4M5 20h14" />

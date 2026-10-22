@@ -17,7 +17,7 @@ export function LoginPage() {
       <section className="w-full max-w-sm rounded-2xl bg-white p-8 shadow-md">
         <h1 className="mb-6 text-center text-2xl font-semibold text-ink">Iniciar sesión</h1>
         {session.status === 'anonymous' && session.expired && (
-          <p role="status" className="mb-4 rounded-md bg-mist px-3 py-2 text-sm text-ocean">
+          <p role="status" className="mb-4 rounded-md bg-cream px-3 py-2 text-sm text-ocean">
             Tu sesión ha caducado. Vuelve a iniciar sesión.
           </p>
         )}

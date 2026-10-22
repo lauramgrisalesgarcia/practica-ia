@@ -58,14 +58,14 @@ export function BarChart({ title, labelHeader, valueHeader, data, formatValue = 
               <rect x={i * slot} y={TOP} width={slot} height={BASELINE - TOP} fill="transparent" />
               {height > 0 && (
                 <>
-                  <rect x={x} y={y} width={barWidth} height={height} rx={CORNER} className="fill-ocean group-hover:fill-teal" />
+                  <rect x={x} y={y} width={barWidth} height={height} rx={CORNER} className="fill-ocean group-hover:fill-rose" />
                   {/* Base recta: solo el extremo superior va redondeado */}
                   <rect
                     x={x}
                     y={BASELINE - Math.min(CORNER, height)}
                     width={barWidth}
                     height={Math.min(CORNER, height)}
-                    className="fill-ocean group-hover:fill-teal"
+                    className="fill-ocean group-hover:fill-rose"
                   />
                 </>
               )}

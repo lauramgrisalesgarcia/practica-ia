@@ -102,7 +102,7 @@ function MaterialView({ material, submitMaterial, onSubmitted }: MaterialViewPro
           />
         )}
         {!submission && !isSolving && (
-          <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl bg-mist px-4 py-3">
+          <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl bg-cream px-4 py-3">
             <p className="text-sm font-medium text-ink">
               {count} {count === 1 ? 'pregunta' : 'preguntas'}
             </p>
@@ -125,9 +125,9 @@ function MaterialView({ material, submitMaterial, onSubmitted }: MaterialViewPro
 // Resumen del resultado, antes de las preguntas (la nota ya se ve arriba, junto a la clase)
 function ResultSummary({ submission }: { submission: StudentSubmission }) {
   return (
-    <section aria-label="Resumen del resultado" className="flex flex-col gap-3 rounded-xl bg-mist p-4">
+    <section aria-label="Resumen del resultado" className="flex flex-col gap-3 rounded-xl bg-cream p-4">
       <p className="flex flex-wrap gap-2 text-sm font-semibold">
-        <span className="rounded-full bg-mint px-3 py-1 text-ink">{submission.correctCount} correctas</span>{' '}
+        <span className="rounded-full bg-apricot px-3 py-1 text-ink">{submission.correctCount} correctas</span>{' '}
         <span className="sr-only">·</span>{' '}
         <span className="rounded-full bg-red-100 px-3 py-1 text-red-800">{submission.incorrectCount} incorrectas</span>
       </p>
@@ -173,14 +173,14 @@ function CorrectedExercises({ material, submission }: { material: StudentMateria
             <li
               key={exercise.id}
               className={`flex flex-col gap-3 rounded-lg border p-4 ${
-                isCorrect ? 'border-ink/10 bg-mist/40' : 'border-red-200 bg-red-50/60'
+                isCorrect ? 'border-ink/10 bg-cream/40' : 'border-red-200 bg-red-50/60'
               }`}
             >
               <div className="flex items-center justify-between gap-2">
                 <h3 className="text-xs font-semibold uppercase tracking-wide text-ocean">Pregunta {index + 1}</h3>
                 <span
                   className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
-                    isCorrect ? 'bg-mint text-ink' : 'bg-red-100 text-red-800'
+                    isCorrect ? 'bg-apricot text-ink' : 'bg-red-100 text-red-800'
                   }`}
                 >
                   {isCorrect ? 'Correcta' : 'Incorrecta'}
@@ -195,7 +195,7 @@ function CorrectedExercises({ material, submission }: { material: StudentMateria
                   const isMine = option === result?.selectedOption
                   if (isMine && isRight) {
                     return (
-                      <li key={option} className="flex items-center gap-1.5 rounded-full border border-ocean bg-mint px-3 py-1 text-ink">
+                      <li key={option} className="flex items-center gap-1.5 rounded-full border border-ocean bg-apricot px-3 py-1 text-ink">
                         <Mark kind="right" />
                         <span aria-describedby={descriptions.yoursRight} className="font-medium">
                           {option}
@@ -217,7 +217,7 @@ function CorrectedExercises({ material, submission }: { material: StudentMateria
                   }
                   if (isRight) {
                     return (
-                      <li key={option} className="flex items-center gap-1.5 rounded-full border border-ocean bg-mint px-3 py-1 text-ink">
+                      <li key={option} className="flex items-center gap-1.5 rounded-full border border-ocean bg-apricot px-3 py-1 text-ink">
                         <Mark kind="right" />
                         <span aria-describedby={descriptions.correct} className="font-medium">
                           {option}

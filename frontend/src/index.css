@@ -2,15 +2,15 @@
 
 /* Paleta de PractIcA */
 @theme {
-  --color-ink: #852e5f;
-  --color-ocean: #225d91;
-  --color-teal: #3f84b0;
-  --color-mint: #e3b7d7;
-  --color-mist: #edccdd;
+  --color-ink: #2b2622;
+  --color-ocean: #28716e;
+  --color-rose: #ce9a9f;
+  --color-apricot: #e18f64;
+  --color-cream: #f2ebe2;
 }
 
 body {
-  @apply bg-mist text-ink antialiased;
+  @apply bg-cream text-ink antialiased;
 }
 
 /* Todo lo que se puede pulsar muestra la mano (Tailwind v4 deja el cursor por defecto en los botones) */

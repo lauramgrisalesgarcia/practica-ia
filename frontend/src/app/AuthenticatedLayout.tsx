@@ -21,7 +21,7 @@ export function AuthenticatedLayout({ children }: { children: ReactNode }) {
             {session.status === 'authenticated' && (
               <span className="hidden flex-col items-end leading-tight sm:flex">
                 <span className="text-sm font-medium">{session.user.name}</span>
-                <span className="text-xs text-mint">{ROLE_LABELS[session.user.role]}</span>
+                <span className="text-xs text-cream">{ROLE_LABELS[session.user.role]}</span>
               </span>
             )}
             <button
