@@ -8,10 +8,13 @@ from urllib.request import Request
 
 import pytest
 
+from app.domain.entities import Level
 from app.domain.material_validation import MAX_OPTIONS, MIN_OPTIONS
 from app.domain.ports import LLMClient
 from app.llm.gemini import (
+    CLASS_DATA_HEADER,
     GEMINI_URL,
+    NEW_TENSES_BY_LEVEL,
     RETRY_DELAY_SECONDS,
     GeminiLLMClient,
     GeminiResponseError,
@@ -112,6 +115,12 @@ def sent_prompt(payload: Mapping[str, Any]) -> str:
     make_client(post).generate_material(payload)
     _, _, body = post.calls[0]
     return str(body["contents"][0]["parts"][0]["text"])
+
+
+def sent_instructions(payload: Mapping[str, Any]) -> str:
+    """Solo las instrucciones del prompt, sin el JSON de la clase que va detrás."""
+    instructions, _, _ = sent_prompt(payload).partition(CLASS_DATA_HEADER)
+    return instructions
 
 
 def with_lesson(exercise_count: int, keywords: list[str]) -> dict[str, Any]:
@@ -224,7 +233,7 @@ def test_post_json_envia_un_post_con_la_clave_y_el_cuerpo_en_json(monkeypatch: p
 
 
 def test_el_prompt_pide_la_cantidad_exacta_el_tipo_de_actividad_y_los_ids() -> None:
-    prompt = sent_prompt(with_lesson(4, ["la carta", "quisiera"]))
+    prompt = sent_instructions(with_lesson(4, ["la carta", "quisiera"]))
 
     assert "exactamente 4 ejercicios" in prompt
     assert "ids enteros del 1 al 4" in prompt
@@ -232,14 +241,14 @@ def test_el_prompt_pide_la_cantidad_exacta_el_tipo_de_actividad_y_los_ids() -> N
 
 
 def test_con_al_menos_tantos_ejercicios_como_palabras_clave_pide_usarlas_todas() -> None:
-    prompt = sent_prompt(with_lesson(2, ["la carta", "quisiera"]))
+    prompt = sent_instructions(with_lesson(2, ["la carta", "quisiera"]))
 
     assert "usa todas las palabras clave" in prompt
     assert "no repitas ninguna palabra clave" not in prompt
 
 
 def test_con_menos_ejercicios_que_palabras_clave_pide_no_repetirlas() -> None:
-    prompt = sent_prompt(with_lesson(1, ["la carta", "quisiera"]))
+    prompt = sent_instructions(with_lesson(1, ["la carta", "quisiera"]))
 
     assert "no repitas ninguna palabra clave" in prompt
     assert "usa todas las palabras clave" not in prompt
@@ -275,6 +284,75 @@ def test_no_reintenta_los_errores_que_no_son_de_saturacion(status: int) -> None:
 
 
 def test_el_prompt_pide_las_opciones_dentro_de_los_limites_del_dominio() -> None:
-    prompt = sent_prompt(PAYLOAD)
+    prompt = sent_instructions(PAYLOAD)
 
     assert f"entre {MIN_OPTIONS} y {MAX_OPTIONS} opciones distintas" in prompt
+
+
+def test_el_prompt_exige_que_solo_una_opcion_encaje_en_la_frase() -> None:
+    prompt = sent_instructions(PAYLOAD)
+
+    assert "exactamente una opción correcta" in prompt
+    assert "sujeto explícito" in prompt
+    assert "si más de una opción encaja, reescribe la frase" in prompt
+
+
+def with_level(level: str) -> dict[str, Any]:
+    return {**PAYLOAD, "student": {**PAYLOAD["student"], "level": level}}
+
+
+def test_en_a1_el_prompt_solo_permite_los_tiempos_verbales_del_nivel() -> None:
+    prompt = sent_instructions(with_level("A1"))
+
+    assert "usa solo estos tiempos verbales, propios del nivel A1: presente de indicativo" in prompt
+    assert "pretérito indefinido" not in prompt
+    assert "subjuntivo" not in prompt
+
+
+def test_en_b2_el_prompt_suma_los_tiempos_de_los_niveles_anteriores() -> None:
+    prompt = sent_instructions(with_level("B2"))
+
+    assert "presente de indicativo" in prompt
+    assert "pretérito indefinido" in prompt
+    assert "presente de subjuntivo" in prompt
+    assert "pretérito imperfecto de subjuntivo" in prompt
+    assert "pluscuamperfecto de subjuntivo" not in prompt
+
+
+def test_el_prompt_pide_vocabulario_propio_del_nivel_del_estudiante() -> None:
+    assert "vocabulario y expresiones propios del nivel A2" in sent_instructions(with_level("A2"))
+
+
+def test_el_prompt_pide_variar_los_sujetos_sin_romper_la_concordancia() -> None:
+    prompt = sent_instructions(PAYLOAD)
+
+    assert "varía los sujetos" in prompt
+    assert "la abuela" in prompt
+    assert "concuerde con la respuesta correcta" in prompt
+
+
+def test_las_palabras_clave_del_docente_mandan_y_el_resto_de_la_frase_sigue_el_nivel() -> None:
+    prompt = sent_instructions(with_level("A2"))
+
+    assert "las palabras clave las elige el docente" in prompt
+    assert "úsalas tal cual como respuesta correcta aunque sean de otro nivel" in prompt
+    assert "la regla de tiempos verbales se aplica al resto de la frase y a las opciones incorrectas" in prompt
+
+
+MCER_ORDER = ("A1", "A2", "B1", "B2", "C1", "C2")
+
+
+def test_todos_los_niveles_del_mcer_tienen_sus_tiempos_verbales() -> None:
+    assert set(NEW_TENSES_BY_LEVEL) == set(Level)
+
+
+@pytest.mark.parametrize("index", range(len(MCER_ORDER)))
+def test_cada_nivel_usa_los_tiempos_de_su_nivel_y_anteriores_y_ninguno_posterior(index: int) -> None:
+    instructions = sent_instructions(with_level(MCER_ORDER[index]))
+
+    for allowed in MCER_ORDER[: index + 1]:
+        for tense in NEW_TENSES_BY_LEVEL[Level(allowed)]:
+            assert tense in instructions
+    for later in MCER_ORDER[index + 1 :]:
+        for tense in NEW_TENSES_BY_LEVEL[Level(later)]:
+            assert tense not in instructions
