@@ -123,7 +123,7 @@ Todo el código, frontend y backend, respeta SOLID. Antes de dar un cambio por t
 **Nunca se exponen secretos**: ni en el código, ni en commits, ni en documentación, ni en logs, ni en las respuestas del chat.
 
 - **Dónde viven**: solo en archivos `.env` locales (raíz para Docker Compose, `backend/.env` para la API) o en variables de entorno / secretos de GitHub Actions. `frontend/.env.local` solo contiene configuración pública (`VITE_API_URL`): todo lo que empieza por `VITE_` acaba en el bundle del navegador, así que nunca se usa para secretos. Los `.env` nunca se versionan; solo las plantillas `.env.example`, con marcadores vacíos y nunca con valores reales.
-- **Sin valores por defecto**: los secretos (`DATABASE_URL`, `JWT_SECRET`, …) no tienen valor por defecto en el código; si faltan, la aplicación no arranca. `JWT_SECRET` exige un mínimo de 32 caracteres.
+- **Sin valores por defecto**: los secretos (`DATABASE_URL`, `JWT_SECRET`, …) no tienen valor por defecto en el código; si faltan, la aplicación no arranca. `JWT_SECRET` exige un mínimo de 32 caracteres. Excepción: `GEMINI_API_KEY` es opcional; sin ella se usa el LLM simulado (`build_llm_client` en `backend/app/composition.py`).
 - **Tipado como secreto**: en el backend son `SecretStr`, de modo que no aparecen al imprimir la configuración ni en errores. Se leen con `.get_secret_value()` solo donde se usan.
 - **Tests**: no contienen secretos escritos; la clave JWT se genera aleatoriamente en cada ejecución y la URL de la BD de test se lee de `TEST_DATABASE_URL`.
 - **Documentación y ejemplos**: usan marcadores (`<token JWT>`, `<contraseña>`), nunca valores reales. Las credenciales de usuarios ficticios de prueba son la única excepción.

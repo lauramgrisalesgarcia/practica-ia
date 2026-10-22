@@ -10,7 +10,7 @@ from fastapi import Depends
 from sqlalchemy.orm import Session
 
 from app.core.clock import SystemClock
-from app.core.config import get_settings
+from app.core.config import Settings, get_settings
 from app.core.password_hasher import Argon2PasswordHasher
 from app.domain.ports import (
     Clock,
@@ -41,6 +41,7 @@ from app.domain.use_cases.list_student_lessons import ListStudentLessons
 from app.domain.use_cases.list_teacher_students import ListTeacherStudents
 from app.persistence.database import get_session
 from app.persistence.file_storage import LocalFileStorage
+from app.llm.gemini import GeminiLLMClient
 from app.llm.simulated import SimulatedLLMClient
 from app.persistence.repositories.lesson_repository import SqlAlchemyLessonRepository
 from app.persistence.repositories.material_repository import SqlAlchemyMaterialRepository
@@ -78,9 +79,19 @@ def get_clock() -> Clock:
     return SystemClock()
 
 
+def build_llm_client(settings: Settings) -> LLMClient:
+    # Con clave de Gemini se usa el cliente real; sin ella, el simulado. El dominio no lo nota.
+    if settings.gemini_api_key is None:
+        return SimulatedLLMClient()
+    return GeminiLLMClient(
+        api_key=settings.gemini_api_key.get_secret_value(),
+        model=settings.gemini_model,
+        recommendations=SimulatedLLMClient(),
+    )
+
+
 def get_llm_client() -> LLMClient:
-    # LLM simulado: se sustituye por un cliente real aquí, sin tocar el dominio.
-    return SimulatedLLMClient()
+    return build_llm_client(get_settings())
 
 
 def get_file_storage() -> FileStorage:
