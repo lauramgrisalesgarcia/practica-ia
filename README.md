@@ -2,6 +2,36 @@
 
 Plataforma de refuerzo para **extranjeros que aprenden español**. El docente genera, a partir de cada clase, una actividad de refuerzo con un LLM (Gemini si se configura `GEMINI_API_KEY`; si no, uno simulado); el estudiante la resuelve **una única vez** y recibe su corrección con recomendaciones personalizadas.
 
+## Acceso
+
+- **Aplicación en producción**: <https://practica-ia.duckdns.org>
+- **Presentación**: [diapositivas en OneDrive](https://1drv.ms/b/c/2868d3488d68991e/IQBH2Ze2fZx4RYC9r6xoeVmnASsqzyLtwT3Pph_rHGfMVCQ?e=u6ngGq) (también en [`docs/004-project-presentation.pdf`](docs/004-project-presentation.pdf))
+- **Video**: [presentación y demo en OneDrive](https://1drv.ms/v/c/2868d3488d68991e/IQCG9NfOuIidSri3TUjQIW4GARvsBhFV0fQEQ3SLentz_zs?e=tx8F2P)
+
+### Usuarios de prueba
+
+Usuarios ficticios de los datos de demo (seed). Todos comparten la misma contraseña.
+
+| Rol | Usuario | Contraseña |
+|---|---|---|
+| Docente | `docente@colegio.edu` (María López) | `UmWwA7EECanhtQJpOl9eUqOg` |
+| Docente | `carlos.ruiz@colegio.edu` (Carlos Ruiz) | `UmWwA7EECanhtQJpOl9eUqOg` |
+| Estudiante | `emma@correo.com` (Emma Schmidt, A2) | `UmWwA7EECanhtQJpOl9eUqOg` |
+| Estudiante | `john@correo.com` (John Miller, B1) | `UmWwA7EECanhtQJpOl9eUqOg` |
+| Estudiante | `pierre@correo.com` (Pierre Dubois, A1) | `UmWwA7EECanhtQJpOl9eUqOg` |
+| Estudiante | `yuki@correo.com` (Yuki Tanaka, B2) | `UmWwA7EECanhtQJpOl9eUqOg` |
+
+## Funcionalidades principales
+
+- **Inicio de sesión por rol** (docente y estudiante), con bloqueo tras varios intentos fallidos.
+- **Panel del docente**: sus estudiantes con nivel MCER e idioma natal, indicadores del mes, actividad reciente, calendario y gráficos de clases y del estado del material.
+- **Ficha del estudiante**: indicadores (clases, material resuelto, nota media) y línea de tiempo de clases con filtros por estado y búsqueda por tema.
+- **Detalle de la clase**: tema, contexto, palabras clave, notas del docente y descarga del PDF.
+- **Generación de material con IA**: el docente revisa las palabras clave y elige el número de ejercicios (1–15); Gemini genera una actividad de completar frases adaptada al nivel e idioma natal, que se valida antes de guardarse.
+- **Panel del estudiante**: refuerzos pendientes, evolución de su nota, actividad reciente y calendario.
+- **Resolución del refuerzo**: pregunta a pregunta, sin ver las respuestas y una única vez.
+- **Corrección y recomendaciones**: nota, frases acertadas y falladas, y recomendaciones personalizadas; el docente ve el mismo resultado.
+
 ## Cómo funciona
 
 ```
@@ -77,6 +107,7 @@ practica-ia/
 │   ├── 001-backend-requirements.md   Requerimientos del backend
 │   ├── 002-frontend-requirements.md  Requerimientos del frontend
 │   ├── 003-arquitectura.md           Arquitectura, diagramas y decisiones
+│   ├── 004-project-presentation.pdf  Presentación del proyecto (diapositivas)
 │   └── openapi.yaml                  Contrato de la API (fuente de verdad)
 ├── infra/postgres/           Inicialización de PostgreSQL
 ├── docker-compose.yml        PostgreSQL y utilidades migrate / seed (desarrollo)
@@ -323,7 +354,19 @@ Los **tests E2E** (`e2e/`) arrancan su propia API (puerto 8011) y su propio fron
 - **Contrato primero**: los cambios de la API empiezan en `docs/openapi.yaml`.
 - **Secretos**: nunca en el código, la documentación ni los commits.
 
-Las normas completas están en [`CLAUDE.md`](CLAUDE.md) y los requerimientos en [`docs/001-backend-requirements.md`](docs/001-backend-requirements.md) (backend) y [`docs/002-frontend-requirements.md`](docs/002-frontend-requirements.md) (frontend).
+Las normas completas están en [`CLAUDE.md`](CLAUDE.md).
+
+## Documentación
+
+| Documento | Contenido |
+|---|---|
+| [`docs/001-backend-requirements.md`](docs/001-backend-requirements.md) | Requerimientos del backend |
+| [`docs/002-frontend-requirements.md`](docs/002-frontend-requirements.md) | Requerimientos del frontend |
+| [`docs/003-arquitectura.md`](docs/003-arquitectura.md) | Arquitectura, diagramas y decisiones |
+| [`docs/004-project-presentation.pdf`](docs/004-project-presentation.pdf) · [OneDrive](https://1drv.ms/b/c/2868d3488d68991e/IQBH2Ze2fZx4RYC9r6xoeVmnASsqzyLtwT3Pph_rHGfMVCQ?e=u6ngGq) | Presentación del proyecto (diapositivas) |
+| [Video del proyecto](https://1drv.ms/v/c/2868d3488d68991e/IQCG9NfOuIidSri3TUjQIW4GARvsBhFV0fQEQ3SLentz_zs?e=tx8F2P) | Video de presentación y demo de la plataforma (OneDrive) |
+| [`docs/openapi.yaml`](docs/openapi.yaml) | Contrato de la API (fuente de verdad) |
+| [`CLAUDE.md`](CLAUDE.md) | Normas de desarrollo del proyecto |
 
 ## Estado
 
